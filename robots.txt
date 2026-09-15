@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://santiiguajardo.github.io/sg-arq-bim-landing/sitemap.xml
