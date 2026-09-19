@@ -12,6 +12,7 @@
 <link rel="canonical" href="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/">
 <meta property="og:url" content="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/">
 <meta property="og:image" content="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/media/513b7ea5b85b46f787edba7e0253bbfb.jpg">
+<link rel="icon" href="media/b7d71eb7ca464ce7a482026a43bd35c4.png">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +36,7 @@ a { color: inherit; }
 
 /* ---------- Fondo (dos capas para el fundido) ---------- */
 #stage { position: fixed; inset: 0; background: #0b0c10; }
-.bg { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; }
+.bg { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease, transform 1s cubic-bezier(.2,.7,.2,1); }
 .bg.on { opacity: 1; }
 .bg video, .bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #shade { position: absolute; inset: 0; pointer-events: none;
@@ -53,6 +54,8 @@ a { color: inherit; }
 #brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; font-size: 16px; text-shadow: 0 1px 12px rgba(0,0,0,.5); }
 #brand img { height: 30px; width: auto; max-width: 120px; object-fit: contain; }
 .tb-right { display: flex; gap: 8px; }
+#fsBtn { gap: 8px; padding: 0 16px; }
+#fsBtn .ico { font-size: 16px; line-height: 1; }
 
 /* ---------- Portada ---------- */
 #intro { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; transition: opacity .6s ease, visibility .6s; }
@@ -149,6 +152,23 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
 #lbStrip .vp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.3); font-size: 14px; }
 #lbCap { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 0 16px 4px; min-height: 20px; }
 
+/* ---------- Pisos (de la terraza hacia abajo) ---------- */
+#floorNav { position: fixed; z-index: 15; right: 16px; top: 76px; bottom: 24px; width: 84px; display: none; flex-direction: column; gap: 6px; padding: 8px; border-radius: 18px; border: 1px solid var(--glass-line); background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+body.in-floors #floorNav { display: flex; }
+#fList { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; scrollbar-width: none; }
+#fList::-webkit-scrollbar { display: none; }
+#fList button, .f-step { flex: 0 0 auto; min-height: 42px; padding: 6px 4px; border-radius: 11px; border: 0; background: rgba(255,255,255,.92); color: #10131a; font-weight: 700; font-size: 12.5px; line-height: 1.15; text-align: center; }
+#fList button:hover, .f-step:hover { background: #fff; }
+#fList button.on { background: var(--accent); color: #fff; }
+.f-step { min-height: 34px; background: rgba(255,255,255,.14); color: #fff; font-size: 14px; }
+.f-step:hover { background: rgba(255,255,255,.28); }
+.f-step:disabled { opacity: .3; cursor: default; }
+#floorInfo { position: fixed; z-index: 15; left: 24px; bottom: 24px; display: none; flex-direction: column; gap: 2px; padding: 14px 18px; border-radius: 16px; border: 1px solid var(--glass-line); background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+body.in-floors #floorInfo { display: flex; }
+#floorInfo strong { font-size: 22px; letter-spacing: -.02em; }
+#floorInfo span { font-size: 13px; color: var(--ink-soft); }
+body.in-floors #panel { display: none; }
+
 /* ---------- Celular ---------- */
 @media (max-width: 760px) {
   #panel { left: 0; right: 0; bottom: 0; top: auto; width: 100%; max-height: 74vh; }
@@ -157,6 +177,11 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
   #lbMain { padding: 56px 8px 4px; }
   .lb-nav { top: auto; bottom: 8px; transform: none; }
   #topbar { padding: 10px 12px; }
+  #fsBtn .lbl { display: none; }
+  #fsBtn { width: 42px; padding: 0; justify-content: center; }
+  #floorNav { width: 64px; right: 10px; }
+  #floorInfo { left: 12px; bottom: 16px; padding: 10px 14px; }
+  #floorInfo strong { font-size: 18px; }
   #brand img { height: 26px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -173,7 +198,7 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
   <div id="brand" role="button" tabindex="0" aria-label="Volver al inicio"></div>
   <div class="tb-right">
     <a class="pill" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>
-    <button class="pill round" id="fsBtn" type="button" aria-label="Pantalla completa">&#x26F6;</button>
+    <button class="pill" id="fsBtn" type="button" aria-label="Pantalla completa"><span class="ico">&#x26F6;</span><span class="lbl">Pantalla completa</span></button>
   </div>
 </header>
 
@@ -188,6 +213,13 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
 
 <main id="panel" class="hide"></main>
 
+<nav id="floorNav" aria-label="Pisos">
+  <button class="f-step" id="fUp" type="button" aria-label="Subir un piso">&#x25B2;</button>
+  <div id="fList"></div>
+  <button class="f-step" id="fDown" type="button" aria-label="Bajar un piso">&#x25BC;</button>
+</nav>
+<div id="floorInfo"></div>
+
 <div id="tr"><video muted playsinline></video><button class="pill" id="skip" type="button">Saltar &#x203A;</button></div>
 
 <div id="lb">
@@ -201,7 +233,7 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
   <div id="lbStrip"></div>
 </div>
 
-<script>window.__SHOWROOM__ = {"name": "Edificio Plaza Londres", "slug": "edificio-plaza-londres", "tagline": "Desarrollo residencial multifamiliar en Mar del Plata", "accent": "#2f6fed", "logo": null, "noindex": true, "contact": {"whatsapp": "542262641822", "phone": "", "email": "", "address": "Mar del Plata, Buenos Aires, Argentina", "lat": -37.9976, "lng": -57.5482, "instagram": "https://www.instagram.com/sg.arqbim", "website": ""}, "intro": {"video": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4", "image": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg", "title": "Edificio Plaza Londres", "subtitle": "Recorré el proyecto", "button": "Ingresar"}, "scenes": [{"id": "mu8zye8rgye0r", "type": "gallery", "title": "Renders y videos", "menu": "Renders", "description": "Modelado 3D, Renderizado y armado de presentacion para venta en pozo de desarrollo inmobiliario", "loop": {}, "transition": {}, "items": [{"src": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg"}, {"src": "media/741d446172c54abbbfed05ae22588874.jpg"}, {"src": "media/dda7c645069c4ef39c0897da67a45ffa.jpg"}, {"src": "media/58b4b85c8f204ba69a8f0a95ee441814.jpg"}, {"src": "media/39aa019bcd0a4e019dc09aebf5669d80.jpg"}, {"src": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4"}, {"src": "media/42864a4fea2340b08555b967574cc581.mp4"}], "units": [], "pois": []}, {"id": "mu8zye8rxvgnc", "type": "location", "title": "Ubicación", "menu": "", "description": "", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}, {"id": "mu8zye8ritmun", "type": "contact", "title": "Contacto", "menu": "", "description": "Escribinos y coordinamos una visita.", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}]};</script>
+<script>window.__SHOWROOM__ = {"name": "Edificio Plaza Londres", "slug": "edificio-plaza-londres", "tagline": "Desarrollo residencial multifamiliar en Mar del Plata", "accent": "#2f6fed", "logo": "media/b7d71eb7ca464ce7a482026a43bd35c4.png", "noindex": true, "contact": {"whatsapp": "542262641822", "phone": "", "email": "", "address": "Mar del Plata, Buenos Aires, Argentina", "lat": -37.9976, "lng": -57.5482, "instagram": "https://www.instagram.com/sg.arqbim", "website": ""}, "intro": {"video": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4", "image": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg", "title": "Edificio Plaza Londres", "subtitle": "Recorré el proyecto", "button": "Ingresar"}, "scenes": [{"id": "mu8zye8rgye0r", "type": "gallery", "title": "Renders y videos", "menu": "Renders", "description": "Modelado 3D, Renderizado y armado de presentacion para venta en pozo de desarrollo inmobiliario", "loop": {}, "transition": {}, "items": [{"src": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg"}, {"src": "media/741d446172c54abbbfed05ae22588874.jpg"}, {"src": "media/dda7c645069c4ef39c0897da67a45ffa.jpg"}, {"src": "media/58b4b85c8f204ba69a8f0a95ee441814.jpg"}, {"src": "media/39aa019bcd0a4e019dc09aebf5669d80.jpg"}, {"src": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4"}, {"src": "media/42864a4fea2340b08555b967574cc581.mp4"}], "units": [], "pois": []}, {"id": "mu8zye8rxvgnc", "type": "location", "title": "Ubicación", "menu": "", "description": "", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}, {"id": "mu8zye8ritmun", "type": "contact", "title": "Contacto", "menu": "", "description": "Escribinos y coordinamos una visita.", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}]};</script>
 <script>/* Showroom virtual — comportamiento común a todas las páginas generadas.
    Lee la configuración de window.__SHOWROOM__ (la arma el servidor desde los datos del editor). */
 (function () {
@@ -257,15 +289,21 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
   var active = -1;
   var currentBg = '';
 
-  function setBackground(m) {
+  function setBackground(m, dir) {
     var key = (m && (m.video || m.image)) || '';
     if (key === currentBg) return;
     currentBg = key;
     var next = layers[(active + 1) % 2];
     next.innerHTML = '';
+    // dir > 0: se baja de piso (la imagen nueva entra desde arriba); dir < 0: se sube
+    next.style.transition = 'none';
+    next.style.transform = dir ? 'translateY(' + (dir > 0 ? '-7%' : '7%') + ') scale(1.04)' : 'none';
+    void next.offsetWidth;
+    next.style.transition = '';
+    next.style.transform = 'none';
     if (m && m.video) {
       var v = document.createElement('video');
-      v.src = m.video; v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
+      v.src = m.video; v.muted = true; v.loop = m.loop !== false; v.playsInline = true; v.autoplay = true;
       v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
       v.poster = m.image || poster(m.video);
       next.appendChild(v);
@@ -279,6 +317,7 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
     next.classList.add('on');
     if (active >= 0) {
       var old = layers[active];
+      if (dir) old.style.transform = 'translateY(' + (dir > 0 ? '7%' : '-7%') + ')';
       old.classList.remove('on');
       setTimeout(function () {
         if (!old.classList.contains('on')) {
@@ -291,13 +330,17 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
   }
 
   function sceneBg(s) {
+    if (s.type === 'floors') {
+      var f0 = floorsOf(s)[0];
+      if (f0) return { image: f0.image };
+    }
     if (s.loop && (s.loop.video || s.loop.image)) return s.loop;
     var first = (s.items || []).filter(function (i) { return i && i.src; })[0];
     if (first) return isVideo(first.src) ? { video: first.src } : { image: first.src };
     return introBg();
   }
   function introBg() {
-    return (intro.video || intro.image) ? { video: intro.video, image: intro.image } : null;
+    return (intro.video || intro.image) ? { video: intro.video, image: intro.image, loop: intro.loop } : null;
   }
 
   /* ---------- Transicion (video de IA) ---------- */
@@ -352,6 +395,7 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
   function showIntro() {
     if (busy) return;
     current = 'intro';
+    document.body.classList.remove('in-floors');
     introEl.classList.remove('gone');
     panel.classList.add('hide');
     setBackground(introBg());
@@ -378,7 +422,7 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
       preloadNext(s);
     };
     panel.classList.add('hide');
-    var tr = s.transition && s.transition.video;
+    var tr = opts.video || (s.transition && s.transition.video);
     if (tr && !opts.instant) playTransition(tr, show);
     else setTimeout(show, opts.instant ? 0 : 280);
   }
@@ -429,14 +473,20 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
 
   function renderScene(s) {
     var html;
-    if (s.type === 'units') html = renderUnits(s);
+    document.body.classList.remove('in-floors');
+    if (s.type === 'floors' && floorsOf(s).length) {
+      panel.innerHTML = '';
+      enterFloors(s);
+      return;
+    }
+    if (s.type === 'floors') html = head(s) + '<p class="empty">Las plantas de los pisos se están preparando.</p>';
     else if (s.type === 'location') html = renderLocation(s);
     else if (s.type === 'contact') html = renderContact(s);
     else html = renderGallery(s);
     panel.innerHTML = '<div class="card" id="card">' + html + '</div>';
     if (s.type === 'units') wireUnits(s);
     else if (s.type === 'contact') wireContact();
-    else if (s.type !== 'location') wireGallery(s);
+    else if (s.type === 'gallery') wireGallery(s);
     var card = $('card');
     if (card) card.scrollTop = 0;
   }
@@ -584,6 +634,85 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
     });
   }
 
+  /* ---------- Pisos: se empieza en la terraza y se va bajando ---------- */
+  var floors = [];
+  var floorIdx = -1;
+  var floorsScene = null;
+
+  function floorsOf(s) { return (s.floors || []).filter(function (f) { return f && f.image; }); }
+
+  function levelKey(v) {
+    var l = String(v == null ? '' : v).toLowerCase().trim();
+    if (l === '0' || l === 'pb' || l === 'planta baja') return 'pb';
+    return l.replace(/^piso\s*/, '');
+  }
+
+  function unitsOnFloor(f) {
+    var want = levelKey(f.level);
+    var out = [];
+    scenes.forEach(function (sc) {
+      if (sc.type !== 'units') return;
+      (sc.units || []).forEach(function (u) { if (want && levelKey(u.level) === want) out.push(u); });
+    });
+    return out;
+  }
+
+  function buildFloorNav() {
+    var list = $('fList');
+    list.innerHTML = floors.map(function (f, i) {
+      return '<button type="button" data-i="' + i + '">' + esc(f.short || f.label) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(list.querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () { selectFloor(Number(b.getAttribute('data-i'))); });
+    });
+  }
+
+  function selectFloor(i, force) {
+    if (i < 0 || i >= floors.length) return;
+    var dir = floorIdx < 0 ? 0 : (i > floorIdx ? 1 : (i < floorIdx ? -1 : 0));
+    if (i === floorIdx && !force) return;
+    floorIdx = i;
+    var f = floors[i];
+    setBackground({ image: f.image }, dir);
+    Array.prototype.forEach.call($('fList').children, function (b, k) {
+      b.classList.toggle('on', k === i);
+      if (k === i) b.scrollIntoView({ block: 'nearest' });
+    });
+    $('fUp').disabled = i === 0;
+    $('fDown').disabled = i === floors.length - 1;
+    var us = unitsOnFloor(f);
+    var free = us.filter(function (u) { return (u.status || 'disponible') === 'disponible'; }).length;
+    $('floorInfo').innerHTML = '<strong>' + esc(f.label) + '</strong>' +
+      (us.length ? '<span>' + free + ' disponible' + (free === 1 ? '' : 's') + ' de ' + us.length + ' unidad' + (us.length === 1 ? '' : 'es') + '</span>' : '');
+  }
+
+  function enterFloors(s) {
+    floorsScene = s;
+    floors = floorsOf(s).map(function (f) { return f; });
+    floorIdx = -1;
+    buildFloorNav();
+    document.body.classList.add('in-floors');
+    selectFloor(0, true);
+  }
+
+  function stepFloor(d) {
+    if (!document.body.classList.contains('in-floors') || $('lb').classList.contains('on')) return;
+    selectFloor(Math.max(0, Math.min(floors.length - 1, floorIdx + d)));
+  }
+  $('fUp').addEventListener('click', function () { stepFloor(-1); });
+  $('fDown').addEventListener('click', function () { stepFloor(1); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { stepFloor(1); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { stepFloor(-1); e.preventDefault(); }
+  });
+  var wheelLock = 0;
+  window.addEventListener('wheel', function (e) {
+    if (!document.body.classList.contains('in-floors')) return;
+    if (document.body.classList.contains('menu-open') || $('lb').classList.contains('on') || Math.abs(e.deltaY) < 20 || Date.now() - wheelLock < 650) return;
+    wheelLock = Date.now();
+    stepFloor(e.deltaY > 0 ? 1 : -1);
+  }, { passive: true });
+
   /* ---------- Visor de fotos y videos ---------- */
   var lb = { items: [], i: 0 };
 
@@ -653,7 +782,7 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
     if (scenes.length) h += '<button id="enter" type="button">' + esc(intro.button || 'Ingresar') + '</button>';
     introEl.innerHTML = h;
     var enter = $('enter');
-    if (enter) enter.addEventListener('click', function () { go(scenes[0].id); });
+    if (enter) enter.addEventListener('click', function () { go(scenes[0].id, { video: intro.enterVideo }); });
   }
 
   function initTopbar() {
@@ -664,6 +793,10 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
     if (link) wa.href = link; else wa.hidden = true;
     var fs = $('fsBtn');
     if (!document.documentElement.requestFullscreen) fs.hidden = true;
+    var fsLabel = fs.querySelector('.lbl');
+    function fsText() { fsLabel.textContent = document.fullscreenElement ? 'Salir de pantalla completa' : 'Pantalla completa'; }
+    fsText();
+    document.addEventListener('fullscreenchange', fsText);
     fs.addEventListener('click', function () {
       if (document.fullscreenElement) document.exitFullscreen();
       else document.documentElement.requestFullscreen();
