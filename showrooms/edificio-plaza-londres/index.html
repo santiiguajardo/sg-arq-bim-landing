@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Edificio Plaza Londres · Showroom virtual</title>
+<meta name="description" content="Desarrollo residencial multifamiliar en Mar del Plata">
+<meta property="og:title" content="Edificio Plaza Londres · Showroom virtual">
+<meta property="og:description" content="Desarrollo residencial multifamiliar en Mar del Plata">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0c10">
+<link rel="canonical" href="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/">
+<meta property="og:url" content="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/">
+<meta property="og:image" content="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/media/513b7ea5b85b46f787edba7e0253bbfb.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>/* Showroom virtual — estilos comunes a todas las páginas generadas.
+   Todos los showrooms comparten este archivo: solo cambian el color de acento, el logo y el contenido. */
+:root {
+  --accent: #2f6fed;
+  --ink: #f4f5f8;
+  --ink-soft: #b4b9c6;
+  --glass: rgba(14, 16, 22, .62);
+  --glass-line: rgba(255, 255, 255, .16);
+  --font-body: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0b0c10; color: var(--ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button { font-family: inherit; color: inherit; cursor: pointer; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+
+/* ---------- Fondo (dos capas para el fundido) ---------- */
+#stage { position: fixed; inset: 0; background: #0b0c10; }
+.bg { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; }
+.bg.on { opacity: 1; }
+.bg video, .bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#shade { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(8,9,12,.55) 0%, rgba(8,9,12,.05) 32%, rgba(8,9,12,.05) 55%, rgba(8,9,12,.72) 100%); }
+
+/* ---------- Barra superior ---------- */
+#topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; pointer-events: none; }
+#topbar > * { pointer-events: auto; }
+.pill { text-decoration: none; display: inline-flex; align-items: center; gap: 9px; height: 42px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-weight: 600; font-size: 14px; }
+.pill:hover { background: rgba(14, 16, 22, .82); }
+.round { width: 42px; height: 42px; padding: 0; justify-content: center; }
+.burger { width: 16px; height: 12px; position: relative; display: inline-block; }
+.burger::before, .burger::after, .burger i { content: ''; position: absolute; left: 0; right: 0; height: 2px; border-radius: 2px; background: currentColor; }
+.burger::before { top: 0; } .burger i { top: 5px; } .burger::after { bottom: 0; }
+#brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; font-size: 16px; text-shadow: 0 1px 12px rgba(0,0,0,.5); }
+#brand img { height: 30px; width: auto; max-width: 120px; object-fit: contain; }
+.tb-right { display: flex; gap: 8px; }
+
+/* ---------- Portada ---------- */
+#intro { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; transition: opacity .6s ease, visibility .6s; }
+#intro.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+#intro .logo { max-height: 120px; max-width: min(70vw, 360px); object-fit: contain; margin-bottom: 18px; filter: drop-shadow(0 6px 24px rgba(0,0,0,.45)); }
+#intro h1 { margin: 0; font-weight: 600; font-size: clamp(2.2rem, 7vw, 4.6rem); letter-spacing: -.04em; line-height: 1.02; text-shadow: 0 4px 30px rgba(0,0,0,.45); text-wrap: balance; }
+#intro p { margin: 14px 0 0; max-width: 560px; font-size: clamp(1rem, 2.4vw, 1.2rem); color: #e6e9f0; text-shadow: 0 2px 16px rgba(0,0,0,.5); }
+#enter { margin-top: 34px; height: 54px; padding: 0 44px; border: 0; border-radius: 999px; background: #fff; color: #10131a; font-weight: 700; font-size: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.35); transition: transform .15s; }
+#enter:hover { transform: translateY(-2px); }
+
+/* ---------- Menu ---------- */
+#drawerBack { position: fixed; inset: 0; z-index: 40; background: rgba(5,6,9,.5); opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+#drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 41; width: min(360px, 88vw); padding: 22px 22px 18px; display: flex; flex-direction: column; background: rgba(12, 14, 19, .94); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-right: 1px solid var(--glass-line); transform: translateX(-102%); transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+body.menu-open #drawer { transform: none; }
+body.menu-open #drawerBack { opacity: 1; visibility: visible; }
+.d-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.d-head strong { font-size: 18px; letter-spacing: -.02em; }
+.d-head img { max-height: 34px; max-width: 160px; object-fit: contain; }
+#drawer nav { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; }
+#drawer nav button { text-align: left; background: transparent; border: 0; padding: 13px 12px; border-radius: 10px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: var(--ink-soft); }
+#drawer nav button:hover { background: rgba(255,255,255,.06); color: #fff; }
+#drawer nav button.on { color: #fff; background: color-mix(in srgb, var(--accent) 30%, transparent); }
+.d-foot { border-top: 1px solid var(--glass-line); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; color: var(--ink-soft); }
+.d-foot a { text-decoration: none; }
+.d-foot a:hover { color: #fff; }
+.d-foot .credit { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; opacity: .7; margin-top: 6px; }
+
+/* ---------- Panel de contenido ---------- */
+#panel { position: fixed; z-index: 10; left: 24px; bottom: 24px; top: 84px; width: min(500px, calc(100vw - 48px)); display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; transition: opacity .5s ease, transform .5s ease; }
+#panel.hide { opacity: 0; transform: translateY(14px); }
+.card { pointer-events: auto; max-height: 100%; overflow-y: auto; padding: 26px 26px 22px; border-radius: 22px; border: 1px solid var(--glass-line); background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: color-mix(in srgb, var(--accent) 55%, #fff); margin: 0 0 10px; }
+.card h2 { margin: 0 0 10px; font-size: clamp(1.7rem, 3.4vw, 2.3rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
+.card .desc { margin: 0 0 18px; color: #dfe3ec; font-size: 15.5px; line-height: 1.55; white-space: pre-line; }
+
+/* Galería */
+.gal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gal button { position: relative; padding: 0; border: 0; border-radius: 12px; overflow: hidden; aspect-ratio: 4 / 3; background: #1a1d26; }
+.gal img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s; }
+.gal button:hover img { transform: scale(1.06); }
+.gal .vp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.28); font-size: 20px; }
+.gal-more { margin-top: 10px; font-size: 12.5px; color: var(--ink-soft); }
+
+/* Unidades */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.chip { height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--glass-line); background: transparent; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.chip.on { background: #fff; color: #10131a; border-color: #fff; }
+.units { display: flex; flex-direction: column; gap: 8px; }
+.unit { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--glass-line); background: rgba(255,255,255,.04); }
+.unit b { font-size: 16px; letter-spacing: -.01em; }
+.unit .meta { grid-column: 1; color: var(--ink-soft); font-size: 13px; }
+.unit .price { grid-column: 2; grid-row: 1 / span 2; align-self: center; text-align: right; font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; }
+.unit .act { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.st { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; }
+.st.disponible { color: #4ade80; } .st.reservada { color: #fbbf24; } .st.vendida { color: #f87171; }
+.unit.vendida { opacity: .55; }
+.empty { color: var(--ink-soft); font-size: 14px; padding: 8px 0; }
+
+/* Ubicacion */
+.map { width: 100%; height: 230px; border: 0; border-radius: 14px; margin-bottom: 14px; filter: grayscale(.25) contrast(1.05); }
+.poi { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--glass-line); font-size: 14.5px; }
+.poi span:last-child { color: var(--ink-soft); white-space: nowrap; }
+
+/* Botones y contacto */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 12px; border: 1px solid var(--glass-line); background: transparent; font-weight: 700; font-size: 14.5px; text-decoration: none; }
+.btn.primary { background: #fff; color: #10131a; border-color: #fff; }
+.btn:hover { transform: translateY(-1px); }
+.btn.sm { height: 36px; padding: 0 16px; font-size: 13px; border-radius: 10px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.cinfo { margin: 16px 0 0; display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; color: #dfe3ec; }
+.form { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.form input, .form textarea { width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--glass-line); background: rgba(255,255,255,.06); color: #fff; font: inherit; font-size: 14.5px; }
+.form input::placeholder, .form textarea::placeholder { color: #8c92a1; }
+.form textarea { min-height: 84px; resize: vertical; }
+
+/* ---------- Transicion (video de IA entre secciones) ---------- */
+#tr { position: fixed; inset: 0; z-index: 60; background: #000; opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility .35s; }
+#tr.on { opacity: 1; visibility: visible; }
+#tr video { width: 100%; height: 100%; object-fit: cover; }
+#skip { position: absolute; right: 18px; bottom: 22px; }
+
+/* ---------- Visor de fotos / videos ---------- */
+#lb { position: fixed; inset: 0; z-index: 70; background: rgba(4,5,8,.94); display: none; flex-direction: column; }
+#lb.on { display: flex; }
+#lbMain { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 56px 64px 8px; }
+#lbMain img, #lbMain video { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+#lbClose { position: absolute; top: 14px; right: 14px; z-index: 2; }
+.lb-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; }
+#lbPrev { left: 12px; } #lbNext { right: 12px; }
+#lbStrip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 16px 16px; justify-content: center; scrollbar-width: thin; }
+#lbStrip button { flex: 0 0 auto; width: 92px; height: 64px; padding: 0; border: 2px solid transparent; border-radius: 9px; overflow: hidden; background: #1a1d26; opacity: .6; position: relative; }
+#lbStrip button.on { opacity: 1; border-color: var(--accent); }
+#lbStrip img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+#lbStrip .vp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.3); font-size: 14px; }
+#lbCap { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 0 16px 4px; min-height: 20px; }
+
+/* ---------- Celular ---------- */
+@media (max-width: 760px) {
+  #panel { left: 0; right: 0; bottom: 0; top: auto; width: 100%; max-height: 74vh; }
+  .card { border-radius: 22px 22px 0 0; padding: 22px 18px 26px; }
+  .gal { grid-template-columns: repeat(2, 1fr); }
+  #lbMain { padding: 56px 8px 4px; }
+  .lb-nav { top: auto; bottom: 8px; transform: none; }
+  #topbar { padding: 10px 12px; }
+  #brand img { height: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg, #panel, #drawer, #tr, #intro { transition: none; }
+}
+</style>
+<script data-goatcounter="https://sgarqbim.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+<div id="stage"><div id="shade"></div></div>
+
+<header id="topbar">
+  <button class="pill" id="menuBtn" type="button" aria-label="Abrir menú"><span class="burger"><i></i></span>Menú</button>
+  <div id="brand" role="button" tabindex="0" aria-label="Volver al inicio"></div>
+  <div class="tb-right">
+    <a class="pill" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>
+    <button class="pill round" id="fsBtn" type="button" aria-label="Pantalla completa">&#x26F6;</button>
+  </div>
+</header>
+
+<section id="intro"></section>
+
+<div id="drawerBack"></div>
+<aside id="drawer" aria-label="Menú">
+  <div class="d-head"><strong>Menú</strong><button class="pill round" id="menuClose" type="button" aria-label="Cerrar menú">&#x2715;</button></div>
+  <nav id="menuNav"></nav>
+  <div class="d-foot" id="menuFoot"></div>
+</aside>
+
+<main id="panel" class="hide"></main>
+
+<div id="tr"><video muted playsinline></video><button class="pill" id="skip" type="button">Saltar &#x203A;</button></div>
+
+<div id="lb">
+  <button class="pill round" id="lbClose" type="button" aria-label="Cerrar">&#x2715;</button>
+  <div id="lbMain">
+    <button class="pill round lb-nav" id="lbPrev" type="button" aria-label="Anterior">&#x2039;</button>
+    <div id="lbMedia"></div>
+    <button class="pill round lb-nav" id="lbNext" type="button" aria-label="Siguiente">&#x203A;</button>
+  </div>
+  <div id="lbCap"></div>
+  <div id="lbStrip"></div>
+</div>
+
+<script>window.__SHOWROOM__ = {"name": "Edificio Plaza Londres", "slug": "edificio-plaza-londres", "tagline": "Desarrollo residencial multifamiliar en Mar del Plata", "accent": "#2f6fed", "logo": null, "noindex": false, "contact": {"whatsapp": "542262641822", "phone": "", "email": "", "address": "Mar del Plata, Buenos Aires, Argentina", "lat": -37.9976, "lng": -57.5482, "instagram": "https://www.instagram.com/sg.arqbim", "website": ""}, "intro": {"video": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4", "image": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg", "title": "Renders y recorridos", "subtitle": "Recorré el proyecto", "button": "Ingresar"}, "scenes": [{"id": "mu8zye8rwct3x", "type": "units", "title": "Unidades", "menu": "", "description": "", "loop": {}, "transition": {}, "items": [], "units": [{"code": "PB-A", "level": "", "area": "", "rooms": "", "price": 95000, "currency": "USD", "status": "disponible"}], "pois": []}, {"id": "mu8zye8rgye0r", "type": "gallery", "title": "Renders y videos", "menu": "Renders", "description": "Modelado 3D, Renderizado y armado de presentacion para venta en pozo de desarrollo inmobiliario", "loop": {}, "transition": {}, "items": [{"src": "media/741d446172c54abbbfed05ae22588874.jpg"}, {"src": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg"}, {"src": "media/dda7c645069c4ef39c0897da67a45ffa.jpg"}, {"src": "media/58b4b85c8f204ba69a8f0a95ee441814.jpg"}, {"src": "media/39aa019bcd0a4e019dc09aebf5669d80.jpg"}, {"src": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4"}, {"src": "media/42864a4fea2340b08555b967574cc581.mp4"}], "units": [], "pois": []}, {"id": "mu8zye8rxvgnc", "type": "location", "title": "Ubicación", "menu": "", "description": "", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}, {"id": "mu8zye8ritmun", "type": "contact", "title": "Contacto", "menu": "", "description": "Escribinos y coordinamos una visita.", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}]};</script>
+<script>/* Showroom virtual — comportamiento común a todas las páginas generadas.
+   Lee la configuración de window.__SHOWROOM__ (la arma el servidor desde los datos del editor). */
+(function () {
+  'use strict';
+
+  var C = window.__SHOWROOM__ || {};
+  var scenes = (C.scenes || []).filter(function (s) { return s && s.id; });
+  var contact = C.contact || {};
+  var intro = C.intro || {};
+  var byId = {};
+  scenes.forEach(function (s) { byId[s.id] = s; });
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var VIDEO = /\.(mp4|webm|mov|m4v)$/i;
+
+  function $(id) { return document.getElementById(id); }
+  function isVideo(src) { return VIDEO.test(src || ''); }
+  function poster(src) { return String(src).replace(/\.[a-z0-9]+$/i, '.poster.jpg'); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function waDigits() { return String(contact.whatsapp || '').replace(/\D/g, ''); }
+  function waLink(text) {
+    var d = waDigits();
+    return d ? 'https://wa.me/' + d + '?text=' + encodeURIComponent(text || '') : '';
+  }
+
+  document.documentElement.style.setProperty('--accent', C.accent || '#2f6fed');
+
+  /* ---------- Fondo con fundido entre dos capas ---------- */
+  var stage = $('stage');
+  var layers = [0, 1].map(function () {
+    var d = document.createElement('div');
+    d.className = 'bg';
+    stage.insertBefore(d, $('shade'));
+    return d;
+  });
+  var active = -1;
+  var currentBg = '';
+
+  function setBackground(m) {
+    var key = (m && (m.video || m.image)) || '';
+    if (key === currentBg) return;
+    currentBg = key;
+    var next = layers[(active + 1) % 2];
+    next.innerHTML = '';
+    if (m && m.video) {
+      var v = document.createElement('video');
+      v.src = m.video; v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
+      v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+      v.poster = m.image || poster(m.video);
+      next.appendChild(v);
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {});
+    } else if (m && m.image) {
+      var im = new Image();
+      im.src = m.image; im.alt = '';
+      next.appendChild(im);
+    }
+    next.classList.add('on');
+    if (active >= 0) {
+      var old = layers[active];
+      old.classList.remove('on');
+      setTimeout(function () {
+        if (!old.classList.contains('on')) {
+          var ov = old.querySelector('video');
+          if (ov) ov.pause();
+        }
+      }, 1000);
+    }
+    active = (active + 1) % 2;
+  }
+
+  function sceneBg(s) {
+    if (s.loop && (s.loop.video || s.loop.image)) return s.loop;
+    var first = (s.items || []).filter(function (i) { return i && i.src; })[0];
+    if (first) return isVideo(first.src) ? { video: first.src } : { image: first.src };
+    return introBg();
+  }
+  function introBg() {
+    return (intro.video || intro.image) ? { video: intro.video, image: intro.image } : null;
+  }
+
+  /* ---------- Transicion (video de IA) ---------- */
+  var trBox = $('tr');
+  var trVid = trBox.querySelector('video');
+  var trEnd = null;
+
+  function playTransition(src, prepare) {
+    if (!src || reduce) { prepare(); return; }
+    var finished = false;
+    var timer;
+    function end() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      trVid.onended = null; trVid.onerror = null;
+      trVid.pause();
+      trEnd = null;
+      prepare();                       // la escena nueva se arma mientras el video todavía tapa la pantalla
+      trBox.classList.remove('on');
+    }
+    trEnd = end;
+    trVid.muted = true;
+    trVid.setAttribute('playsinline', '');
+    trVid.src = src;
+    trVid.onended = end;
+    trVid.onerror = end;
+    trBox.classList.add('on');
+    var p = trVid.play();
+    if (p && p.catch) p.catch(end);
+    timer = setTimeout(end, 25000);
+  }
+  $('skip').addEventListener('click', function () { if (trEnd) trEnd(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && trEnd) trEnd(); });
+
+  /* ---------- Navegacion ---------- */
+  var panel = $('panel');
+  var introEl = $('intro');
+  var current = null;
+  var busy = false;
+
+  function markMenu() {
+    Array.prototype.forEach.call(document.querySelectorAll('#drawer nav button'), function (b) {
+      b.classList.toggle('on', b.getAttribute('data-go') === current);
+    });
+  }
+
+  function setHash(id) {
+    try { history.replaceState(null, '', '#/' + id); } catch (e) { /* file:// u otro contexto sin history */ }
+  }
+
+  function showIntro() {
+    if (busy) return;
+    current = 'intro';
+    introEl.classList.remove('gone');
+    panel.classList.add('hide');
+    setBackground(introBg());
+    markMenu();
+    setHash('inicio');
+  }
+
+  function go(id, opts) {
+    opts = opts || {};
+    closeMenu();
+    if (id === 'intro' || id === 'inicio') { showIntro(); return; }
+    var s = byId[id];
+    if (!s || busy || current === id) return;
+    busy = true;
+    var show = function () {
+      current = id;
+      introEl.classList.add('gone');
+      renderScene(s);
+      setBackground(sceneBg(s));
+      panel.classList.remove('hide');
+      markMenu();
+      setHash(id);
+      busy = false;
+      preloadNext(s);
+    };
+    panel.classList.add('hide');
+    var tr = s.transition && s.transition.video;
+    if (tr && !opts.instant) playTransition(tr, show);
+    else setTimeout(show, opts.instant ? 0 : 280);
+  }
+
+  var preloaded = {};
+  function preloadNext(s) {
+    var i = scenes.indexOf(s);
+    var nxt = scenes[i + 1];
+    var src = nxt && nxt.transition && nxt.transition.video;
+    if (!src || preloaded[src]) return;
+    preloaded[src] = true;
+    var v = document.createElement('video');
+    v.preload = 'auto'; v.muted = true; v.src = src;
+  }
+
+  /* ---------- Menu ---------- */
+  function buildMenu() {
+    var items = [{ id: 'inicio', label: 'Inicio' }].concat(scenes.map(function (s) {
+      return { id: s.id, label: s.menu || s.title || 'Sección' };
+    }));
+    $('menuNav').innerHTML = items.map(function (it) {
+      return '<button type="button" data-go="' + esc(it.id) + '">' + esc(it.label) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call($('menuNav').querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () { go(b.getAttribute('data-go')); });
+    });
+
+    var foot = [];
+    if (contact.phone) foot.push('<a href="tel:' + esc(String(contact.phone).replace(/[^\d+]/g, '')) + '">' + esc(contact.phone) + '</a>');
+    if (contact.email) foot.push('<a href="mailto:' + esc(contact.email) + '">' + esc(contact.email) + '</a>');
+    if (contact.instagram) foot.push('<a href="' + esc(contact.instagram) + '" target="_blank" rel="noopener">Instagram</a>');
+    if (contact.website) foot.push('<a href="' + esc(/^https?:/.test(contact.website) ? contact.website : 'https://' + contact.website) + '" target="_blank" rel="noopener">' + esc(contact.website) + '</a>');
+    foot.push('<span class="credit">Showroom por SG ARQ BIM</span>');
+    $('menuFoot').innerHTML = foot.join('');
+  }
+
+  function openMenu() { document.body.classList.add('menu-open'); }
+  function closeMenu() { document.body.classList.remove('menu-open'); }
+  $('menuBtn').addEventListener('click', openMenu);
+  $('menuClose').addEventListener('click', closeMenu);
+  $('drawerBack').addEventListener('click', closeMenu);
+
+  /* ---------- Contenido de cada seccion ---------- */
+  function head(s) {
+    return '<p class="eyebrow">' + esc(C.name || '') + '</p><h2>' + esc(s.title || '') + '</h2>' +
+      (s.description ? '<p class="desc">' + esc(s.description) + '</p>' : '');
+  }
+
+  function renderScene(s) {
+    var html;
+    if (s.type === 'units') html = renderUnits(s);
+    else if (s.type === 'location') html = renderLocation(s);
+    else if (s.type === 'contact') html = renderContact(s);
+    else html = renderGallery(s);
+    panel.innerHTML = '<div class="card" id="card">' + html + '</div>';
+    if (s.type === 'units') wireUnits(s);
+    else if (s.type === 'contact') wireContact();
+    else if (s.type !== 'location') wireGallery(s);
+    var card = $('card');
+    if (card) card.scrollTop = 0;
+  }
+
+  /* Galeria */
+  function galleryItems(s) { return (s.items || []).filter(function (i) { return i && i.src; }); }
+
+  function renderGallery(s) {
+    var items = galleryItems(s);
+    var html = head(s);
+    if (items.length) {
+      html += '<div class="gal">' + items.map(function (it, k) {
+        var vid = isVideo(it.src);
+        return '<button type="button" data-k="' + k + '" aria-label="' + esc(it.caption || ('Abrir ' + (k + 1))) + '">' +
+          '<img loading="lazy" alt="" src="' + esc(vid ? poster(it.src) : it.src) + '">' +
+          (vid ? '<span class="vp">&#9654;</span>' : '') + '</button>';
+      }).join('') + '</div>';
+      html += '<p class="gal-more">' + items.length + (items.length === 1 ? ' foto o video' : ' fotos y videos') + ' · tocá para ampliar</p>';
+    }
+    return html;
+  }
+  function wireGallery(s) {
+    var items = galleryItems(s);
+    Array.prototype.forEach.call(panel.querySelectorAll('.gal button'), function (b) {
+      b.addEventListener('click', function () { openLightbox(items, Number(b.getAttribute('data-k'))); });
+    });
+  }
+
+  /* Unidades */
+  var uFilter = { status: 'todas', rooms: 'todas' };
+
+  function priceText(u) {
+    if (!(Number(u.price) > 0)) return 'Consultar';
+    return esc((u.currency || 'USD') + ' ' + Number(u.price).toLocaleString('es-AR'));
+  }
+
+  function renderUnits(s) {
+    var units = s.units || [];
+    var html = head(s);
+    if (!units.length) return html + '<p class="empty">Todavía no hay unidades cargadas.</p>';
+    var statuses = ['disponible', 'reservada', 'vendida'].filter(function (st) {
+      return units.some(function (u) { return u.status === st; });
+    });
+    var rooms = [];
+    units.forEach(function (u) { if (u.rooms && rooms.indexOf(String(u.rooms)) < 0) rooms.push(String(u.rooms)); });
+    rooms.sort(function (a, b) { return Number(a) - Number(b); });
+    html += '<div class="chips" id="fStatus">' +
+      ['todas'].concat(statuses).map(function (st) {
+        return '<button type="button" class="chip' + (uFilter.status === st ? ' on' : '') + '" data-v="' + st + '">' + (st === 'todas' ? 'Todas' : st.charAt(0).toUpperCase() + st.slice(1)) + '</button>';
+      }).join('') + '</div>';
+    if (rooms.length > 1) {
+      html += '<div class="chips" id="fRooms">' +
+        ['todas'].concat(rooms).map(function (r) {
+          return '<button type="button" class="chip' + (uFilter.rooms === r ? ' on' : '') + '" data-v="' + r + '">' + (r === 'todas' ? 'Cualquier tamaño' : r + ' amb.') + '</button>';
+        }).join('') + '</div>';
+    }
+    html += '<div class="units" id="unitList">' + unitCards(s) + '</div>';
+    return html;
+  }
+
+  function unitCards(s) {
+    var list = (s.units || []).filter(function (u) {
+      return (uFilter.status === 'todas' || u.status === uFilter.status) &&
+        (uFilter.rooms === 'todas' || String(u.rooms) === uFilter.rooms);
+    });
+    if (!list.length) return '<p class="empty">No hay unidades con ese filtro.</p>';
+    return list.map(function (u) {
+      var meta = [u.level ? 'Piso ' + u.level : '', u.area ? u.area + ' m²' : '', u.rooms ? u.rooms + ' amb.' : ''].filter(Boolean).join(' · ');
+      var link = waLink('Hola, me interesa la unidad ' + (u.code || '') + ' de ' + (C.name || '') + '.');
+      var st = u.status || 'disponible';
+      return '<div class="unit ' + esc(st) + '"><b>' + esc(u.code || 'Unidad') + '</b><span class="price">' + priceText(u) + '</span>' +
+        '<span class="meta">' + esc(meta) + '</span>' +
+        '<div class="act"><span class="st ' + esc(st) + '">' + esc(st) + '</span>' +
+        (link && st !== 'vendida' ? '<a class="btn sm primary" target="_blank" rel="noopener" href="' + link + '">Consultar</a>' : '') + '</div></div>';
+    }).join('');
+  }
+
+  function wireUnits(s) {
+    function bind(id, key) {
+      var box = $(id);
+      if (!box) return;
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function (b) {
+        b.addEventListener('click', function () {
+          uFilter[key] = b.getAttribute('data-v');
+          Array.prototype.forEach.call(box.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
+          $('unitList').innerHTML = unitCards(s);
+        });
+      });
+    }
+    bind('fStatus', 'status');
+    bind('fRooms', 'rooms');
+  }
+
+  /* Ubicacion */
+  function hasCoords() { return isFinite(parseFloat(contact.lat)) && isFinite(parseFloat(contact.lng)); }
+
+  function renderLocation(s) {
+    var html = head(s);
+    if (hasCoords()) {
+      var lat = parseFloat(contact.lat), lng = parseFloat(contact.lng);
+      var bbox = [lng - 0.004, lat - 0.003, lng + 0.004, lat + 0.003].join('%2C');
+      html += '<iframe class="map" loading="lazy" title="Mapa" src="https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + lat + '%2C' + lng + '"></iframe>';
+    }
+    if (contact.address) html += '<p class="desc" style="margin-bottom:12px">' + esc(contact.address) + '</p>';
+    var pois = (s.pois || []).filter(function (p) { return p && p.name; });
+    if (pois.length) {
+      html += pois.map(function (p) { return '<div class="poi"><span>' + esc(p.name) + '</span><span>' + esc(p.distance || '') + '</span></div>'; }).join('');
+    }
+    if (hasCoords()) {
+      html += '<div class="row" style="margin-top:14px"><a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + parseFloat(contact.lat) + ',' + parseFloat(contact.lng) + '">Cómo llegar</a></div>';
+    }
+    return html;
+  }
+
+  /* Contacto */
+  function renderContact(s) {
+    var html = head(s);
+    var link = waLink('Hola, quiero más información sobre ' + (C.name || 'el proyecto') + '.');
+    html += '<div class="row">';
+    if (link) html += '<a class="btn primary" target="_blank" rel="noopener" href="' + link + '">Escribir por WhatsApp</a>';
+    if (contact.phone) html += '<a class="btn" href="tel:' + esc(String(contact.phone).replace(/[^\d+]/g, '')) + '">Llamar</a>';
+    if (contact.email) html += '<a class="btn" href="mailto:' + esc(contact.email) + '">Email</a>';
+    html += '</div>';
+    var info = [];
+    if (contact.address) info.push(esc(contact.address));
+    if (contact.phone) info.push(esc(contact.phone));
+    if (contact.email) info.push(esc(contact.email));
+    if (info.length) html += '<div class="cinfo">' + info.map(function (i) { return '<span>' + i + '</span>'; }).join('') + '</div>';
+    if (waDigits()) {
+      html += '<form class="form" id="cForm"><input name="name" placeholder="Tu nombre" required>' +
+        '<textarea name="msg" placeholder="¿Qué te gustaría saber?"></textarea>' +
+        '<button class="btn primary" type="submit">Enviar consulta</button></form>';
+    }
+    return html;
+  }
+  function wireContact() {
+    var f = $('cForm');
+    if (!f) return;
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = f.elements.name.value.trim();
+      var msg = f.elements.msg.value.trim();
+      var text = 'Hola, soy ' + name + '. Consulta sobre ' + (C.name || 'el proyecto') + (msg ? ': ' + msg : '.');
+      window.open(waLink(text), '_blank', 'noopener');
+    });
+  }
+
+  /* ---------- Visor de fotos y videos ---------- */
+  var lb = { items: [], i: 0 };
+
+  function openLightbox(items, k) {
+    lb.items = items; lb.i = k;
+    $('lb').classList.add('on');
+    var strip = $('lbStrip');
+    strip.innerHTML = items.map(function (it, n) {
+      var vid = isVideo(it.src);
+      return '<button type="button" data-n="' + n + '"><img alt="" src="' + esc(vid ? poster(it.src) : it.src) + '">' + (vid ? '<span class="vp">&#9654;</span>' : '') + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(strip.querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () { lb.i = Number(b.getAttribute('data-n')); showLightbox(); });
+    });
+    showLightbox();
+  }
+  function showLightbox() {
+    var it = lb.items[lb.i];
+    var main = $('lbMedia');
+    main.innerHTML = '';
+    if (isVideo(it.src)) {
+      var v = document.createElement('video');
+      v.src = it.src; v.controls = true; v.autoplay = true; v.playsInline = true; v.poster = poster(it.src);
+      main.appendChild(v);
+    } else {
+      var im = new Image();
+      im.src = it.src; im.alt = it.caption || '';
+      main.appendChild(im);
+    }
+    $('lbCap').textContent = (it.caption ? it.caption + ' · ' : '') + (lb.i + 1) + ' / ' + lb.items.length;
+    Array.prototype.forEach.call($('lbStrip').children, function (b, n) {
+      b.classList.toggle('on', n === lb.i);
+      if (n === lb.i) b.scrollIntoView({ inline: 'center', block: 'nearest' });
+    });
+    var multi = lb.items.length > 1;
+    $('lbPrev').hidden = !multi;
+    $('lbNext').hidden = !multi;
+    $('lbStrip').hidden = !multi;
+  }
+  function stepLightbox(d) {
+    lb.i = (lb.i + d + lb.items.length) % lb.items.length;
+    showLightbox();
+  }
+  function closeLightbox() {
+    $('lb').classList.remove('on');
+    var v = $('lbMedia').querySelector('video');
+    if (v) v.pause();
+    $('lbMedia').innerHTML = '';
+  }
+  $('lbClose').addEventListener('click', closeLightbox);
+  $('lbPrev').addEventListener('click', function () { stepLightbox(-1); });
+  $('lbNext').addEventListener('click', function () { stepLightbox(1); });
+  document.addEventListener('keydown', function (e) {
+    if (!$('lb').classList.contains('on')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowRight') stepLightbox(1);
+    else if (e.key === 'ArrowLeft') stepLightbox(-1);
+  });
+
+  /* ---------- Arranque ---------- */
+  function initIntro() {
+    var h = '';
+    if (C.logo) h += '<img class="logo" alt="' + esc(C.name || '') + '" src="' + esc(C.logo) + '">';
+    h += '<h1>' + esc(intro.title || C.name || '') + '</h1>';
+    var sub = intro.subtitle || C.tagline;
+    if (sub) h += '<p>' + esc(sub) + '</p>';
+    if (scenes.length) h += '<button id="enter" type="button">' + esc(intro.button || 'Ingresar') + '</button>';
+    introEl.innerHTML = h;
+    var enter = $('enter');
+    if (enter) enter.addEventListener('click', function () { go(scenes[0].id); });
+  }
+
+  function initTopbar() {
+    $('brand').innerHTML = (C.logo ? '<img alt="" src="' + esc(C.logo) + '">' : '') + (C.logo ? '' : '<span>' + esc(C.name || '') + '</span>');
+    $('brand').addEventListener('click', function () { go('inicio'); });
+    var link = waLink('Hola, quiero más información sobre ' + (C.name || 'el proyecto') + '.');
+    var wa = $('waBtn');
+    if (link) wa.href = link; else wa.hidden = true;
+    var fs = $('fsBtn');
+    if (!document.documentElement.requestFullscreen) fs.hidden = true;
+    fs.addEventListener('click', function () {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    });
+  }
+
+  buildMenu();
+  initIntro();
+  initTopbar();
+
+  var start = (location.hash || '').replace(/^#\/?/, '');
+  if (start && byId[start]) {
+    go(start, { instant: true });
+  } else {
+    showIntro();
+  }
+})();
+</script>
+</body>
+</html>
