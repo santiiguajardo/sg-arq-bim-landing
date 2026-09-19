@@ -213,6 +213,20 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
   var intro = C.intro || {};
   var byId = {};
   scenes.forEach(function (s) { byId[s.id] = s; });
+
+  /* Cada seccion tiene una direccion legible (#/renders, #/ubicacion) en vez del codigo interno. */
+  function slugOf(s) {
+    var t = String(s.menu || s.title || s.id).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return t || s.id;
+  }
+  var keyOf = {};
+  var idOfKey = {};
+  scenes.forEach(function (s) {
+    var k = slugOf(s);
+    while (idOfKey[k] || k === 'inicio') k += '-2';
+    keyOf[s.id] = k;
+    idOfKey[k] = s.id;
+  });
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var VIDEO = /\.(mp4|webm|mov|m4v)$/i;
 
@@ -359,7 +373,7 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
       setBackground(sceneBg(s));
       panel.classList.remove('hide');
       markMenu();
-      setHash(id);
+      setHash(keyOf[id]);
       busy = false;
       preloadNext(s);
     };
@@ -661,8 +675,9 @@ body.menu-open #drawerBack { opacity: 1; visibility: visible; }
   initTopbar();
 
   var start = (location.hash || '').replace(/^#\/?/, '');
-  if (start && byId[start]) {
-    go(start, { instant: true });
+  var startId = idOfKey[start] || (byId[start] ? start : '');
+  if (startId) {
+    go(startId, { instant: true });
   } else {
     showIntro();
   }
