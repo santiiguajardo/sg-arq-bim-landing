@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#0b0c10">
 <link rel="canonical" href="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/">
 <meta property="og:url" content="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/">
-<meta property="og:image" content="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/media/513b7ea5b85b46f787edba7e0253bbfb.jpg">
+<meta property="og:image" content="https://santiiguajardo.github.io/sg-arq-bim-landing/showrooms/edificio-plaza-londres/media/b7d71eb7ca464ce7a482026a43bd35c4.png">
 <link rel="icon" href="media/b7d71eb7ca464ce7a482026a43bd35c4.png">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -169,6 +169,62 @@ body.in-floors #floorInfo { display: flex; }
 #floorInfo span { font-size: 13px; color: var(--ink-soft); }
 body.in-floors #panel { display: none; }
 
+/* ---------- Plantas con unidades ---------- */
+#floorStage { position: fixed; z-index: 12; display: none; pointer-events: none; transition: opacity .35s ease; }
+body.in-floors #floorStage { display: block; }
+#floorStage.swap { opacity: 0; }
+#floorStage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+#floorStage .zone { fill: var(--c); fill-opacity: 0; stroke: var(--c); stroke-opacity: 0; stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: all; cursor: pointer; transition: fill-opacity .2s, stroke-opacity .2s; }
+#floorStage .zone:hover { fill-opacity: .22; }
+#floorStage .zone.sel { fill-opacity: .5; stroke-opacity: 1; }
+.pin { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; display: flex; align-items: center; gap: 6px; padding: 5px 11px 5px 8px; border: 0; border-radius: 999px; background: #fff; color: #10131a; font-weight: 700; font-size: 13px; letter-spacing: -.01em; box-shadow: 0 2px 10px rgba(0,0,0,.4); white-space: nowrap; transition: transform .15s, background .2s; }
+.pin i { width: 11px; height: 11px; border-radius: 50%; background: var(--c); flex: none; }
+.pin:hover { transform: translate(-50%, -50%) scale(1.08); }
+.pin.sel { background: var(--c); color: #0b0c10; transform: translate(-50%, -50%) scale(1.14); z-index: 2; }
+.pin.sel i { background: #fff; }
+
+#unitCard { position: fixed; z-index: 16; left: 16px; top: 76px; width: 330px; max-height: calc(100vh - 100px); overflow-y: auto; border-radius: 20px; border: 1px solid var(--glass-line); background: rgba(12, 14, 19, .9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); scrollbar-width: none; animation: ucIn .3s cubic-bezier(.2,.7,.2,1); }
+#unitCard[hidden] { display: none; }
+@keyframes ucIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+#unitCard::-webkit-scrollbar { display: none; }
+.uc-x { position: absolute; z-index: 2; top: 10px; right: 10px; width: 36px; height: 36px; padding: 0; justify-content: center; }
+.uc-gal { position: relative; aspect-ratio: 16/10; background: #1a1d26; overflow: hidden; border-radius: 20px 20px 0 0; }
+.uc-gal img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
+.uc-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(0,0,0,.5); color: #fff; font-size: 20px; line-height: 1; padding: 0 0 3px; }
+.uc-nav.prev { left: 8px; } .uc-nav.next { right: 8px; }
+.uc-dots { position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; pointer-events: none; }
+.uc-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.5); }
+.uc-dots i.on { background: #fff; }
+.uc-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
+.uc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.uc-head h3 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+.uc-st { flex: none; padding: 4px 12px; border-radius: 999px; background: var(--c); color: #0b0c10; font-weight: 800; font-size: 12.5px; }
+.uc-price { font-size: 26px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.uc-cta, .uc-tour { width: 100%; }
+.uc-rows { margin: 2px 0 0; display: flex; flex-direction: column; }
+.uc-rows div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--glass-line); font-size: 14.5px; }
+.uc-rows div:last-child { border-bottom: 0; }
+.uc-rows dt { color: var(--ink-soft); } .uc-rows dd { margin: 0; font-weight: 700; }
+body.card-open #floorInfo { display: none; }
+.unit .acts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+#tour { position: fixed; inset: 0; z-index: 75; background: #000; display: none; }
+#tour.on { display: block; }
+#tourCv { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+#tourCv.grab { cursor: grabbing; }
+#tour.flat #tourCv { display: none; }
+#tourFlat { display: none; position: absolute; inset: 0; overflow: auto; }
+#tour.flat #tourFlat { display: block; }
+#tourFlat img { height: 100%; width: auto; max-width: none; display: block; }
+#tourMsg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 15px; pointer-events: none; }
+#tourMsg[hidden] { display: none; }
+#tourClose { position: absolute; top: 16px; right: 16px; }
+#tourCap { position: absolute; top: 22px; left: 20px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-weight: 700; font-size: 14px; }
+#tourHint { position: absolute; bottom: 74px; left: 0; right: 0; text-align: center; font-size: 12.5px; color: rgba(255,255,255,.7); pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+#tourStrip { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 24px); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+#tourStrip button { flex: none; height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); color: var(--ink); font-weight: 600; font-size: 13.5px; }
+#tourStrip button.on { background: #fff; color: #10131a; border-color: #fff; }
+
 /* ---------- Celular ---------- */
 @media (max-width: 760px) {
   #panel { left: 0; right: 0; bottom: 0; top: auto; width: 100%; max-height: 74vh; }
@@ -182,6 +238,10 @@ body.in-floors #panel { display: none; }
   #floorNav { width: 64px; right: 10px; }
   #floorInfo { left: 12px; bottom: 16px; padding: 10px 14px; }
   #floorInfo strong { font-size: 18px; }
+  #unitCard { left: 10px; right: 84px; top: auto; bottom: 10px; width: auto; max-height: 64vh; }
+  .uc-gal { aspect-ratio: 16/8; }
+  .pin { font-size: 11.5px; padding: 4px 9px 4px 7px; }
+  #tourCap { top: 16px; left: 12px; }
   #brand img { height: 26px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -219,6 +279,18 @@ body.in-floors #panel { display: none; }
   <button class="f-step" id="fDown" type="button" aria-label="Bajar un piso">&#x25BC;</button>
 </nav>
 <div id="floorInfo"></div>
+<div id="floorStage"></div>
+<aside id="unitCard" hidden aria-label="Ficha de la unidad"></aside>
+
+<div id="tour" aria-label="Tour 360">
+  <canvas id="tourCv"></canvas>
+  <div id="tourFlat"></div>
+  <div id="tourMsg" hidden></div>
+  <button class="pill round" id="tourClose" type="button" aria-label="Cerrar tour">&#x2715;</button>
+  <div id="tourCap"></div>
+  <div id="tourHint">Arrastrá para mirar alrededor · rueda o pellizco para acercar</div>
+  <div id="tourStrip"></div>
+</div>
 
 <div id="tr"><video muted playsinline></video><button class="pill" id="skip" type="button">Saltar &#x203A;</button></div>
 
@@ -233,7 +305,7 @@ body.in-floors #panel { display: none; }
   <div id="lbStrip"></div>
 </div>
 
-<script>window.__SHOWROOM__ = {"name": "Edificio Plaza Londres", "slug": "edificio-plaza-londres", "tagline": "Desarrollo residencial multifamiliar en Mar del Plata", "accent": "#2f6fed", "logo": "media/b7d71eb7ca464ce7a482026a43bd35c4.png", "noindex": true, "contact": {"whatsapp": "542262641822", "phone": "", "email": "", "address": "Mar del Plata, Buenos Aires, Argentina", "lat": -37.9976, "lng": -57.5482, "instagram": "https://www.instagram.com/sg.arqbim", "website": ""}, "intro": {"video": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4", "image": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg", "title": "Edificio Plaza Londres", "subtitle": "Recorré el proyecto", "button": "Ingresar"}, "scenes": [{"id": "mu8zye8rgye0r", "type": "gallery", "title": "Renders y videos", "menu": "Renders", "description": "Modelado 3D, Renderizado y armado de presentacion para venta en pozo de desarrollo inmobiliario", "loop": {}, "transition": {}, "items": [{"src": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg"}, {"src": "media/741d446172c54abbbfed05ae22588874.jpg"}, {"src": "media/dda7c645069c4ef39c0897da67a45ffa.jpg"}, {"src": "media/58b4b85c8f204ba69a8f0a95ee441814.jpg"}, {"src": "media/39aa019bcd0a4e019dc09aebf5669d80.jpg"}, {"src": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4"}, {"src": "media/42864a4fea2340b08555b967574cc581.mp4"}], "units": [], "pois": []}, {"id": "mu8zye8rxvgnc", "type": "location", "title": "Ubicación", "menu": "", "description": "", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}, {"id": "mu8zye8ritmun", "type": "contact", "title": "Contacto", "menu": "", "description": "Escribinos y coordinamos una visita.", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}]};</script>
+<script>window.__SHOWROOM__ = {"name": "Edificio Plaza Londres", "slug": "edificio-plaza-londres", "tagline": "Desarrollo residencial multifamiliar en Mar del Plata", "accent": "#2f6fed", "logo": "media/b7d71eb7ca464ce7a482026a43bd35c4.png", "noindex": true, "contact": {"whatsapp": "542262641822", "phone": "", "email": "", "address": "Mar del Plata, Buenos Aires, Argentina", "lat": -37.9976, "lng": -57.5482, "instagram": "https://www.instagram.com/sg.arqbim", "website": ""}, "intro": {"video": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4", "image": null, "title": "Edificio Plaza Londres", "subtitle": "Recorré el proyecto", "button": "Ingresar", "enterVideo": "media/66a3d1593fcd4c55b1dba4ce4085289a.mp4"}, "scenes": [{"id": "mu91x5c9un1", "type": "units", "title": "Unidades", "menu": "Unidades", "description": "", "loop": {"image": "media/3ef26628c16e4e349aa814a660d4bfa9.jpg", "video": null}, "transition": {}, "items": [], "units": [], "pois": []}, {"id": "mu8zye8rgye0r", "type": "gallery", "title": "Renders y videos", "menu": "Renders", "description": "Modelado 3D, Renderizado y armado de presentacion para venta en pozo de desarrollo inmobiliario", "loop": {}, "transition": {}, "items": [{"src": "media/513b7ea5b85b46f787edba7e0253bbfb.jpg"}, {"src": "media/741d446172c54abbbfed05ae22588874.jpg"}, {"src": "media/dda7c645069c4ef39c0897da67a45ffa.jpg"}, {"src": "media/58b4b85c8f204ba69a8f0a95ee441814.jpg"}, {"src": "media/39aa019bcd0a4e019dc09aebf5669d80.jpg"}, {"src": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4"}, {"src": "media/42864a4fea2340b08555b967574cc581.mp4"}], "units": [], "pois": []}, {"id": "mu8zye8rxvgnc", "type": "location", "title": "Ubicación", "menu": "", "description": "", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}, {"id": "mu8zye8ritmun", "type": "contact", "title": "Contacto", "menu": "", "description": "Escribinos y coordinamos una visita.", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}]};</script>
 <script>/* Showroom virtual — comportamiento común a todas las páginas generadas.
    Lee la configuración de window.__SHOWROOM__ (la arma el servidor desde los datos del editor). */
 (function () {
@@ -312,6 +384,7 @@ body.in-floors #panel { display: none; }
     } else if (m && m.image) {
       var im = new Image();
       im.src = m.image; im.alt = '';
+      if (m.fit) im.style.objectFit = m.fit;
       next.appendChild(im);
     }
     next.classList.add('on');
@@ -414,7 +487,7 @@ body.in-floors #panel { display: none; }
       current = id;
       introEl.classList.add('gone');
       renderScene(s);
-      setBackground(sceneBg(s));
+      if (!(s.type === 'floors' && floorsOf(s).length)) setBackground(sceneBg(s));
       panel.classList.remove('hide');
       markMenu();
       setHash(keyOf[id]);
@@ -523,15 +596,32 @@ body.in-floors #panel { display: none; }
     return esc((u.currency || 'USD') + ' ' + Number(u.price).toLocaleString('es-AR'));
   }
 
+  // La lista de unidades sale de la propia seccion; si no cargó ninguna, junta las que se configuraron piso por piso.
+  function unitPool(s) {
+    if (s.units && s.units.length) return { list: s.units, agg: false };
+    var out = [];
+    scenes.forEach(function (fs) {
+      if (fs.type !== 'floors') return;
+      floorsOf(fs).forEach(function (f, fi) {
+        (f.units || []).forEach(function (u) {
+          out.push({ code: u.code, levelLabel: levelText(f), area: u.area, rooms: u.bedrooms, price: u.price, currency: u.currency,
+            status: u.status, _id: u.id, _fi: fi, _fs: fs.id, _map: typeof u.x === 'number' || (u.poly && u.poly.length > 2) });
+        });
+      });
+    });
+    return { list: out, agg: true };
+  }
+
   function renderUnits(s) {
-    var units = s.units || [];
+    var pool = unitPool(s);
+    var units = pool.list;
     var html = head(s);
     if (!units.length) return html + '<p class="empty">Todavía no hay unidades cargadas.</p>';
     var statuses = ['disponible', 'reservada', 'vendida'].filter(function (st) {
       return units.some(function (u) { return u.status === st; });
     });
     var rooms = [];
-    units.forEach(function (u) { if (u.rooms && rooms.indexOf(String(u.rooms)) < 0) rooms.push(String(u.rooms)); });
+    units.forEach(function (u) { if (u.rooms !== '' && u.rooms != null && rooms.indexOf(String(u.rooms)) < 0) rooms.push(String(u.rooms)); });
     rooms.sort(function (a, b) { return Number(a) - Number(b); });
     html += '<div class="chips" id="fStatus">' +
       ['todas'].concat(statuses).map(function (st) {
@@ -540,7 +630,7 @@ body.in-floors #panel { display: none; }
     if (rooms.length > 1) {
       html += '<div class="chips" id="fRooms">' +
         ['todas'].concat(rooms).map(function (r) {
-          return '<button type="button" class="chip' + (uFilter.rooms === r ? ' on' : '') + '" data-v="' + r + '">' + (r === 'todas' ? 'Cualquier tamaño' : r + ' amb.') + '</button>';
+          return '<button type="button" class="chip' + (uFilter.rooms === r ? ' on' : '') + '" data-v="' + r + '">' + (r === 'todas' ? 'Cualquier tamaño' : r + (pool.agg ? ' dorm.' : ' amb.')) + '</button>';
         }).join('') + '</div>';
     }
     html += '<div class="units" id="unitList">' + unitCards(s) + '</div>';
@@ -548,19 +638,22 @@ body.in-floors #panel { display: none; }
   }
 
   function unitCards(s) {
-    var list = (s.units || []).filter(function (u) {
+    var pool = unitPool(s);
+    var list = pool.list.filter(function (u) {
       return (uFilter.status === 'todas' || u.status === uFilter.status) &&
         (uFilter.rooms === 'todas' || String(u.rooms) === uFilter.rooms);
     });
     if (!list.length) return '<p class="empty">No hay unidades con ese filtro.</p>';
     return list.map(function (u) {
-      var meta = [u.level ? 'Piso ' + u.level : '', u.area ? u.area + ' m²' : '', u.rooms ? u.rooms + ' amb.' : ''].filter(Boolean).join(' · ');
+      var lvl = u.levelLabel || (u.level ? 'Piso ' + u.level : '');
+      var meta = [lvl, u.area ? u.area + ' m²' : '', u.rooms !== '' && u.rooms != null ? u.rooms + (pool.agg ? ' dorm.' : ' amb.') : ''].filter(Boolean).join(' · ');
       var link = waLink('Hola, me interesa la unidad ' + (u.code || '') + ' de ' + (C.name || '') + '.');
       var st = u.status || 'disponible';
+      var see = pool.agg && u._map ? '<button type="button" class="btn sm" data-see="' + esc(u._fs) + '|' + u._fi + '|' + esc(u._id) + '">Ver en planta</button>' : '';
       return '<div class="unit ' + esc(st) + '"><b>' + esc(u.code || 'Unidad') + '</b><span class="price">' + priceText(u) + '</span>' +
         '<span class="meta">' + esc(meta) + '</span>' +
-        '<div class="act"><span class="st ' + esc(st) + '">' + esc(st) + '</span>' +
-        (link && st !== 'vendida' ? '<a class="btn sm primary" target="_blank" rel="noopener" href="' + link + '">Consultar</a>' : '') + '</div></div>';
+        '<div class="act"><span class="st ' + esc(st) + '">' + esc(st) + '</span><span class="acts">' + see +
+        (link && st !== 'vendida' ? '<a class="btn sm primary" target="_blank" rel="noopener" href="' + link + '">Consultar</a>' : '') + '</span></div></div>';
     }).join('');
   }
 
@@ -578,6 +671,14 @@ body.in-floors #panel { display: none; }
     }
     bind('fStatus', 'status');
     bind('fRooms', 'rooms');
+    var list = $('unitList');
+    if (list) list.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-see]');
+      if (!b) return;
+      var p = b.getAttribute('data-see').split('|');
+      pendingUnit = { fi: Number(p[1]), id: p[2] };
+      go(p[0]);
+    });
   }
 
   /* Ubicacion */
@@ -638,6 +739,12 @@ body.in-floors #panel { display: none; }
   var floors = [];
   var floorIdx = -1;
   var floorsScene = null;
+  var pendingUnit = null;
+  var selUnit = null;
+  var imgNat = {};
+  var floorStage = $('floorStage');
+  var STATUS_COLOR = { disponible: '#22c55e', reservada: '#f5b301', vendida: '#ef4444' };
+  var STATUS_LABEL = { disponible: 'Disponible', reservada: 'Reservada', vendida: 'Vendida' };
 
   function floorsOf(s) { return (s.floors || []).filter(function (f) { return f && f.image; }); }
 
@@ -646,8 +753,15 @@ body.in-floors #panel { display: none; }
     if (l === '0' || l === 'pb' || l === 'planta baja') return 'pb';
     return l.replace(/^piso\s*/, '');
   }
+  function levelText(f) {
+    var k = levelKey(f.level);
+    if (k === 'pb') return 'Planta baja';
+    if (/^\d+$/.test(k)) return k + '°';
+    return f.label || k;
+  }
 
-  function unitsOnFloor(f) {
+  // Unidades cargadas en la seccion "Unidades" con el mismo piso (forma vieja de configurarlo).
+  function legacyUnits(f) {
     var want = levelKey(f.level);
     var out = [];
     scenes.forEach(function (sc) {
@@ -656,6 +770,7 @@ body.in-floors #panel { display: none; }
     });
     return out;
   }
+  function unitsOf(f) { return (f.units && f.units.length) ? f.units : legacyUnits(f); }
 
   function buildFloorNav() {
     var list = $('fList');
@@ -667,20 +782,84 @@ body.in-floors #panel { display: none; }
     });
   }
 
+  /* La planta ocupa la pantalla como "cover" (o "contain" en pantallas verticales, para que se vean todas las unidades);
+     los puntos y las zonas se ubican en % sobre la imagen, así que se calcula el rectángulo real que ocupa. */
+  function fitMode() { return window.innerWidth / window.innerHeight < 0.9 ? 'contain' : 'cover'; }
+
+  function layoutStage() {
+    var f = floors[floorIdx];
+    var n = f && imgNat[f.image];
+    if (!n) return;
+    var vw = window.innerWidth, vh = window.innerHeight, fit = fitMode();
+    var sc = fit === 'cover' ? Math.max(vw / n.w, vh / n.h) : Math.min(vw / n.w, vh / n.h);
+    var w = n.w * sc, h = n.h * sc;
+    floorStage.style.left = ((vw - w) / 2) + 'px';
+    floorStage.style.top = ((vh - h) / 2) + 'px';
+    floorStage.style.width = w + 'px';
+    floorStage.style.height = h + 'px';
+    var im = layers[active] && layers[active].querySelector('img');
+    if (im) im.style.objectFit = fit;
+  }
+  window.addEventListener('resize', function () { if (document.body.classList.contains('in-floors')) layoutStage(); });
+
+  function withDims(src, cb) {
+    if (imgNat[src]) { cb(); return; }
+    var im = new Image();
+    im.onload = function () { imgNat[src] = { w: im.naturalWidth || 1600, h: im.naturalHeight || 1000 }; cb(); };
+    im.onerror = function () { cb(); };
+    im.src = src;
+  }
+
+  function renderStage(f) {
+    var svg = '<svg viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">';
+    var pins = '';
+    (f.units || []).forEach(function (u) {
+      if (!u) return;
+      var col = STATUS_COLOR[u.status || 'disponible'] || STATUS_COLOR.disponible;
+      if (u.poly && u.poly.length > 2) {
+        svg += '<polygon class="zone" data-u="' + esc(u.id) + '" style="--c:' + col + '" points="' +
+          u.poly.map(function (p) { return (p[0] * 1000).toFixed(1) + ',' + (p[1] * 1000).toFixed(1); }).join(' ') + '"/>';
+      }
+      if (typeof u.x === 'number' && typeof u.y === 'number') {
+        pins += '<button type="button" class="pin" data-u="' + esc(u.id) + '" style="left:' + (u.x * 100).toFixed(2) + '%;top:' + (u.y * 100).toFixed(2) +
+          '%;--c:' + col + '"><i></i><span>' + esc(u.code || '') + '</span></button>';
+      }
+    });
+    floorStage.innerHTML = svg + '</svg>' + pins;
+    Array.prototype.forEach.call(floorStage.querySelectorAll('[data-u]'), function (el) {
+      el.addEventListener('click', function () { selectUnit(el.getAttribute('data-u')); });
+    });
+    markSelected();
+  }
+
+  function markSelected() {
+    Array.prototype.forEach.call(floorStage.querySelectorAll('[data-u]'), function (el) {
+      el.classList.toggle('sel', el.getAttribute('data-u') === selUnit);
+    });
+  }
+
   function selectFloor(i, force) {
     if (i < 0 || i >= floors.length) return;
     var dir = floorIdx < 0 ? 0 : (i > floorIdx ? 1 : (i < floorIdx ? -1 : 0));
     if (i === floorIdx && !force) return;
     floorIdx = i;
     var f = floors[i];
-    setBackground({ image: f.image }, dir);
+    closeCard();
+    floorStage.classList.add('swap');
+    setBackground({ image: f.image, fit: fitMode() }, dir);
+    withDims(f.image, function () {
+      if (floors[floorIdx] !== f) return;
+      layoutStage();
+      renderStage(f);
+      requestAnimationFrame(function () { floorStage.classList.remove('swap'); });
+    });
     Array.prototype.forEach.call($('fList').children, function (b, k) {
       b.classList.toggle('on', k === i);
       if (k === i) b.scrollIntoView({ block: 'nearest' });
     });
     $('fUp').disabled = i === 0;
     $('fDown').disabled = i === floors.length - 1;
-    var us = unitsOnFloor(f);
+    var us = unitsOf(f);
     var free = us.filter(function (u) { return (u.status || 'disponible') === 'disponible'; }).length;
     $('floorInfo').innerHTML = '<strong>' + esc(f.label) + '</strong>' +
       (us.length ? '<span>' + free + ' disponible' + (free === 1 ? '' : 's') + ' de ' + us.length + ' unidad' + (us.length === 1 ? '' : 'es') + '</span>' : '');
@@ -692,11 +871,17 @@ body.in-floors #panel { display: none; }
     floorIdx = -1;
     buildFloorNav();
     document.body.classList.add('in-floors');
-    selectFloor(0, true);
+    var want = pendingUnit;
+    pendingUnit = null;
+    selectFloor(want && want.fi >= 0 && want.fi < floors.length ? want.fi : 0, true);
+    if (want) {
+      var f = floors[floorIdx];
+      withDims(f.image, function () { if (floors[floorIdx] === f) selectUnit(want.id); });
+    }
   }
 
   function stepFloor(d) {
-    if (!document.body.classList.contains('in-floors') || $('lb').classList.contains('on')) return;
+    if (!document.body.classList.contains('in-floors') || $('lb').classList.contains('on') || $('tour').classList.contains('on')) return;
     selectFloor(Math.max(0, Math.min(floors.length - 1, floorIdx + d)));
   }
   $('fUp').addEventListener('click', function () { stepFloor(-1); });
@@ -708,10 +893,258 @@ body.in-floors #panel { display: none; }
   var wheelLock = 0;
   window.addEventListener('wheel', function (e) {
     if (!document.body.classList.contains('in-floors')) return;
+    if (e.target.closest && e.target.closest('#unitCard, #tour')) return;
     if (document.body.classList.contains('menu-open') || $('lb').classList.contains('on') || Math.abs(e.deltaY) < 20 || Date.now() - wheelLock < 650) return;
     wheelLock = Date.now();
     stepFloor(e.deltaY > 0 ? 1 : -1);
   }, { passive: true });
+
+  /* ---------- Ficha de la unidad (a la izquierda) ---------- */
+  var card = $('unitCard');
+  var cardImg = 0;
+
+  function findUnit(id) {
+    var f = floors[floorIdx];
+    var list = f ? (f.units || []) : [];
+    for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(id)) return list[i];
+    return null;
+  }
+
+  function selectUnit(id) {
+    var u = findUnit(id);
+    if (!u) return;
+    selUnit = String(id);
+    markSelected();
+    openCard(u, floors[floorIdx]);
+  }
+
+  function closeCard() {
+    selUnit = null;
+    card.hidden = true;
+    card.innerHTML = '';
+    document.body.classList.remove('card-open');
+    markSelected();
+  }
+
+  function has(v) { return v !== '' && v != null; }
+
+  function openCard(u, f) {
+    var st = u.status || 'disponible';
+    var col = STATUS_COLOR[st] || STATUS_COLOR.disponible;
+    var imgs = (u.images || []).filter(Boolean);
+    var tours = (u.tour || []).filter(function (t) { return t && t.src; });
+    var rows = [];
+    if (has(u.area)) rows.push(['Superficie total', esc(u.area) + ' m²']);
+    if (has(u.bedrooms)) rows.push(['Dormitorios', Number(u.bedrooms) === 0 ? 'Monoambiente' : esc(u.bedrooms)]);
+    if (has(u.bathrooms)) rows.push(['Baños', esc(u.bathrooms)]);
+    rows.push(['Piso', esc(levelText(f))]);
+    var link = waLink('Hola, me interesa la unidad ' + (u.code || '') + ' (' + levelText(f) + ') de ' + (C.name || '') + '.');
+    cardImg = 0;
+    card.style.setProperty('--c', col);
+    card.innerHTML =
+      '<button type="button" class="pill round uc-x" id="ucX" aria-label="Cerrar">&#x2715;</button>' +
+      (imgs.length ? '<div class="uc-gal"><img id="ucImg" alt="" src="' + esc(imgs[0]) + '">' +
+        (imgs.length > 1 ? '<button type="button" class="uc-nav prev" id="ucPrev" aria-label="Anterior">&#x2039;</button><button type="button" class="uc-nav next" id="ucNext" aria-label="Siguiente">&#x203A;</button>' +
+          '<span class="uc-dots" id="ucDots">' + imgs.map(function (x, k) { return '<i' + (k === 0 ? ' class="on"' : '') + '></i>'; }).join('') + '</span>' : '') + '</div>' : '') +
+      '<div class="uc-body">' +
+        '<div class="uc-head"><h3>Unidad ' + esc(u.code || '') + '</h3><span class="uc-st">' + esc(STATUS_LABEL[st] || st) + '</span></div>' +
+        '<div class="uc-price">' + priceText(u) + '</div>' +
+        (link && st !== 'vendida' ? '<a class="btn primary uc-cta" target="_blank" rel="noopener" href="' + link + '">Solicitar información</a>' : '') +
+        '<dl class="uc-rows">' + rows.map(function (r) { return '<div><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>'; }).join('') + '</dl>' +
+        (tours.length ? '<button type="button" class="btn uc-tour" id="ucTour"><span aria-hidden="true">&#x27F3;</span> Tour 360°</button>' : '') +
+      '</div>';
+    card.hidden = false;
+    document.body.classList.add('card-open');
+    $('ucX').addEventListener('click', closeCard);
+    if (imgs.length) {
+      var show = function (d) {
+        cardImg = (cardImg + d + imgs.length) % imgs.length;
+        $('ucImg').src = imgs[cardImg];
+        Array.prototype.forEach.call($('ucDots').children, function (x, k) { x.classList.toggle('on', k === cardImg); });
+      };
+      if (imgs.length > 1) {
+        $('ucPrev').addEventListener('click', function () { show(-1); });
+        $('ucNext').addEventListener('click', function () { show(1); });
+      }
+      $('ucImg').addEventListener('click', function () {
+        openLightbox(imgs.map(function (x) { return { src: x }; }), cardImg);
+      });
+    }
+    if (tours.length) $('ucTour').addEventListener('click', function () { openTour(u, tours); });
+  }
+
+  /* ---------- Tour 360° (renders equirectangulares, se mira arrastrando) ---------- */
+  var tourEl = $('tour');
+  var tourCv = $('tourCv');
+  var T = { list: [], i: 0, gl: null, prog: null, tex: null, loc: {}, yaw: 0, pitch: 0, fov: 1.35, raf: 0, auto: true, ptrs: {}, pinch: 0, token: 0, ready: false, gl2: false };
+
+  var VS = 'attribute vec2 p; varying vec2 v; void main(){ v = p; gl_Position = vec4(p, 0.0, 1.0); }';
+  var FS = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n' +
+    'varying vec2 v; uniform sampler2D t; uniform float yaw; uniform float pitch; uniform float fov; uniform float aspect;\n' +
+    'void main(){\n' +
+    '  float tf = tan(fov * 0.5);\n' +
+    '  vec3 d = normalize(vec3(v.x * aspect * tf, v.y * tf, -1.0));\n' +
+    '  float cp = cos(pitch), sp = sin(pitch);\n' +
+    '  d = vec3(d.x, d.y * cp - d.z * sp, d.y * sp + d.z * cp);\n' +
+    '  float cy = cos(yaw), sy = sin(yaw);\n' +
+    '  d = vec3(d.x * cy + d.z * sy, d.y, -d.x * sy + d.z * cy);\n' +
+    '  float lon = atan(d.x, -d.z);\n' +
+    '  float lat = asin(clamp(d.y, -1.0, 1.0));\n' +
+    '  gl_FragColor = texture2D(t, vec2(lon / 6.2831853 + 0.5, 0.5 - lat / 3.1415927));\n' +
+    '}';
+
+  function tourMsg(t) { var m = $('tourMsg'); m.textContent = t || ''; m.hidden = !t; }
+
+  function tourInitGL() {
+    if (T.gl) return true;
+    var gl = tourCv.getContext('webgl2') || tourCv.getContext('webgl') || tourCv.getContext('experimental-webgl');
+    if (!gl) return false;
+    function sh(type, src) {
+      var s = gl.createShader(type);
+      gl.shaderSource(s, src); gl.compileShader(s);
+      return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
+    }
+    var vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
+    if (!vs || !fs) return false;
+    var pr = gl.createProgram();
+    gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr);
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return false;
+    gl.useProgram(pr);
+    var buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    var a = gl.getAttribLocation(pr, 'p');
+    gl.enableVertexAttribArray(a);
+    gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+    ['yaw', 'pitch', 'fov', 'aspect', 't'].forEach(function (n) { T.loc[n] = gl.getUniformLocation(pr, n); });
+    T.gl = gl; T.prog = pr;
+    T.gl2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
+    return true;
+  }
+
+  function tourLoad(k) {
+    var it = T.list[k];
+    var tok = ++T.token;
+    T.i = k; T.ready = false;
+    $('tourCap').textContent = (T.title ? T.title + ' · ' : '') + (it.label || 'Ambiente ' + (k + 1));
+    Array.prototype.forEach.call($('tourStrip').children, function (b, n) { b.classList.toggle('on', n === k); });
+    tourMsg('Cargando render 360°…');
+    var im = new Image();
+    im.onerror = function () { if (tok === T.token) tourMsg('No se pudo cargar este render.'); };
+    im.onload = function () {
+      if (tok !== T.token) return;
+      if (!T.gl) { flatShow(it.src); return; }
+      var gl = T.gl;
+      var src = im;
+      var max = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+      if (im.width > max) {
+        var c = document.createElement('canvas');
+        c.width = max; c.height = Math.round(im.height * max / im.width);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        src = c;
+      }
+      if (T.tex) gl.deleteTexture(T.tex);
+      T.tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, T.tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, T.gl2 ? gl.REPEAT : gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      T.ready = true;
+      T.yaw = 0; T.pitch = 0; T.auto = true;
+      tourMsg('');
+    };
+    im.src = it.src;
+  }
+
+  // Sin WebGL se muestra el render como una imagen ancha que se desplaza con el dedo o el mouse.
+  function flatShow(src) {
+    tourEl.classList.add('flat');
+    $('tourFlat').innerHTML = '<img alt="" src="' + esc(src) + '">';
+    tourMsg('');
+  }
+
+  function tourFrame() {
+    if (!tourEl.classList.contains('on')) { T.raf = 0; return; }
+    T.raf = requestAnimationFrame(tourFrame);
+    if (!T.gl || !T.ready) return;
+    var gl = T.gl;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = Math.round(tourCv.clientWidth * dpr), h = Math.round(tourCv.clientHeight * dpr);
+    if (tourCv.width !== w || tourCv.height !== h) { tourCv.width = w; tourCv.height = h; gl.viewport(0, 0, w, h); }
+    if (T.auto && !reduce) T.yaw += 0.0011;
+    gl.uniform1f(T.loc.yaw, T.yaw);
+    gl.uniform1f(T.loc.pitch, T.pitch);
+    gl.uniform1f(T.loc.fov, T.fov);
+    gl.uniform1f(T.loc.aspect, w / Math.max(h, 1));
+    gl.uniform1i(T.loc.t, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  function openTour(u, list) {
+    T.list = list; T.title = 'Unidad ' + (u.code || '');
+    tourEl.classList.add('on');
+    tourEl.classList.remove('flat');
+    $('tourStrip').innerHTML = list.length > 1 ? list.map(function (it, k) {
+      return '<button type="button" data-k="' + k + '">' + esc(it.label || 'Ambiente ' + (k + 1)) + '</button>';
+    }).join('') : '';
+    Array.prototype.forEach.call($('tourStrip').children, function (b) {
+      b.addEventListener('click', function () { tourLoad(Number(b.getAttribute('data-k'))); });
+    });
+    if (!tourInitGL()) tourEl.classList.add('flat');
+    tourLoad(0);
+    if (!T.raf) T.raf = requestAnimationFrame(tourFrame);
+  }
+
+  function closeTour() {
+    tourEl.classList.remove('on', 'flat');
+    T.token++;
+    $('tourFlat').innerHTML = '';
+  }
+  $('tourClose').addEventListener('click', closeTour);
+
+  tourCv.addEventListener('pointerdown', function (e) {
+    T.auto = false;
+    T.ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    try { tourCv.setPointerCapture(e.pointerId); } catch (x) { /* sin captura */ }
+    T.pinch = 0;
+    tourCv.classList.add('grab');
+  });
+  tourCv.addEventListener('pointermove', function (e) {
+    var p = T.ptrs[e.pointerId];
+    if (!p) return;
+    var ids = Object.keys(T.ptrs);
+    if (ids.length === 2) {
+      T.ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var a = T.ptrs[ids[0]], b = T.ptrs[ids[1]];
+      var dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (T.pinch) T.fov = Math.max(0.6, Math.min(1.9, T.fov * (T.pinch / dist)));
+      T.pinch = dist;
+      return;
+    }
+    var k = T.fov / Math.max(tourCv.clientHeight, 1);
+    T.yaw += (e.clientX - p.x) * k;
+    T.pitch = Math.max(-1.45, Math.min(1.45, T.pitch + (e.clientY - p.y) * k));
+    T.ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+  });
+  function endPtr(e) {
+    delete T.ptrs[e.pointerId];
+    T.pinch = 0;
+    if (!Object.keys(T.ptrs).length) tourCv.classList.remove('grab');
+  }
+  tourCv.addEventListener('pointerup', endPtr);
+  tourCv.addEventListener('pointercancel', endPtr);
+  tourCv.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    T.fov = Math.max(0.6, Math.min(1.9, T.fov * (e.deltaY > 0 ? 1.06 : 0.94)));
+  }, { passive: false });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (tourEl.classList.contains('on')) closeTour();
+    else if (!card.hidden && !$('lb').classList.contains('on')) closeCard();
+  });
 
   /* ---------- Visor de fotos y videos ---------- */
   var lb = { items: [], i: 0 };
