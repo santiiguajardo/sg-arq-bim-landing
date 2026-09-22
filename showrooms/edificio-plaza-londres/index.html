@@ -278,6 +278,14 @@ body.card-open #floorInfo { display: none; }
 
 #fsNote { position: fixed; z-index: 60; top: 70px; left: 50%; width: max-content; max-width: min(380px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 14px; border: 1px solid var(--glass-line); background: rgba(12, 14, 19, .92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-size: 13.5px; line-height: 1.45; opacity: 0; transform: translate(-50%, -6px); pointer-events: none; transition: opacity .25s, transform .25s; }
 #fsNote.on { opacity: 1; transform: translate(-50%, 0); }
+
+.hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.fmsg { margin: 6px 0 0; font-size: 13px; color: var(--ink-soft); min-height: 0; }
+.fmsg.ok { color: #4ade80; font-size: 14px; line-height: 1.45; margin: 4px 0 0; }
+.uc-form { display: flex; flex-direction: column; gap: 8px; }
+.uc-form input, .uc-form textarea { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--glass-line); background: rgba(255,255,255,.06); color: #fff; font: inherit; font-size: 14px; }
+.uc-form textarea { resize: vertical; }
+.uc-wa { text-align: center; font-size: 13px; color: var(--ink-soft); text-decoration: underline; }
 </style>
 <script data-goatcounter="https://sgarqbim.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -337,7 +345,7 @@ body.card-open #floorInfo { display: none; }
   <div id="lbStrip"></div>
 </div>
 
-<script>window.__SHOWROOM__ = {"name": "Edificio Plaza Londres", "slug": "edificio-plaza-londres", "tagline": "Desarrollo residencial multifamiliar en Mar del Plata", "accent": "#1631bb", "logo": "media/b7d71eb7ca464ce7a482026a43bd35c4.png", "noindex": false, "contact": {"whatsapp": "542262641822", "phone": "", "email": "", "address": "Gascón 2728, Mar del Plata", "lat": -38.005313, "lng": -57.553567, "instagram": "https://www.instagram.com/sg.arqbim", "website": "", "zoom": 17, "mapStyle": "liberty"}, "intro": {"video": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4", "image": null, "title": "Edificio Plaza Londres", "subtitle": "Recorré el proyecto", "button": "Ingresar", "enterVideo": "media/66a3d1593fcd4c55b1dba4ce4085289a.mp4"}, "scenes": [{"id": "mua1pqg5rtxhn", "type": "floors", "title": "Pisos / Unidades", "menu": "Pisos / Unidades", "description": "", "loop": {}, "transition": {}, "items": [], "units": [], "pois": [], "floorCount": 7, "hasPB": true, "hasRoof": true, "floors": [{"level": "terraza", "label": "Terraza", "short": "Terraza", "image": "media/3ef26628c16e4e349aa814a660d4bfa9.jpg", "units": []}, {"level": "7", "label": "Piso 7", "short": "7", "image": null, "units": []}, {"level": "6", "label": "Piso 6", "short": "6", "image": null, "units": []}, {"level": "5", "label": "Piso 5", "short": "5", "image": null, "units": []}, {"level": "4", "label": "Piso 4", "short": "4", "image": null, "units": []}, {"level": "3", "label": "Piso 3", "short": "3", "image": null, "units": []}, {"level": "2", "label": "Piso 2", "short": "2", "image": null, "units": []}, {"level": "1", "label": "Piso 1", "short": "1", "image": null, "units": []}, {"level": "pb", "label": "Planta baja", "short": "PB", "image": null, "units": []}]}, {"id": "mu8zye8rgye0r", "type": "gallery", "title": "Renders y videos", "menu": "Renders", "description": "Modelado 3D, Renderizado y armado de presentacion para venta en pozo de desarrollo inmobiliario", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}, {"id": "mu8zye8rxvgnc", "type": "location", "title": "Ubicación", "menu": "", "description": "", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}, {"id": "mu8zye8ritmun", "type": "contact", "title": "Contacto", "menu": "", "description": "Escribinos y coordinamos una visita.", "loop": {}, "transition": {}, "items": [], "units": [], "pois": []}], "unitLabel": "Departamento"};</script>
+<script>window.__SHOWROOM__ = {"accent": "#1631bb", "contact": {"address": "Gascón 2728, Mar del Plata", "email": "", "instagram": "https://www.instagram.com/sg.arqbim", "lat": -38.005313, "lng": -57.553567, "mapStyle": "liberty", "phone": "", "website": "", "whatsapp": "542262641822", "zoom": 17}, "cover": "media/9d01636053f246d197bf16f314ba7146.jpg", "intro": {"button": "Ingresar", "enterVideo": "media/66a3d1593fcd4c55b1dba4ce4085289a.mp4", "image": null, "subtitle": "Recorré el proyecto", "title": "Edificio Plaza Londres", "video": "media/94b02b18f8414c03a9ffc9e685eff64f.mp4"}, "logo": "media/b7d71eb7ca464ce7a482026a43bd35c4.png", "name": "Edificio Plaza Londres", "noindex": false, "scenes": [{"description": "", "floorCount": 7, "floors": [{"image": "media/3ef26628c16e4e349aa814a660d4bfa9.jpg", "label": "Terraza", "level": "terraza", "short": "Terraza", "units": []}, {"image": "media/e87d066204764b7f90b0cefd24265475.jpg", "label": "Piso 7", "level": "7", "short": "7", "units": []}, {"image": null, "label": "Piso 6", "level": "6", "short": "6", "units": []}, {"image": null, "label": "Piso 5", "level": "5", "short": "5", "units": []}, {"image": null, "label": "Piso 4", "level": "4", "short": "4", "units": []}, {"image": null, "label": "Piso 3", "level": "3", "short": "3", "units": []}, {"image": null, "label": "Piso 2", "level": "2", "short": "2", "units": []}, {"image": null, "label": "Piso 1", "level": "1", "short": "1", "units": []}, {"image": null, "label": "Planta baja", "level": "pb", "short": "PB", "units": []}], "hasPB": true, "hasRoof": true, "id": "mua1pqg5rtxhn", "items": [], "loop": {}, "menu": "Pisos / Unidades", "pois": [], "title": "Pisos / Unidades", "transition": {}, "type": "floors", "units": []}, {"description": "Modelado 3D, Renderizado y armado de presentacion para venta en pozo de desarrollo inmobiliario", "id": "mu8zye8rgye0r", "items": [], "loop": {}, "menu": "Renders", "pois": [], "title": "Renders y videos", "transition": {}, "type": "gallery", "units": []}, {"description": "", "id": "mu8zye8rxvgnc", "items": [], "loop": {}, "menu": "", "pois": [], "title": "Ubicación", "transition": {}, "type": "location", "units": []}, {"description": "Escribinos y coordinamos una visita.", "id": "mu8zye8ritmun", "items": [], "loop": {}, "menu": "", "pois": [], "title": "Contacto", "transition": {}, "type": "contact", "units": []}], "slug": "edificio-plaza-londres", "tagline": "Desarrollo residencial multifamiliar en Mar del Plata", "unitLabel": "Departamento"};</script>
 <script>/* Showroom virtual — comportamiento común a todas las páginas generadas.
    Lee la configuración de window.__SHOWROOM__ (la arma el servidor desde los datos del editor). */
 (function () {
@@ -381,6 +389,32 @@ body.card-open #floorInfo { display: none; }
     var d = waDigits();
     return d ? 'https://wa.me/' + d + '?text=' + encodeURIComponent(text || '') : '';
   }
+
+  /* ---------- Estadísticas (GoatCounter) y consultas (a la planilla de Google del dueño) ---------- */
+  function track(kind, label) {
+    try {
+      var gc = window.goatcounter;
+      if (!gc || !gc.count) return;
+      var slug = C.slug || 'showroom';
+      gc.count({ path: 'showroom/' + slug + '/' + kind + (label ? '/' + label : ''), title: (C.name || slug) + ' · ' + kind + (label ? ' ' + label : ''), event: true });
+    } catch (e) { /* las estadísticas nunca deben romper la página */ }
+  }
+  function leadsOn() { return /^https:\/\/script\.google(usercontent)?\.com\//.test(String(C.leadsUrl || '')); }
+  function sendLead(p) {
+    var body = JSON.stringify({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      showroom: C.name || '', slug: C.slug || '', unit: p.unit || '', floor: p.floor || '',
+      name: p.name || '', phone: p.phone || '', email: p.email || '', message: p.message || '',
+      page: location.href.split('#')[0], website: p.website || ''
+    });
+    return fetch(C.leadsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body });
+  }
+  function validContact(v) { v = String(v || '').trim(); return /@.+\..+/.test(v) || v.replace(/\D/g, '').length >= 7; }
+  function splitContact(v) { v = String(v || '').trim(); return /@/.test(v) ? { email: v } : { phone: v }; }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href*="wa.me"]');
+    if (a) track('whatsapp');
+  }, true);
 
   document.documentElement.style.setProperty('--accent', C.accent || '#2f6fed');
 
@@ -520,6 +554,7 @@ body.card-open #floorInfo { display: none; }
     busy = true;
     var show = function () {
       current = id;
+      track('escena', keyOf[id]);
       introEl.classList.add('gone');
       renderScene(s);
       if (!(s.type === 'floors' && floorsOf(s).length)) setBackground(sceneBg(s));
@@ -809,10 +844,12 @@ body.card-open #floorInfo { display: none; }
     if (contact.phone) info.push(esc(contact.phone));
     if (contact.email) info.push(esc(contact.email));
     if (info.length) html += '<div class="cinfo">' + info.map(function (i) { return '<span>' + i + '</span>'; }).join('') + '</div>';
-    if (waDigits()) {
+    if (waDigits() || leadsOn()) {
       html += '<form class="form" id="cForm"><input name="name" placeholder="Tu nombre" required>' +
+        (leadsOn() ? '<input name="contact" placeholder="Tu teléfono o email" required>' : '') +
+        '<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
         '<textarea name="msg" placeholder="¿Qué te gustaría saber?"></textarea>' +
-        '<button class="btn primary" type="submit">Enviar consulta</button></form>';
+        '<button class="btn primary" type="submit">Enviar consulta</button><p class="fmsg" id="cMsg" role="status"></p></form>';
     }
     return html;
   }
@@ -824,7 +861,25 @@ body.card-open #floorInfo { display: none; }
       var name = f.elements.name.value.trim();
       var msg = f.elements.msg.value.trim();
       var text = 'Hola, soy ' + name + '. Consulta sobre ' + (C.name || 'el proyecto') + (msg ? ': ' + msg : '.');
-      window.open(waLink(text), '_blank', 'noopener');
+      if (!leadsOn()) { window.open(waLink(text), '_blank', 'noopener'); return; }
+      var out = $('cMsg');
+      var ct = f.elements.contact.value;
+      if (!validContact(ct)) { out.textContent = 'Revisá tu teléfono o email.'; return; }
+      if (f.elements.website.value) return;                       // trampa para robots
+      var btn = f.querySelector('button[type=submit]');
+      btn.disabled = true;
+      out.textContent = 'Enviando…';
+      var p = splitContact(ct);
+      sendLead({ name: name, phone: p.phone, email: p.email, message: msg }).then(function () {
+        track('consulta', 'general');
+        f.reset();
+        out.textContent = '¡Gracias! Recibimos tu consulta y te vamos a contactar.';
+        btn.disabled = false;
+      }).catch(function () {
+        out.textContent = 'No pudimos enviarla. Te abrimos WhatsApp para que escribas directo.';
+        btn.disabled = false;
+        if (waDigits()) window.open(waLink(text), '_blank', 'noopener');
+      });
     });
   }
 
@@ -937,6 +992,7 @@ body.card-open #floorInfo { display: none; }
     if (i === floorIdx && !force) return;
     floorIdx = i;
     var f = floors[i];
+    track('piso', f.short || f.label);
     closeCard();
     floorStage.classList.add('swap');
     setBackground({ image: f.image, fit: fitMode() }, dir);
@@ -1029,6 +1085,7 @@ body.card-open #floorInfo { display: none; }
     var u = findUnit(id);
     if (!u) return;
     selUnit = String(id);
+    track('depto', u.code);
     markSelected();
     openCard(u, floors[floorIdx]);
   }
@@ -1064,7 +1121,9 @@ body.card-open #floorInfo { display: none; }
       '<div class="uc-body">' +
         '<div class="uc-head"><h3>' + esc(UNIT) + ' ' + esc(u.code || '') + '</h3><span class="uc-st">' + esc(STATUS_LABEL[st] || st) + '</span></div>' +
         '<div class="uc-price">' + priceText(u) + '</div>' +
-        (link && st !== 'vendida' ? '<a class="btn primary uc-cta" target="_blank" rel="noopener" href="' + link + '">Solicitar información</a>' : '') +
+        (st === 'vendida' ? '' : (leadsOn()
+          ? '<div id="ucAskBox"><button type="button" class="btn primary uc-cta" id="ucAsk">Solicitar información</button></div>'
+          : (link ? '<a class="btn primary uc-cta" target="_blank" rel="noopener" href="' + link + '">Solicitar información</a>' : ''))) +
         '<dl class="uc-rows">' + rows.map(function (r) { return '<div><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>'; }).join('') + '</dl>' +
         (tours.length ? '<button type="button" class="btn uc-tour" id="ucTour"><span aria-hidden="true">&#x27F3;</span> Tour 360°</button>' : '') +
       '</div>';
@@ -1086,6 +1145,40 @@ body.card-open #floorInfo { display: none; }
       });
     }
     if (tours.length) $('ucTour').addEventListener('click', function () { openTour(u, tours); });
+    if ($('ucAsk')) $('ucAsk').addEventListener('click', function () { askForm(u, f, link); });
+  }
+
+  /* Formulario corto dentro de la ficha: la consulta llega a la planilla del dueño con el departamento que se miró */
+  function askForm(u, f, link) {
+    var box = $('ucAskBox');
+    var msg = 'Hola, me interesa: ' + UNIT + ' ' + (u.code || '') + ' (' + levelText(f) + ') de ' + (C.name || '') + '.';
+    box.innerHTML = '<form class="uc-form" id="ucForm"><input name="name" placeholder="Tu nombre" required>' +
+      '<input name="contact" placeholder="Tu teléfono o email" required>' +
+      '<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+      '<textarea name="message" rows="2">' + esc(msg) + '</textarea>' +
+      '<button class="btn primary" type="submit">Enviar consulta</button>' +
+      (link ? '<a class="uc-wa" target="_blank" rel="noopener" href="' + link + '">o escribir por WhatsApp</a>' : '') +
+      '<p class="fmsg" id="ucMsg" role="status"></p></form>';
+    var form = $('ucForm');
+    form.elements.name.focus();
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var out = $('ucMsg');
+      var ct = form.elements.contact.value;
+      if (!validContact(ct)) { out.textContent = 'Revisá tu teléfono o email.'; return; }
+      if (form.elements.website.value) return;
+      var btn = form.querySelector('button[type=submit]');
+      btn.disabled = true;
+      out.textContent = 'Enviando…';
+      var p = splitContact(ct);
+      sendLead({ unit: u.code, floor: levelText(f), name: form.elements.name.value.trim(), phone: p.phone, email: p.email, message: form.elements.message.value.trim() }).then(function () {
+        track('consulta', u.code);
+        box.innerHTML = '<p class="fmsg ok">¡Gracias! Recibimos tu consulta por el ' + esc(UNIT.toLowerCase()) + ' ' + esc(u.code || '') + ' y te vamos a contactar.</p>';
+      }).catch(function () {
+        btn.disabled = false;
+        out.textContent = 'No pudimos enviarla.' + (link ? ' Probá por WhatsApp.' : ' Probá de nuevo en un rato.');
+      });
+    });
   }
 
   /* ---------- Tour 360° (renders equirectangulares, se mira arrastrando) ---------- */
@@ -1198,6 +1291,7 @@ body.card-open #floorInfo { display: none; }
   }
 
   function openTour(u, list) {
+    track('tour', u.code);
     T.list = list; T.title = UNIT + ' ' + (u.code || '');
     tourEl.classList.add('on');
     tourEl.classList.remove('flat');
