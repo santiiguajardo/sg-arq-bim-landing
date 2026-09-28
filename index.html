@@ -471,7 +471,7 @@
       var err = form.querySelector(".pt-err"), submit = form.querySelector("button");
       err.textContent = "";
       submit.disabled = true;
-      login(form.u.value, form.c.value).then(function (data) {
+      login(form.u.value, form.c.value.trim()).then(function (data) {
         session = data;
         render();
       }).catch(function (ex) {
