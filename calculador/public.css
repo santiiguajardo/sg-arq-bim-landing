@@ -101,6 +101,8 @@ html[data-theme="light"] .pub-theme .lb-dark { display: inline; }
 .pub-foot b { color: #fff; font-weight: 600; }
 .pub-cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0 22px; }
 .pub-foot .pub-small { color: #6f7480; }
+.pub-foot .pub-link { color: #9aa0ac; text-decoration: underline; text-underline-offset: 3px; }
+.pub-foot .pub-link:hover { color: #fff; }
 
 /* ── botones: mismos que la landing (contorno claro; el principal, blanco) ── */
 body.pub .btn { font-family: var(--font); font-weight: 600; font-size: 14px; padding: 11px 20px; border-radius: 8px; border: 1px solid var(--btn-line); background: transparent; color: var(--ink); text-decoration: none; transition: transform .12s, background .15s, border-color .15s; }
