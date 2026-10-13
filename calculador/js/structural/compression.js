@@ -1,5 +1,5 @@
 // Estructuras de grandes luces de compresión dominante: cubierta cilíndrica de onda parabólica (cerámica armada u otro material), arco de tres articulaciones A, B y la clave C.
-// FUENTE: guía de predimensionado 2.1 "Compresión dominante" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024; carpeta e4). Método de la cátedra: la generatriz es una parábola de
+// FUENTE: guía de predimensionado 2.1 "Compresión dominante" del Taller de Estructuras E4 (curso 2024; carpeta e4). Método de la cátedra: la generatriz es una parábola de
 // parámetro p = (L/2)² / 2 f (y = x² / 2p desde la clave); la onda se carga por metro de directriz (peso propio = peso específico × volumen de 1 m de onda); la acción del viento se simplifica
 // con cargas verticales (barlovento + W, sotavento − W) repartidas en tramos de 3 m medidos en planta. En lugar del método gráfico de cambio de polo se resuelve el mismo arco de tres articulaciones
 // por equilibrio: V_A = Σ P (L − u) / L, H = (V_A L/2 − Σ_izq P (L/2 − u)) / f; la línea de presiones se compara con el eje de la onda (excentricidad e = M / R).

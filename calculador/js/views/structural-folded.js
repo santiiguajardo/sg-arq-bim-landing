@@ -1,5 +1,5 @@
 // Grandes luces: losa plegada de hormigón armado. Motor en js/structural/folded.js.
-// FUENTE: guía 4 "Plegados" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024).
+// FUENTE: guía 4 "Plegados" del Taller de Estructuras E4 (curso 2024).
 import * as F from '../structural/folded.js';
 import { REBAR_DIAMETERS } from '../structural/big-beams.js';
 import { escapeHtml } from '../utils.js';
@@ -7,7 +7,7 @@ import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js
 
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
-export const FOLD_NOTE = 'Predimensionado según la guía 4 "Plegados" del Taller de Estructuras E4 (FAUD-UNMdP, 2024): el plegado se asimila a una viga simplemente apoyada con la sección de un módulo de onda (alas de hormigón comprimido y traccionado más un alma equivalente), con tensiones admisibles de la cátedra. La viga tímpano y las columnas se predimensionan con las reglas rápidas de la guía (sin la tabla de coeficientes ke y kx, que no se adjuntó: se usa h = 8 √(M / b) y Fe = 0,5 M / h). No se verifican el pandeo de las columnas, las aristas del plegado, el pandeo local de las chapas ni la fisuración. Herramienta de apoyo para el predimensionado.';
+export const FOLD_NOTE = 'Predimensionado según la guía 4 "Plegados" del Taller de Estructuras E4 (2024): el plegado se asimila a una viga simplemente apoyada con la sección de un módulo de onda (alas de hormigón comprimido y traccionado más un alma equivalente), con tensiones admisibles de la cátedra. La viga tímpano y las columnas se predimensionan con las reglas rápidas de la guía (sin la tabla de coeficientes ke y kx, que no se adjuntó: se usa h = 8 √(M / b) y Fe = 0,5 M / h). No se verifican el pandeo de las columnas, las aristas del plegado, el pandeo local de las chapas ni la fisuración. Herramienta de apoyo para el predimensionado.';
 
 // ---------------------------------------------------------------- figuras
 function waveFigure(d) {

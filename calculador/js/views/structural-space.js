@@ -1,5 +1,5 @@
 // Grandes luces: estereoestructura plana (retícula espacial de caños). Motor en js/structural/spaceframe.js.
-// FUENTE: guía 5 "Estereoestructuras" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024).
+// FUENTE: guía 5 "Estereoestructuras" del Taller de Estructuras E4 (curso 2024).
 import * as P from '../structural/spaceframe.js';
 import * as W from '../structural/wind.js';
 import { escapeHtml } from '../utils.js';
@@ -9,7 +9,7 @@ import { axisEditor, gridSketch } from './structural-spans.js';
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
 const nums = (a) => (Array.isArray(a) ? a.map(Number) : []);
-export const SPACE_NOTE = 'Predimensionado según la guía 5 "Estereoestructuras" del Taller de Estructuras E4 (FAUD-UNMdP, 2024): la retícula se asimila a una placa isótropa apoyada sobre vigas y columnas o sobre columnas, con franjas continuas (coeficientes de la Tabla 1, hasta 4 tramos), barras superiores e inferiores con C = T = M / H, diagonales con Q Ld / (4 H), pandeo con las tablas ω de la cátedra y caños de la Tabla G (DIN 2448). El caño se elige como el más liviano que verifica (esbeltez máxima 150 en las barras comprimidas), por lo que puede salir menor que el que adopta la guía. No se verifican los nudos, el pandeo de conjunto ni el montaje. Herramienta de apoyo para el predimensionado.';
+export const SPACE_NOTE = 'Predimensionado según la guía 5 "Estereoestructuras" del Taller de Estructuras E4 (2024): la retícula se asimila a una placa isótropa apoyada sobre vigas y columnas o sobre columnas, con franjas continuas (coeficientes de la Tabla 1, hasta 4 tramos), barras superiores e inferiores con C = T = M / H, diagonales con Q Ld / (4 H), pandeo con las tablas ω de la cátedra y caños de la Tabla G (DIN 2448). El caño se elige como el más liviano que verifica (esbeltez máxima 150 en las barras comprimidas), por lo que puede salir menor que el que adopta la guía. No se verifican los nudos, el pandeo de conjunto ni el montaje. Herramienta de apoyo para el predimensionado.';
 
 const defaults = () => ({ kind: 'space', hyp: 'beams', xSpans: [25, 25], xCantL: 5, xCantR: 2.5, ySpans: [20, 20], yCantL: 2.5, yCantR: 2.5, Lm: 2.5, H: 0, pp: 20, sc: 30, windManual: 0, V: 45, exposure: 'B', zWind: 7.5, Kzt: 1, Kd: 0.85, I: 1, G: 0.85,
   sigma: 1400, E: 2100000, omegaTable: 'F-22', flechaRatio: 500, lambdaMax: 150, qc: 0.375, colH: 3.5, colSame: 'yes', soilSigma: 2.5, plateC: 20, baseThick: 20, anchored: 'no' });

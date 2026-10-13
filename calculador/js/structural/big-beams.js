@@ -1,5 +1,5 @@
 // Vigas de gran inercia: viga Vierendeel (hormigón armado o acero) y viga postesada de hormigón.
-// FUENTE: guías de predimensionado 6.1 "Vigas de gran inercia - Vierendeel" y 6.2 "Vigas de gran inercia - Postesadas" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024; carpeta e4).
+// FUENTE: guías de predimensionado 6.1 "Vigas de gran inercia - Vierendeel" y 6.2 "Vigas de gran inercia - Postesadas" del Taller de Estructuras E4 (curso 2024; carpeta e4).
 // Método de la cátedra (viga simplemente apoyada de luz L, carga q en kg/m): M = q L² / 8, Q = q L / 2; los cordones trabajan con C = T = M / Z, Z = 0,9 H (brazo de palanca).
 // Vierendeel: montantes por corte (hormigón: m2 ≥ Q / (m1 τadm); acero: Q / Fe ≤ 1100 kg/cm²), cordón comprimido C / (m1 m2) ≤ σadm con λ = 0,7 a / m1 (a = distancia entre nudos) y ω de la tabla,
 // armadura (hormigón) Fe = T / σs o perfil (acero) Fe = T / σadm, flecha f = 5 q L⁴ / (384 E J) ≤ L / 500 con J = 2 [J propio del cordón + A z1²].

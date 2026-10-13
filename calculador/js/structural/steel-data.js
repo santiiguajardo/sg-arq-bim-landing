@@ -1,4 +1,4 @@
-// Datos de tablas del material de la cátedra (Estructuras III, FAUD-UNMdP, carpeta "e3"). GENERADO: no editar a mano.
+// Datos de tablas del material de la cátedra (Estructuras III, carpeta "e3"). GENERADO: no editar a mano.
 // - OMEGA: coeficiente de pandeo ω por esbeltez λ = 20…249 (TABLAS_DE_COEFICIENTES_DE_PANDEO.pdf). La tabla "St37" es la Tabla 3 del apunte;
 //   se comprobó contra los ejemplos de la cátedra (ω = 1,24 para λ = 54; 1,19 para 48; 1,62 para 85).
 // - PROFILES: perfiles laminados IPN, UPN, IPE, HEB (Perfiles-UIH-y-W.pdf), caños circulares (Tabla 11 del apunte) y costanera C

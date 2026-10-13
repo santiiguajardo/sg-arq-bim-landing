@@ -1,12 +1,15 @@
 // Estado del calculador estructural público (versión gratuita de la landing).
-// Reemplaza a js/state.js del panel: no hay servidor, ni cuentas, ni sincronización. Los cálculos de cada visitante
-// quedan solo en su navegador (localStorage) y nunca se envían a ningún lado.
+// Reemplaza a js/state.js del panel: no hay servidor, ni cuentas, ni sincronización. Cada persona que entra empieza con el historial
+// en blanco y sus cálculos se guardan solo durante su sesión (sessionStorage: sobreviven a recargar la página pero se borran al cerrar la
+// pestaña o el navegador). Nunca se envían a ningún lado ni se comparten con otras personas ni con el panel.
 const KEY = 'sgCalcPublico_v1';
+// Versiones anteriores guardaban el historial en localStorage (persistía entre visitas): se borra para que nadie herede datos de otra persona.
+try { localStorage.removeItem(KEY); } catch (e) { /* sin acceso al almacenamiento */ }
 const subs = new Set();
 
 function load() {
   try {
-    const p = JSON.parse(localStorage.getItem(KEY));
+    const p = JSON.parse(sessionStorage.getItem(KEY));
     if (p && Array.isArray(p.calcs)) return { calcs: p.calcs, projects: [] };
   } catch (e) { /* sin almacenamiento o datos viejos: se empieza vacío */ }
   return { calcs: [], projects: [] };
@@ -15,7 +18,7 @@ function load() {
 let state = load();
 
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ calcs: state.calcs })); } catch (e) { /* modo privado o sin espacio: sigue funcionando sin guardar */ }
+  try { sessionStorage.setItem(KEY, JSON.stringify({ calcs: state.calcs })); } catch (e) { /* modo privado o sin espacio: sigue funcionando sin guardar */ }
   subs.forEach((fn) => fn());
 }
 

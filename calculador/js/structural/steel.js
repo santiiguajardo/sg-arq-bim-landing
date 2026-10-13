@@ -1,5 +1,5 @@
 // Estructuras de acero por el método elástico (tensiones admisibles) con el coeficiente de pandeo ω, tal como se enseña en el material de la
-// cátedra (Estructuras III, FAUD-UNMdP: apuntes "Teoría acero", ejemplos del Ing. Monteros y TP 4, 5 y 7).
+// cátedra (Estructuras III: apuntes "Teoría acero", ejemplos del Ing. Monteros y TP 4, 5 y 7).
 // Unidades de este archivo: fuerzas en kg, longitudes de cálculo estático en m, secciones en cm, tensiones en kg/cm², momentos en kg·m
 // (se pasan a kg·cm para dimensionar). Es una herramienta de apoyo y no reemplaza la verificación de un profesional matriculado.
 import { OMEGA, PROFILES as BASE_PROFILES } from './steel-data.js';

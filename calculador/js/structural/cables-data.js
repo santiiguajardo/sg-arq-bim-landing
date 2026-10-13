@@ -1,4 +1,4 @@
-// Datos de las guías de Tracción del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024; carpeta e4/traccion). GENERADO por gen_cables.py: no se edita a mano.
+// Datos de las guías de Tracción del Taller de Estructuras E4 (curso 2024; carpeta e4/traccion). GENERADO por gen_cables.py: no se edita a mano.
 // - CABLE_TABLE_1 y CABLE_TABLE_2: cargas de rotura (kg) de los cables de acero flexibles 6x19x1 y 6x24x7 con alma textil por diámetro y resistencia del alambre
 //   (Tablas N° 1 y 2 del anexo, fuente: catálogo HIERROMAT). Transcriptas del escaneo SIN corregir; los valores que no siguen la ley de los vecinos se detectan en cables.js (suspectCells).
 // - GUIDE_CABLE: los 9 puntos (diámetro, carga de rotura) que citan las guías para el "cable 6x19 con alma textil, 180 kg/mm2" (la tabla de donde salen está detrás de un código QR y no se adjuntó).

@@ -1,5 +1,5 @@
 // Estructuras de grandes luces traccionadas (cables y telas): cercha Jawerth, cubierta pesada, paraboloide hiperbólico e hiperboloide de revolución.
-// FUENTE: guías de predimensionado del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024; carpeta e4/traccion): 1.1 Cercha Jawerth, 1.2 Cubierta pesada, 1.3 Hiperboloide de revolución,
+// FUENTE: guías de predimensionado del Taller de Estructuras E4 (curso 2024; carpeta e4/traccion): 1.1 Cercha Jawerth, 1.2 Cubierta pesada, 1.3 Hiperboloide de revolución,
 // 1.4 Paraboloide hiperbólico y 1.5 Anexo de tablas (cables 6x19 y 6x24x7, telas, caños DIN 2448, ω de F-22 y F-24). Método de la cátedra: en cada cable portante
 // con flecha del orden del 10 % de la luz la catenaria se resuelve como parábola, H = q L² / 8 f, V = q L / 2, R = √(H² + V²) (kg, m); tensión previa Tp ≥ la mayor fuerza que
 // tiende a comprimir los cables × β1 (1,5 a 2); la carga de rotura del cable es el máximo esfuerzo × β2 (2) y se busca en la tabla de cables; apoyos descompuestos en tensor y columna.

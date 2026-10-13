@@ -1,5 +1,5 @@
 // Losa plegada de hormigón armado (cubierta de gran luz que trabaja en una dirección sobre tímpanos).
-// FUENTE: guía de predimensionado 4 "Plegados" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024; carpeta e4).
+// FUENTE: guía de predimensionado 4 "Plegados" del Taller de Estructuras E4 (curso 2024; carpeta e4).
 // Método de la cátedra: el plegado se asimila a una viga simplemente apoyada de luz L cuya sección es el perfil equivalente de un módulo de onda (dos alas de ancho b y espesor d, más un alma
 // equivalente de ancho bo = 2 d / sen α). Esfuerzos M = q L² / 8 y Q = q L / 2; el par interno es C = T = M / Z con Z = H − d; compresión σ = C / (b d), armadura Fe = T / σe,
 // corte τ = Q / (bo Z), flecha f = 5 q L⁴ / (384 E J) ≤ L / 500 con J = 2 (b d³/12 + b d ((H − d)/2)²) + bo (H − 2 d)³ / 12.

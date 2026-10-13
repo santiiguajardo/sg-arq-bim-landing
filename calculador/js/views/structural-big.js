@@ -1,5 +1,5 @@
 // Grandes luces: vigas de gran inercia (Vierendeel de hormigón armado o de acero, y viga postesada de hormigón). Motor en js/structural/big-beams.js.
-// FUENTE: guías 6.1 y 6.2 del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024).
+// FUENTE: guías 6.1 y 6.2 del Taller de Estructuras E4 (curso 2024).
 import * as B from '../structural/big-beams.js';
 import * as C from '../structural/cables.js';
 import * as S from '../structural/steel.js';
@@ -8,7 +8,7 @@ import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js
 
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
-export const BIG_NOTE = 'Predimensionado según las guías 6.1 (Vierendeel) y 6.2 (postesadas) del Taller de Estructuras E4 (FAUD-UNMdP, 2024): viga simplemente apoyada, cordones con C = T = M / (0,9 H), montantes al corte, pandeo del cordón comprimido, armadura o perfil del cordón traccionado y flecha con la inercia de los cordones (L/500). No se verifican los momentos locales de los cordones y los montantes entre nudos (flexión Vierendeel), los nudos, la fisuración ni las pérdidas de postesado. Herramienta de apoyo para el predimensionado.';
+export const BIG_NOTE = 'Predimensionado según las guías 6.1 (Vierendeel) y 6.2 (postesadas) del Taller de Estructuras E4 (2024): viga simplemente apoyada, cordones con C = T = M / (0,9 H), montantes al corte, pandeo del cordón comprimido, armadura o perfil del cordón traccionado y flecha con la inercia de los cordones (L/500). No se verifican los momentos locales de los cordones y los montantes entre nudos (flexión Vierendeel), los nudos, la fisuración ni las pérdidas de postesado. Herramienta de apoyo para el predimensionado.';
 
 const LOAD_FIELDS = (d, selfHint) => `<div class="field-row" style="flex-wrap:wrap;">${numField('design.floorD', 'Entrepiso: permanentes', d.floorD, { unit: 'kg/m' })}${numField('design.floorL', 'Entrepiso: accidentales', d.floorL, { unit: 'kg/m' })}</div>
   <div class="field-row" style="flex-wrap:wrap;">${numField('design.roofD', 'Cubierta: permanentes', d.roofD, { unit: 'kg/m' })}${numField('design.roofL', 'Cubierta: accidentales', d.roofL, { unit: 'kg/m' })}</div>

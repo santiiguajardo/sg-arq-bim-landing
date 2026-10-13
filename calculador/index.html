@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://gc.zgo.at; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.goatcounter.com; connect-src 'self' https://*.goatcounter.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<script src="js/guard.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Calculador estructural gratuito · SG ARQ BIM</title>
 <meta name="description" content="Predimensioná hormigón armado, acero, grandes luces (cercha Jawerth, cáscaras, plegados, estereoestructuras) y edificios en torre, con verificaciones y memoria de cálculo en PDF. Gratis y sin registro." />
@@ -37,7 +40,7 @@
       <li><b>Grandes luces</b> cables y cercha Jawerth, cáscaras, plegados, estereoestructuras</li>
       <li><b>Edificio en torre</b> con tabiques y viento CIRSOC 102</li>
     </ul>
-    <p class="pub-small">Gratis y sin registro. Tus cálculos se guardan solo en este navegador: no se envían a ningún servidor.</p>
+    <p class="pub-small">Gratis y sin registro. Cada persona empieza con el historial en blanco: tus cálculos se guardan solo durante esta sesión (se borran al cerrar la pestaña) y no se envían a ningún servidor.</p>
   </div>
 </section>
 
@@ -60,7 +63,7 @@
 <footer class="pub-foot">
   <div class="pub-wrap">
     <h2>¿Necesitás el proyecto o un cálculo profesional?</h2>
-    <p>Esta herramienta es de apoyo para el predimensionado y el estudio: <b>no reemplaza el cálculo, la verificación y la firma de un profesional matriculado</b>. Los resultados deben ser revisados antes de usarse en obra. Se basa en el método de la cátedra de Estructuras de la FAUD-UNMdP, el CIRSOC 201, 101 y 102.</p>
+    <p>Esta herramienta es de apoyo para el predimensionado y el estudio: <b>no reemplaza el cálculo, la verificación y la firma de un profesional matriculado</b>. Los resultados deben ser revisados antes de usarse en obra. Se basa en métodos de predimensionado de uso académico y en los reglamentos CIRSOC 201, 101 y 102.</p>
     <div class="pub-cta">
       <a class="btn btn-primary" data-cfg-whatsapp href="#" target="_blank" rel="noopener" hidden>Escribime por WhatsApp</a>
       <a class="btn" data-cfg-email href="#" hidden>Enviar email</a>

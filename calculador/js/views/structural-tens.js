@@ -1,5 +1,5 @@
 // Estructuras de grandes luces traccionadas: cercha Jawerth, cubierta pesada, paraboloide hiperbólico e hiperboloide de revolución.
-// Motor en js/structural/cables.js. FUENTE: guías 1.1 a 1.5 de Tracción del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024).
+// Motor en js/structural/cables.js. FUENTE: guías 1.1 a 1.5 de Tracción del Taller de Estructuras E4 (curso 2024).
 import * as C from '../structural/cables.js';
 import { escapeHtml } from '../utils.js';
 import { fmt, numField, selField, checksCard, failCard, memoRow } from './structural-ui.js';
@@ -7,7 +7,7 @@ import { fmt, numField, selField, checksCard, failCard, memoRow } from './struct
 const kg = (v) => fmt(v, 0);
 const pill = (ok) => (ok ? '<span class="tag tag-freelance">Verifica</span>' : '<span class="tag tag-alta">No verifica</span>');
 const KINDS = { jawerth: 'Cercha Jawerth (guía 1.1)', heavy: 'Cubierta pesada (guía 1.2)', ph: 'Paraboloide hiperbólico (guía 1.4)', hr: 'Hiperboloide de revolución (guía 1.3)' };
-export const TENS_NOTE = 'Predimensionado según las guías de Tracción del Taller de Estructuras E4 (FAUD-UNMdP, 2024): la catenaria se resuelve como parábola (flecha del orden del 10 % de la luz), la tensión previa evita la compresión de los cables y la carga de rotura se busca en las tablas de cables. El coeficiente de forma del viento de estas formas no está tabulado: es un valor hipotético que debe verificarse en el cálculo definitivo, y las guías piden tablas de cables del fabricante. Herramienta de apoyo para el predimensionado.';
+export const TENS_NOTE = 'Predimensionado según las guías de Tracción del Taller de Estructuras E4 (2024): la catenaria se resuelve como parábola (flecha del orden del 10 % de la luz), la tensión previa evita la compresión de los cables y la carga de rotura se busca en las tablas de cables. El coeficiente de forma del viento de estas formas no está tabulado: es un valor hipotético que debe verificarse en el cálculo definitivo, y las guías piden tablas de cables del fabricante. Herramienta de apoyo para el predimensionado.';
 const CATALOGS = C.CABLE_CATALOGS;
 const LAYOUTS = { espacial: 'Cilíndrica espacial: cables superior e inferior desfasados medio módulo', plana: 'Cilíndrica plana (coplanar): los dos cables en el mismo plano vertical', radial: 'Radial: planta circular, con la carga triangular de cada faja' };
 const COVERS = { tela: 'Tela estructural (cerramiento y pendolón a la vez)', pend: 'Pendolones inclinados de cable (cubierta aparte)', a: 'Sobre el cable superior: pendolones verticales', b: 'Colgada del cable inferior: pendolones verticales' };

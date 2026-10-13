@@ -1,5 +1,5 @@
 // Edificio en torre de hormigón armado con tabiques contraviento.
-// FUENTE: guía de predimensionado 7 "Edificio en torre" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024; carpeta e4), con el viento del reglamento CIRSOC 102 (2005, procedimiento analítico).
+// FUENTE: guía de predimensionado 7 "Edificio en torre" del Taller de Estructuras E4 (curso 2024; carpeta e4), con el viento del reglamento CIRSOC 102 (2005, procedimiento analítico).
 // Método de la cátedra: el edificio trabaja como una ménsula empotrada en el suelo. Viento sobre la cara mayor B (SPRFV): qz = 0,613 Kzt Kd V² I Kz, presión a barlovento + succión a sotavento (la presión
 // interna se compensa), p = qz G Cp − qh G Cp' con Cp = 0,8 y Cp' = Cp de sotavento (L / B); fuerza por piso Wi = p B (altura tributaria). Esfuerzos Q y M de la ménsula por piso y volcamiento M equil / M volc ≥ 1,5,
 // tensión del terreno σ = −G / F ± M / W, flecha en cabeza f = qv h⁴ / (8 E J) con qv = (qmáx + qmín) / 2 y f ≤ h / 500. Los tabiques paralelos al viento toman el momento en proporción a su inercia

@@ -1,5 +1,5 @@
 // Estereoestructura plana (retícula espacial de caños) para cubrir grandes luces.
-// FUENTE: guía de predimensionado 5 "Estereoestructuras" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024; carpeta e4).
+// FUENTE: guía de predimensionado 5 "Estereoestructuras" del Taller de Estructuras E4 (curso 2024; carpeta e4).
 // Método de la cátedra: la estereoestructura se asimila a una placa isótropa (a) apoyada sobre vigas y columnas o (b) apoyada directamente sobre columnas (como un entrepiso sin vigas).
 // Cada franja del ancho de un módulo se resuelve como viga continua con los coeficientes de la Tabla 1 (Ca de apoyo, Ct de tramo, voladizo Ca = 2) y carga qm = 0,65 q Lm (qx = qy = 0,65 q si ly / lx ≥ 0,80);
 // con placa sobre columnas los momentos se multiplican por 1,4 (apoyo) y 1,2 (tramo). Barras superiores e inferiores: C = T = M / H, caños de la Tabla G (DIN 2448), pandeo con ω (Sk = 0,7 L).

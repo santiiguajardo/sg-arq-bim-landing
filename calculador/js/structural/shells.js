@@ -1,5 +1,5 @@
 // Cáscaras de hormigón armado: módulo de paraboloide hiperbólico (cuatro sectores con una columna central) y cúpula de generatriz circular.
-// FUENTE: guías de predimensionado 3.1 "Cáscaras - Paraboloide hiperbólico" y 3.2 "Cáscaras - Cúpulas" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024; carpeta e4/cascaras).
+// FUENTE: guías de predimensionado 3.1 "Cáscaras - Paraboloide hiperbólico" y 3.2 "Cáscaras - Cúpulas" del Taller de Estructuras E4 (curso 2024; carpeta e4/cascaras).
 // Método de la cátedra (membrana, franjas de 1 m de ancho):
 // - PH equilátero: la cáscara se divide en parábolas comprimidas y traccionadas de igual luz y flecha que toman q / 2 cada una, H = (q / 2) L² / 8 f (R ≈ H con f / L ≈ 10 %),
 //   σ = H / (e 100) ≤ σadm, armadura por cuantía mínima o por tracción Fe = H / σe, corte δ = H / (e 100). Las vigas de borde reciben H por metro (externas) o 2 H por metro (internas, comprimidas).

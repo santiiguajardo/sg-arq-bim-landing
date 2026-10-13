@@ -1,12 +1,12 @@
 // Grandes luces: cáscaras de hormigón armado (módulo de paraboloide hiperbólico y cúpula de generatriz circular). Motor en js/structural/shells.js.
-// FUENTE: guías 3.1 y 3.2 de Cáscaras del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024).
+// FUENTE: guías 3.1 y 3.2 de Cáscaras del Taller de Estructuras E4 (curso 2024).
 import * as Sh from '../structural/shells.js';
 import { escapeHtml } from '../utils.js';
 import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js';
 
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
-export const SHELL_NOTE = 'Predimensionado según las guías 3.1 (paraboloide hiperbólico) y 3.2 (cúpulas) de Cáscaras del Taller de Estructuras E4 (FAUD-UNMdP, 2024): teoría de membrana con carga uniforme y simétrica, franjas de 1 m de ancho, tensiones admisibles de la cátedra. No se verifican las perturbaciones de borde, el punzonado de la columna central, el pandeo de las columnas, el viento con su coeficiente real, la distribución asimétrica de cargas ni el comportamiento del hormigón fisurado. Herramienta de apoyo para el predimensionado.';
+export const SHELL_NOTE = 'Predimensionado según las guías 3.1 (paraboloide hiperbólico) y 3.2 (cúpulas) de Cáscaras del Taller de Estructuras E4 (2024): teoría de membrana con carga uniforme y simétrica, franjas de 1 m de ancho, tensiones admisibles de la cátedra. No se verifican las perturbaciones de borde, el punzonado de la columna central, el pandeo de las columnas, el viento con su coeficiente real, la distribución asimétrica de cargas ni el comportamiento del hormigón fisurado. Herramienta de apoyo para el predimensionado.';
 const BAR_D = [6, 8, 10, 12];
 const EDGE_D = [10, 12, 16, 20, 25];
 

@@ -1,5 +1,5 @@
 // Grandes luces de compresión dominante: cubierta cilíndrica de onda parabólica (cerámica armada u otro material). Motor en js/structural/compression.js.
-// FUENTE: guía de predimensionado 2.1 "Compresión dominante" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024).
+// FUENTE: guía de predimensionado 2.1 "Compresión dominante" del Taller de Estructuras E4 (curso 2024).
 import * as K from '../structural/compression.js';
 import * as C from '../structural/cables.js';
 import { escapeHtml } from '../utils.js';
@@ -7,7 +7,7 @@ import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js
 
 const kg = (v) => fmt(v, 0);
 const pill = (ok) => (ok ? '<span class="tag tag-freelance">Verifica</span>' : '<span class="tag tag-alta">No verifica</span>');
-export const COMP_NOTE = 'Predimensionado según la guía 2.1 de Compresión dominante del Taller de Estructuras E4 (FAUD-UNMdP, 2024): arco de tres articulaciones (apoyos A y B y clave C), línea de presiones del peso propio y del viento comparada con el eje de la onda, núcleo central (e ≤ h/6), compresión, pandeo y flexocompresión. La guía lo resuelve con el método gráfico de cambio de polo; acá se resuelve el mismo arco por equilibrio y los números difieren unos pocos por ciento. El viento se simplifica con cargas verticales y el material (cerámica armada: 1800 kg/m³, 10 kg/cm², E = 100000 kg/cm²) son datos de la guía. Herramienta de apoyo para el predimensionado.';
+export const COMP_NOTE = 'Predimensionado según la guía 2.1 de Compresión dominante del Taller de Estructuras E4 (2024): arco de tres articulaciones (apoyos A y B y clave C), línea de presiones del peso propio y del viento comparada con el eje de la onda, núcleo central (e ≤ h/6), compresión, pandeo y flexocompresión. La guía lo resuelve con el método gráfico de cambio de polo; acá se resuelve el mismo arco por equilibrio y los números difieren unos pocos por ciento. El viento se simplifica con cargas verticales y el material (cerámica armada: 1800 kg/m³, 10 kg/cm², E = 100000 kg/cm²) son datos de la guía. Herramienta de apoyo para el predimensionado.';
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
 
 function defaultsFor() {

@@ -1,5 +1,5 @@
 // Hormigón armado: edificio en torre con tabiques contraviento. Motor en js/structural/tower.js.
-// FUENTE: guía 7 "Edificio en torre" del Taller de Estructuras E4 (FAUD-UNMdP, curso 2024) y CIRSOC 102-2005 (viento).
+// FUENTE: guía 7 "Edificio en torre" del Taller de Estructuras E4 (curso 2024) y CIRSOC 102-2005 (viento).
 import * as T from '../structural/tower.js';
 import { setCalcField } from '../state.js';
 import { escapeHtml, showToast } from '../utils.js';
@@ -7,7 +7,7 @@ import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js
 
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
 const tn = (v, n = 1) => fmt(v, n);
-export const TOWER_NOTE = 'Predimensionado según la guía 7 "Edificio en torre" del Taller de Estructuras E4 (FAUD-UNMdP, 2024) con el viento del CIRSOC 102-2005 (procedimiento analítico, sistema principal resistente al viento): el edificio trabaja como una ménsula empotrada; los tabiques de hormigón paralelos al viento toman el momento en proporción a su inercia y se predimensionan a flexocompresión en la planta baja con tensiones admisibles; se verifican volcamiento, tensión del terreno bajo la platea y flecha en cabeza. Solo se calcula la dirección más crítica (viento sobre la cara mayor): hay que repetirlo con el viento sobre la cara menor. No se verifican las losas, los pórticos perimetrales, el efecto dinámico (Gf si la frecuencia es menor que 1 Hz), la torsión de planta fuera del caso simple ni la interacción con el suelo. Herramienta de apoyo para el predimensionado.';
+export const TOWER_NOTE = 'Predimensionado según la guía 7 "Edificio en torre" del Taller de Estructuras E4 (2024) con el viento del CIRSOC 102-2005 (procedimiento analítico, sistema principal resistente al viento): el edificio trabaja como una ménsula empotrada; los tabiques de hormigón paralelos al viento toman el momento en proporción a su inercia y se predimensionan a flexocompresión en la planta baja con tensiones admisibles; se verifican volcamiento, tensión del terreno bajo la platea y flecha en cabeza. Solo se calcula la dirección más crítica (viento sobre la cara mayor): hay que repetirlo con el viento sobre la cara menor. No se verifican las losas, los pórticos perimetrales, el efecto dinámico (Gf si la frecuencia es menor que 1 Hz), la torsión de planta fuera del caso simple ni la interacción con el suelo. Herramienta de apoyo para el predimensionado.';
 
 const rectWall = (name, x, y) => ({ kind: 'rect', name, e: 0.2, lw: 4.5, x, y, infl: 10.5, hd: 0.9 });
 const uWall = (name, x) => ({ kind: 'U', name, e: 0.2, lw: 3.6, lf: 5, x, y: 8, inflWeb: 17.2, inflFl: 30.4 });
