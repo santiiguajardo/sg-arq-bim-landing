@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-QObSr0mDp/LD8bY1VTYs7ZZuyhZnyC8tNzWgASvoqC0=&#x27; &#x27;sha256-Dsjhz0vqszCk45V8Su2MOT5Wc5S0aDYFuwOkBhdEoP8=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Edificio Plaza Londres · Showroom virtual</title>
 <meta name="description" content="Desarrollo residencial multifamiliar en Mar del Plata">
@@ -400,12 +402,26 @@ body.card-open #floorInfo { display: none; }
     } catch (e) { /* las estadísticas nunca deben romper la página */ }
   }
   function leadsOn() { return /^https:\/\/script\.google(usercontent)?\.com\//.test(String(C.leadsUrl || '')); }
+  // Protección contra robots: además de la trampa "website", un formulario enviado en menos de 2,5 s desde que se abrió la página
+  // o repetido dentro de los 30 s no se manda (al visitante se le responde igual, así un robot no aprende qué lo frena).
+  var PAGE_T0 = Date.now();
+  function leadAllowed() {
+    var now = Date.now();
+    if (now - PAGE_T0 < 2500) return false;
+    try {
+      var last = Number(localStorage.getItem('sr_lead_ts') || 0);
+      if (now - last < 30000) return false;
+      localStorage.setItem('sr_lead_ts', String(now));
+    } catch (e) { /* sin almacenamiento: se deja pasar, el límite lo pone el Apps Script */ }
+    return true;
+  }
   function sendLead(p) {
+    if (!leadAllowed()) return Promise.resolve();
     var body = JSON.stringify({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
       showroom: C.name || '', slug: C.slug || '', unit: p.unit || '', floor: p.floor || '',
       name: p.name || '', phone: p.phone || '', email: p.email || '', message: p.message || '',
-      page: location.href.split('#')[0], website: p.website || ''
+      page: location.href.split('#')[0], website: p.website || '', t: Date.now() - PAGE_T0
     });
     return fetch(C.leadsUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body });
   }
@@ -785,9 +801,11 @@ body.card-open #floorInfo { display: none; }
     mapLibP = new Promise(function (ok, fail) {
       var css = document.createElement('link');
       css.rel = 'stylesheet'; css.href = MAPLIB + 'maplibre-gl.css';
+      css.integrity = 'sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V'; css.crossOrigin = 'anonymous';
       document.head.appendChild(css);
       var sc = document.createElement('script');
       sc.src = MAPLIB + 'maplibre-gl.js';
+      sc.integrity = 'sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj'; sc.crossOrigin = 'anonymous';
       sc.onload = function () { ok(window.maplibregl); };
       sc.onerror = function () { mapLibP = null; fail(new Error('maplibre')); };
       document.head.appendChild(sc);
