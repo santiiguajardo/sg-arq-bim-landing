@@ -22,6 +22,9 @@ document.querySelectorAll('[data-quick]').forEach((btn) => btn.addEventListener(
   const [element, variant] = btn.dataset.quick.split(':');
   const id = addCalc(makeCalc({ name: btn.dataset.name || btn.textContent.trim(), element, variant: variant || '', projectId: null }));
   location.hash = `structural?id=${id}`;
+  // la portada es alta: lleva la pantalla de cálculo a la vista (respeta "reducir movimiento")
+  const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(() => content.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' }), 80);
 }));
 
 // Datos de contacto y del video: los escribe la publicación en config.json (si no está, la página funciona igual).

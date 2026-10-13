@@ -12,6 +12,9 @@
 <meta property="og:description" content="Predimensionado de estructuras con memoria de cálculo en PDF. Gratis, sin registro, en tu navegador." />
 <meta property="og:type" content="website" />
 <link rel="icon" href="../favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/styles.css" />
 <link rel="stylesheet" href="public.css" />
 <script data-goatcounter="https://sgarqbim.goatcounter.com/count" data-goatcounter-settings='{"path":"/calculador"}' async src="//gc.zgo.at/count.js"></script>
@@ -19,8 +22,8 @@
 <body class="pub">
 <header class="pub-top">
   <a class="pub-brand" href="../" aria-label="Volver al sitio de SG ARQ BIM">
-    <img src="logo-black.png" alt="SG ARQ BIM" />
-    <span><b>SG ARQ</b> BIM</span>
+    <img src="logo-white.png" alt="" />
+    <span><b>SG ARQ</b> <i>BIM</i></span>
   </a>
   <nav class="pub-nav">
     <a href="../">← Volver al sitio</a>
@@ -31,22 +34,27 @@
 
 <section class="pub-hero">
   <div class="pub-wrap">
-    <p class="pub-kicker">Herramienta gratuita</p>
-    <h1>Calculador estructural</h1>
-    <p class="pub-lead">Predimensioná una estructura en tres pasos (diseño, predimensionado y dimensionado), mirá qué verifica en verde y qué no en rojo y bajá la memoria de cálculo en PDF.</p>
-    <ul class="pub-points">
-      <li><b>Hormigón armado</b> losas, vigas, columnas, bases y edificios</li>
-      <li><b>Acero</b> vigas, columnas, cabriadas, cerchas y naves con uniones</li>
-      <li><b>Grandes luces</b> cables y cercha Jawerth, cáscaras, plegados, estereoestructuras</li>
-      <li><b>Edificio en torre</b> con tabiques y viento CIRSOC 102</li>
-    </ul>
-    <p class="pub-small">Gratis y sin registro. Cada persona empieza con el historial en blanco: tus cálculos se guardan solo durante esta sesión (se borran al cerrar la pestaña) y no se envían a ningún servidor.</p>
+    <div class="pub-hero-card">
+      <div>
+        <p class="pub-kicker">Herramienta gratuita</p>
+        <h1>Calculador <em>estructural</em></h1>
+        <p class="pub-lead">Predimensioná una estructura en tres pasos (diseño, predimensionado y dimensionado), mirá qué verifica en verde y qué no en rojo y bajá la memoria de cálculo en PDF.</p>
+        <p class="pub-small">Gratis y sin registro. Cada persona empieza con el historial en blanco: tus cálculos se guardan solo durante esta sesión (se borran al cerrar la pestaña) y no se envían a ningún servidor.</p>
+      </div>
+      <ul class="pub-points">
+        <li><b>Hormigón armado</b><span>losas, vigas, columnas, bases y edificios</span></li>
+        <li><b>Acero</b><span>vigas, columnas, cabriadas, cerchas y naves con uniones</span></li>
+        <li><b>Grandes luces</b><span>cables y cercha Jawerth, cáscaras, plegados, estereoestructuras</span></li>
+        <li><b>Edificio en torre</b><span>con tabiques y viento CIRSOC 102</span></li>
+      </ul>
+    </div>
   </div>
 </section>
 
 <section class="pub-quick" id="quickStart">
   <div class="pub-wrap">
-    <p class="pub-quick-title">Empezá con un ejemplo (ya viene con datos para que veas el resultado):</p>
+    <p class="pub-quick-label">Ejemplos</p>
+    <p class="pub-quick-title">Empezá con un ejemplo: ya viene con datos para que veas el resultado.</p>
     <div class="pub-quick-row">
       <button class="btn" data-quick="beam:conv" data-name="Viga de hormigón armado">Viga de hormigón armado</button>
       <button class="btn" data-quick="column" data-name="Columna de hormigón armado">Columna de hormigón</button>
