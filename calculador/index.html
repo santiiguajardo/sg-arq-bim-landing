@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculador estructural gratuito · SG ARQ BIM</title>
+<meta name="description" content="Predimensioná hormigón armado, acero, grandes luces (cercha Jawerth, cáscaras, plegados, estereoestructuras) y edificios en torre, con verificaciones y memoria de cálculo en PDF. Gratis y sin registro." />
+<meta property="og:title" content="Calculador estructural gratuito · SG ARQ BIM" />
+<meta property="og:description" content="Predimensionado de estructuras con memoria de cálculo en PDF. Gratis, sin registro, en tu navegador." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="../favicon.ico" />
+<link rel="stylesheet" href="css/styles.css" />
+<link rel="stylesheet" href="public.css" />
+<script data-goatcounter="https://sgarqbim.goatcounter.com/count" data-goatcounter-settings='{"path":"/calculador"}' async src="//gc.zgo.at/count.js"></script>
+</head>
+<body class="pub">
+<header class="pub-top">
+  <a class="pub-brand" href="../" aria-label="Volver al sitio de SG ARQ BIM">
+    <img src="logo-black.png" alt="SG ARQ BIM" />
+    <span><b>SG ARQ</b> BIM</span>
+  </a>
+  <nav class="pub-nav">
+    <a href="../">← Volver al sitio</a>
+    <a data-cfg-video href="#" target="_blank" rel="noopener" hidden>Ver el video</a>
+    <a data-cfg-instagram href="#" target="_blank" rel="noopener" hidden>Instagram</a>
+  </nav>
+</header>
+
+<section class="pub-hero">
+  <div class="pub-wrap">
+    <p class="pub-kicker">Herramienta gratuita</p>
+    <h1>Calculador estructural</h1>
+    <p class="pub-lead">Predimensioná una estructura en tres pasos (diseño, predimensionado y dimensionado), mirá qué verifica en verde y qué no en rojo y bajá la memoria de cálculo en PDF.</p>
+    <ul class="pub-points">
+      <li><b>Hormigón armado</b> losas, vigas, columnas, bases y edificios</li>
+      <li><b>Acero</b> vigas, columnas, cabriadas, cerchas y naves con uniones</li>
+      <li><b>Grandes luces</b> cables y cercha Jawerth, cáscaras, plegados, estereoestructuras</li>
+      <li><b>Edificio en torre</b> con tabiques y viento CIRSOC 102</li>
+    </ul>
+    <p class="pub-small">Gratis y sin registro. Tus cálculos se guardan solo en este navegador: no se envían a ningún servidor.</p>
+  </div>
+</section>
+
+<section class="pub-quick" id="quickStart">
+  <div class="pub-wrap">
+    <p class="pub-quick-title">Empezá con un ejemplo (ya viene con datos para que veas el resultado):</p>
+    <div class="pub-quick-row">
+      <button class="btn" data-quick="beam:conv" data-name="Viga de hormigón armado">Viga de hormigón armado</button>
+      <button class="btn" data-quick="column" data-name="Columna de hormigón armado">Columna de hormigón</button>
+      <button class="btn" data-quick="sbeam" data-name="Viga de acero">Viga de acero</button>
+      <button class="btn" data-quick="stens:jawerth" data-name="Cercha Jawerth">Cercha Jawerth</button>
+      <button class="btn" data-quick="sdome:dome" data-name="Cúpula">Cúpula</button>
+      <button class="btn" data-quick="tower" data-name="Edificio en torre">Edificio en torre</button>
+    </div>
+  </div>
+</section>
+
+<main class="content pub-main" id="content"></main>
+
+<footer class="pub-foot">
+  <div class="pub-wrap">
+    <h2>¿Necesitás el proyecto o un cálculo profesional?</h2>
+    <p>Esta herramienta es de apoyo para el predimensionado y el estudio: <b>no reemplaza el cálculo, la verificación y la firma de un profesional matriculado</b>. Los resultados deben ser revisados antes de usarse en obra. Se basa en el método de la cátedra de Estructuras de la FAUD-UNMdP, el CIRSOC 201, 101 y 102.</p>
+    <div class="pub-cta">
+      <a class="btn btn-primary" data-cfg-whatsapp href="#" target="_blank" rel="noopener" hidden>Escribime por WhatsApp</a>
+      <a class="btn" data-cfg-email href="#" hidden>Enviar email</a>
+      <a class="btn" href="../">Ver el portafolio</a>
+    </div>
+    <p class="pub-small">© SG ARQ BIM · Mar del Plata, Argentina</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+/* Calculador estructural público: marco de la página (la pantalla de cálculo usa css/styles.css del panel). */
+body.pub { background: var(--bg); min-height: 100%; }
+.pub-wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+.pub-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+.pub-brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-size: 16px; letter-spacing: -0.02em; }
+.pub-brand img { height: 30px; width: auto; display: block; }
+.pub-nav { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 13.5px; }
+.pub-nav a { color: var(--ink-soft); text-decoration: none; font-weight: 600; }
+.pub-nav a:hover { color: var(--accent-ink); }
+
+.pub-hero { background: linear-gradient(180deg, #14161c 0%, #1d2230 100%); color: #eef0f4; padding: 44px 0 38px; }
+.pub-kicker { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #7fa8ff; }
+.pub-hero h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 46px); letter-spacing: -0.03em; line-height: 1.05; }
+.pub-lead { margin: 0 0 18px; max-width: 62ch; font-size: 16.5px; line-height: 1.55; color: #cfd3dc; }
+.pub-points { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 22px; max-width: 900px; }
+.pub-points li { font-size: 14px; line-height: 1.45; color: #cfd3dc; padding-left: 16px; position: relative; }
+.pub-points li::before { content: ''; position: absolute; left: 0; top: .55em; width: 7px; height: 7px; border-radius: 2px; background: #2f6fed; }
+.pub-points b { color: #fff; display: block; font-size: 14.5px; }
+.pub-small { margin: 0; font-size: 12.5px; color: #9aa0ac; }
+
+.pub-quick { background: var(--panel); border-bottom: 1px solid var(--line); padding: 16px 0 18px; }
+.pub-quick-title { margin: 0 0 10px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); }
+.pub-quick-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.pub-main { margin: 0 auto; padding-top: 26px; }
+/* el campo de proyecto no existe en la versión pública */
+.pub-main .field:has([name="projectId"]) { display: none; }
+
+.pub-foot { background: #14161c; color: #cfd3dc; padding: 36px 0 30px; margin-top: 40px; }
+.pub-foot h2 { margin: 0 0 8px; color: #fff; font-size: 22px; letter-spacing: -0.02em; }
+.pub-foot p { max-width: 74ch; line-height: 1.6; font-size: 14px; }
+.pub-foot b { color: #fff; }
+.pub-cta { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 18px; }
+.pub-foot .btn:not(.btn-primary) { background: transparent; color: #eef0f4; border-color: #3a3f4c; }
+
+@media (max-width: 640px) {
+  .pub-hero { padding: 30px 0 26px; }
+  .pub-main { padding-left: 14px; padding-right: 14px; }
+  .pub-nav { gap: 12px; }
+}
+@media print { .pub-top, .pub-hero, .pub-quick, .pub-foot { display: none; } }
