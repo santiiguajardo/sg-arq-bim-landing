@@ -2,25 +2,51 @@
    La pantalla de cálculo usa css/styles.css del panel; acá se redefinen sus colores para que quede en la misma
    estética que la landing. Las hojas de la memoria de cálculo siguen siendo blancas (es papel de impresión). */
 
-body.pub {
-  /* misma paleta que la landing */
-  --ink: #eef0f4; --ink-soft: #9aa0ac;
+/* Tema oscuro (por defecto, igual que la landing). Encabezado y pie quedan oscuros también en el tema claro,
+   como la franja de marca del panel. */
+body.pub,
+html[data-theme="light"] body.pub .pub-top,
+html[data-theme="light"] body.pub .pub-foot {
+  --ink: #eef0f4; --ink-soft: #9aa0ac; --head: #fff;
   --line: #2a2d37; --line-soft: #232731;
   --bg: #0e0f13; --bg-2: #181a21; --panel: #181a21;
   --accent: #2f6fed; --accent-ink: #7fa8ff; --accent-soft: rgba(47, 111, 237, .16);
   --good: #3ed598; --good-soft: rgba(62, 213, 152, .12);
   --warn: #f0b04a; --warn-soft: rgba(240, 176, 74, .12);
-  --bad: #ff7a7a; --bad-soft: rgba(255, 95, 95, .13);
+  --bad: #ff7a7a; --bad-soft: rgba(255, 95, 95, .13); --bad-text: #ffc2c2;
+  --btn-line: rgba(255, 255, 255, .22); --btn-line-hover: rgba(255, 255, 255, .45); --btn-hover: rgba(255, 255, 255, .07);
+  --btn-primary-hover: #fff; --tile: rgba(255, 255, 255, .03);
+  --grid: rgba(255, 255, 255, .025); --glow: rgba(47, 111, 237, .10);
+  --hero-from: rgba(47, 111, 237, .14); --hero-to: rgba(47, 111, 237, .03);
+  --note-line: rgba(127, 168, 255, .28); --sheet-shadow: 0 18px 50px -12px rgba(0, 0, 0, .7);
   --sidebar: #14161c; --sidebar-line: #262933; --sidebar-text: #b7bac2;
   --shadow: none;
-  --font: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   color-scheme: dark;
+}
+/* Tema claro: los tonos del panel (fondo gris muy claro, tarjetas blancas, mismo azul de acento) */
+html[data-theme="light"] body.pub {
+  --ink: #16181d; --ink-soft: #4a4f59; --head: #0e0f13;
+  --line: #dfe2e8; --line-soft: #eceef2;
+  --bg: #f5f6f8; --bg-2: #ffffff; --panel: #ffffff;
+  --accent: #2f6fed; --accent-ink: #1c4fc4; --accent-soft: #e8f0fe;
+  --good: #167a42; --good-soft: #e5f7ec;
+  --warn: #a8650f; --warn-soft: #fbf0dd;
+  --bad: #c23030; --bad-soft: #fce8e8; --bad-text: #8a1f1f;
+  --btn-line: rgba(20, 22, 28, .24); --btn-line-hover: rgba(20, 22, 28, .55); --btn-hover: rgba(20, 22, 28, .05);
+  --btn-primary-hover: #2a2e38; --tile: rgba(255, 255, 255, .75);
+  --grid: rgba(20, 22, 28, .035); --glow: rgba(47, 111, 237, .10);
+  --hero-from: rgba(47, 111, 237, .12); --hero-to: rgba(47, 111, 237, .03);
+  --note-line: #cfe0fd; --sheet-shadow: 0 14px 40px -16px rgba(20, 22, 28, .4);
+  color-scheme: light;
+}
+body.pub {
+  --font: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   min-height: 100%;
   font-family: var(--font);
   background-color: var(--bg);
-  background-image: radial-gradient(circle at 15% 0%, rgba(47, 111, 237, .10), transparent 45%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 42px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 42px);
+  background-image: radial-gradient(circle at 15% 0%, var(--glow), transparent 45%),
+    repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 42px);
 }
 .pub-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 
@@ -35,16 +61,27 @@ body.pub {
 .pub-nav a:hover { color: #fff; }
 .pub-nav a:focus-visible, .pub-brand:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 3px; border-radius: 4px; }
 
+/* selector de tema */
+.pub-theme { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--sidebar-line); border-radius: 8px; background: transparent; color: var(--sidebar-text); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+.pub-theme:hover { color: #fff; border-color: #4a4f5c; background: rgba(255, 255, 255, .05); }
+.pub-theme:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 3px; }
+.pub-theme svg { width: 15px; height: 15px; flex: none; }
+.pub-theme .ic-sun, html[data-theme="light"] .pub-theme .ic-moon { display: none; }
+html[data-theme="light"] .pub-theme .ic-sun { display: block; }
+.pub-theme .lb-dark { display: none; }
+html[data-theme="light"] .pub-theme .lb-light { display: none; }
+html[data-theme="light"] .pub-theme .lb-dark { display: inline; }
+
 /* ── portada ── */
 .pub-hero { padding: 48px 0 26px; }
-.pub-hero-card { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px 40px; align-items: center; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(135deg, rgba(47, 111, 237, .14), rgba(47, 111, 237, .03)); padding: clamp(22px, 4vw, 40px); max-width: calc(1200px - 64px); }
+.pub-hero-card { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px 40px; align-items: center; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(135deg, var(--hero-from), var(--hero-to)); padding: clamp(22px, 4vw, 40px); max-width: calc(1200px - 64px); }
 .pub-kicker { margin: 0 0 12px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-ink); }
-.pub-hero h1 { margin: 0 0 14px; font-weight: 700; font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.02; letter-spacing: -0.045em; color: #fff; text-wrap: balance; }
+.pub-hero h1 { margin: 0 0 14px; font-weight: 700; font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.02; letter-spacing: -0.045em; color: var(--head); text-wrap: balance; }
 .pub-hero h1 em { font-weight: 300; font-style: italic; }
 .pub-lead { margin: 0 0 18px; max-width: 58ch; font-size: 16px; line-height: 1.6; color: var(--ink-soft); }
 .pub-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.pub-points li { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .03); font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
-.pub-points b { color: #fff; font-size: 14.5px; font-weight: 600; }
+.pub-points li { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--tile); font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
+.pub-points b { color: var(--head); font-size: 14.5px; font-weight: 600; }
 .pub-small { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); max-width: 62ch; }
 
 /* ── ejemplos para empezar ── */
@@ -66,11 +103,11 @@ body.pub {
 .pub-foot .pub-small { color: #6f7480; }
 
 /* ── botones: mismos que la landing (contorno claro; el principal, blanco) ── */
-body.pub .btn { font-family: var(--font); font-weight: 600; font-size: 14px; padding: 11px 20px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .22); background: transparent; color: var(--ink); text-decoration: none; transition: transform .12s, background .15s, border-color .15s; }
-body.pub .btn:hover { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .45); }
+body.pub .btn { font-family: var(--font); font-weight: 600; font-size: 14px; padding: 11px 20px; border-radius: 8px; border: 1px solid var(--btn-line); background: transparent; color: var(--ink); text-decoration: none; transition: transform .12s, background .15s, border-color .15s; }
+body.pub .btn:hover { background: var(--btn-hover); border-color: var(--btn-line-hover); }
 body.pub .btn:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 3px; }
 body.pub .btn-primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
-body.pub .btn-primary:hover { background: #fff; border-color: #fff; }
+body.pub .btn-primary:hover { background: var(--btn-primary-hover); border-color: var(--btn-primary-hover); }
 body.pub .btn[disabled] { opacity: .45; cursor: default; }
 body.pub .btn-sm { padding: 6px 12px; font-size: 12.5px; }
 body.pub .btn-icon { padding: 6px 9px; }
@@ -79,7 +116,7 @@ body.pub .btn-danger:hover { background: var(--bad-soft); border-color: var(--ba
 .pub-quick .btn:hover { transform: translateY(-1px); }
 
 /* ── pantalla de cálculo: tarjetas, campos, pestañas ── */
-body.pub .view-header h1 { font-weight: 700; font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -0.03em; color: #fff; }
+body.pub .view-header h1 { font-weight: 700; font-size: clamp(1.5rem, 2.6vw, 2rem); letter-spacing: -0.03em; color: var(--head); }
 body.pub .card { border-radius: 12px; background: var(--bg-2); box-shadow: none; }
 body.pub .card h3 { font-size: 11.5px; letter-spacing: .12em; font-weight: 600; }
 body.pub .field label { color: var(--ink-soft); }
@@ -88,9 +125,9 @@ body.pub .axed-span input, body.pub .axed-eq input { background: var(--bg); colo
 body.pub .field input:focus, body.pub .field select:focus, body.pub .field textarea:focus,
 body.pub .axed-span input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent-ink); }
 body.pub .tab { background: transparent; color: var(--ink-soft); border-color: var(--line); font-family: var(--font); }
-body.pub .tab:hover { color: var(--ink); border-color: rgba(255, 255, 255, .3); }
+body.pub .tab:hover { color: var(--ink); border-color: var(--btn-line-hover); }
 body.pub .tab.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-body.pub .note { background: var(--accent-soft); border-color: rgba(127, 168, 255, .28); color: var(--ink-soft); }
+body.pub .note { background: var(--accent-soft); border-color: var(--note-line); color: var(--ink-soft); }
 body.pub .modal, body.pub .autosuggest { background: var(--bg-2); color: var(--ink); border: 1px solid var(--line); }
 body.pub .toast { background: var(--ink); color: var(--bg); }
 body.pub .progress-track { background: var(--line-soft); }
@@ -103,7 +140,7 @@ body.pub #content th, body.pub #content td { border-color: var(--line); }
 /* lo que verifica en verde y lo que no en rojo: píldoras suaves como las de la landing */
 body.pub #content[data-view="structural"] .tag-freelance { background: var(--good-soft); color: var(--good); border: 1px solid var(--good); }
 body.pub #content[data-view="structural"] .tag-alta { background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad); }
-body.pub .vf-row.vf-bad .vf-text { color: #ffc2c2; }
+body.pub .vf-row.vf-bad .vf-text { color: var(--bad-text); }
 
 /* esquemas: las etiquetas llevan un borde del color del fondo para leerse sobre un trazo */
 body.pub #content[data-view="structural"] svg text { stroke: var(--bg-2); }
@@ -111,8 +148,8 @@ body.pub #content[data-view="structural"] svg text[fill="#fff"], body.pub #conte
 
 /* memoria de cálculo a pantalla completa: fondo de la página y hojas A4 blancas */
 body.pub .memoria-overlay, body.pub .memoria-bar { background: var(--bg); color: var(--ink); }
-body.pub .memoria-bar strong { color: #fff; }
-body.pub .mem-sheet { box-shadow: 0 18px 50px -12px rgba(0, 0, 0, .7); }
+body.pub .memoria-bar strong { color: var(--head); }
+body.pub .mem-sheet { box-shadow: var(--sheet-shadow); }
 
 @media (max-width: 820px) {
   .pub-hero-card { grid-template-columns: 1fr; }

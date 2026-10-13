@@ -27,6 +27,24 @@ document.querySelectorAll('[data-quick]').forEach((btn) => btn.addEventListener(
   setTimeout(() => content.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' }), 80);
 }));
 
+// Tema claro / oscuro: la elección se recuerda en este navegador (no forma parte del historial de cálculos).
+const THEME_KEY = 'sgCalcTema';
+const themeBtn = document.getElementById('themeBtn');
+function paintTheme() {
+  const light = document.documentElement.getAttribute('data-theme') === 'light';
+  themeBtn.setAttribute('aria-pressed', String(light));
+  themeBtn.setAttribute('aria-label', light ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro');
+}
+if (themeBtn) {
+  paintTheme();
+  themeBtn.addEventListener('click', () => {
+    const light = document.documentElement.getAttribute('data-theme') !== 'light';
+    if (light) document.documentElement.setAttribute('data-theme', 'light'); else document.documentElement.removeAttribute('data-theme');
+    try { if (light) localStorage.setItem(THEME_KEY, 'light'); else localStorage.removeItem(THEME_KEY); } catch (e) { /* sin almacenamiento: vale solo para esta visita */ }
+    paintTheme();
+  });
+}
+
 // Datos de contacto y del video: los escribe la publicación en config.json (si no está, la página funciona igual).
 fetch('config.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((cfg) => {
   if (!cfg) return;

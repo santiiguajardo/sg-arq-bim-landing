@@ -9,4 +9,8 @@
       location.replace('https://' + location.host + location.pathname + location.search + location.hash);
     }
   } catch (e) { /* sin acceso: la política de contenido sigue protegiendo la página */ }
+  // tema elegido (claro/oscuro): se aplica antes de pintar para que no parpadee
+  try {
+    if (localStorage.getItem('sgCalcTema') === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  } catch (e) { /* sin almacenamiento: queda el tema oscuro */ }
 })();

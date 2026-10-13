@@ -333,17 +333,17 @@ function openNewModal(state) {
       <div class="field"><label>¿Qué querés calcular?</label>
         <div style="display:grid; gap:8px;" data-modes>
           <label class="chk-row" style="border:1px solid var(--line); border-radius:10px; padding:10px 12px; align-items:flex-start;"><input type="radio" name="mode" value="building" checked />
-            <span><b>Edificio completo</b><br><span class="text-muted" style="font-size:12.5px;" data-bdesc>Losas, vigas, columnas y bases a partir de los niveles, las luces entre apoyos, los apeos y los voladizos.</span></span></label>
+            <span style="min-width:0; flex:1;"><b>Edificio completo</b><br><span class="text-muted" style="font-size:12.5px;" data-bdesc>Losas, vigas, columnas y bases a partir de los niveles, las luces entre apoyos, los apeos y los voladizos.</span></span></label>
           <label class="chk-row" style="border:1px solid var(--line); border-radius:10px; padding:10px 12px; align-items:flex-start;"><input type="radio" name="mode" value="element" />
-            <span><b>Elemento separado</b><br><span class="text-muted" style="font-size:12.5px;">Una losa (en una o dos direcciones), una viga (convencional o invertida), una columna o una base (aislada, excéntrica, doblemente excéntrica o unificada), con sus propias cargas.</span>
-            <select name="element" style="margin-top:6px; max-width:100%;">${elOpts}</select><select name="elementSteel" style="margin-top:6px; max-width:100%; display:none;">${elOptsSteel}</select></span></label>
+            <span style="min-width:0; flex:1;"><b>Elemento separado</b><br><span class="text-muted" style="font-size:12.5px;">Una losa (en una o dos direcciones), una viga (convencional o invertida), una columna o una base (aislada, excéntrica, doblemente excéntrica o unificada), con sus propias cargas.</span>
+            <select name="element" style="margin-top:6px; width:100%; max-width:100%;">${elOpts}</select><select name="elementSteel" style="margin-top:6px; width:100%; max-width:100%; display:none;">${elOptsSteel}</select></span></label>
         </div>
         <div data-towerbox style="display:none; border:1px solid var(--line); border-radius:10px; padding:10px 12px;">
           <b>Edificio en torre (tabiques contraviento)</b><br><span class="text-muted" style="font-size:12.5px;">Torre alta de hormigón armado cuyos tabiques toman el viento: viento CIRSOC 102 por piso, esfuerzos de la ménsula, volcamiento, tensión del terreno bajo la platea, flecha en cabeza y flexocompresión de cada tabique con su armadura y su dintel.</span>
         </div>
         <div data-glbox style="display:none; border:1px solid var(--line); border-radius:10px; padding:10px 12px;">
           <b>Estructura de grandes luces</b><br><span class="text-muted" style="font-size:12.5px;">Cubiertas y estructuras que cubren luces grandes con sistemas especiales (cables y telas, cubiertas cilíndricas de compresión dominante, vigas Vierendeel y postesadas, losas plegadas, estereoestructuras y cáscaras de hormigón: paraboloide hiperbólico y cúpulas): el material depende del sistema.</span>
-          <select name="elementGL" style="margin-top:6px; max-width:100%;">${elOptsGL}</select>
+          <select name="elementGL" style="margin-top:6px; width:100%; max-width:100%;">${elOptsGL}</select>
         </div>
       </div>
       <div class="field"><label>Proyecto <span class="text-muted">(opcional)</span></label>
