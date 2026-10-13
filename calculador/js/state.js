@@ -1,4 +1,4 @@
-// Estado del calculador estructural público (versión gratuita de la landing).
+// Estado del calculador estructural público (versión pública de la landing).
 // Reemplaza a js/state.js del panel: no hay servidor, ni cuentas, ni sincronización. Cada persona que entra empieza con el historial
 // en blanco y sus cálculos se guardan solo durante su sesión (sessionStorage: sobreviven a recargar la página pero se borran al cerrar la
 // pestaña o el navegador). Nunca se envían a ningún lado ni se comparten con otras personas ni con el panel.
