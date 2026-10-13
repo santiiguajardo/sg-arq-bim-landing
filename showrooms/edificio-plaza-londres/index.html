@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-QObSr0mDp/LD8bY1VTYs7ZZuyhZnyC8tNzWgASvoqC0=&#x27; &#x27;sha256-Dsjhz0vqszCk45V8Su2MOT5Wc5S0aDYFuwOkBhdEoP8=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-QObSr0mDp/LD8bY1VTYs7ZZuyhZnyC8tNzWgASvoqC0=&#x27; &#x27;sha256-nja37PaWA2MbgfhuwDl3TCaZ96SAzgALuWnJMwGNuss=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Edificio Plaza Londres · Showroom virtual</title>
@@ -282,6 +282,8 @@ body.card-open #floorInfo { display: none; }
 #fsNote.on { opacity: 1; transform: translate(-50%, 0); }
 
 .hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.fnote { margin: 8px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--ink-soft); }
+.fnote a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .fmsg { margin: 6px 0 0; font-size: 13px; color: var(--ink-soft); min-height: 0; }
 .fmsg.ok { color: #4ade80; font-size: 14px; line-height: 1.45; margin: 4px 0 0; }
 .uc-form { display: flex; flex-direction: column; gap: 8px; }
@@ -867,9 +869,13 @@ body.card-open #floorInfo { display: none; }
         (leadsOn() ? '<input name="contact" placeholder="Tu teléfono o email" required>' : '') +
         '<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
         '<textarea name="msg" placeholder="¿Qué te gustaría saber?"></textarea>' +
-        '<button class="btn primary" type="submit">Enviar consulta</button><p class="fmsg" id="cMsg" role="status"></p></form>';
+        '<button class="btn primary" type="submit">Enviar consulta</button>' + privacyNote() + '<p class="fmsg" id="cMsg" role="status"></p></form>';
     }
     return html;
+  }
+  /* Aviso de privacidad bajo los formularios: lleva a la política de la landing (que está dos carpetas más arriba). */
+  function privacyNote() {
+    return '<p class="fnote">Usamos estos datos solo para responderte. <a href="../../#privacidad" target="_blank" rel="noopener">Política de privacidad</a></p>';
   }
   function wireContact() {
     var f = $('cForm');
@@ -1176,6 +1182,7 @@ body.card-open #floorInfo { display: none; }
       '<textarea name="message" rows="2">' + esc(msg) + '</textarea>' +
       '<button class="btn primary" type="submit">Enviar consulta</button>' +
       (link ? '<a class="uc-wa" target="_blank" rel="noopener" href="' + link + '">o escribir por WhatsApp</a>' : '') +
+      privacyNote() +
       '<p class="fmsg" id="ucMsg" role="status"></p></form>';
     var form = $('ucForm');
     form.elements.name.focus();
