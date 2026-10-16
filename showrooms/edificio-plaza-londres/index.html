@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-gyzq9dtN7xQ2sJbsjnkWEtjxc78/8DGJNCUa2lEdiiM=&#x27; &#x27;sha256-30qZext7hisGk7OEw/7pwkMq2jwRJA9JX5YMEWwqG3Y=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-gyzq9dtN7xQ2sJbsjnkWEtjxc78/8DGJNCUa2lEdiiM=&#x27; &#x27;sha256-OAdoPWElC+2EfSKtN35+kDZzj7t//wP1vWEMPwOc7z4=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Edificio Plaza Londres · Showroom virtual</title>
@@ -207,6 +207,16 @@ body.in-floors #panel { display: none; }
 #floorStage { position: fixed; z-index: 12; display: none; pointer-events: none; transition: opacity .35s ease; }
 body.in-floors #floorStage { display: block; }
 #floorStage.swap { opacity: 0; }
+/* capa que recibe el deslizamiento horizontal de la planta (celular): los puntos y las zonas también dejan arrastrar */
+#floorPan { position: fixed; inset: 0; z-index: 11; display: none; touch-action: none; }
+body.in-floors #floorPan { display: block; }
+#floorStage .zone, .pin { touch-action: none; }
+#panHint { position: fixed; top: 68px; left: 50%; transform: translateX(-50%); z-index: 20; display: none; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; font-size: 10.4px; font-weight: 600; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.7); transition: opacity .6s; }
+body.in-floors #panHint.on { display: flex; }
+#panHint .ph-t { position: relative; width: 96px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.28); }
+#panHint .ph-t i { position: absolute; top: 0; height: 100%; border-radius: 2px; background: #fff; }
+#panHint.used .ph-x { opacity: 0; transition: opacity .6s; }
+body.card-open #panHint .ph-x { opacity: 0; }
 #floorStage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 #floorStage .zone { fill: var(--c); fill-opacity: 0; stroke: var(--c); stroke-opacity: 0; stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: all; cursor: pointer; transition: fill .2s, stroke .2s, fill-opacity .2s, stroke-opacity .2s; }
 /* En reposo las zonas no se ven (solo los puntos con el código). Al pasar el mouse o tocar aparecen con el color propio que se les eligió (--h) o, si no tienen, el de su estado (--c) */
@@ -556,6 +566,7 @@ body.card-open #floorInfo { display: none; }
       var im = new Image();
       im.src = m.image; im.alt = '';
       if (m.fit) im.style.objectFit = m.fit;
+      if (m.stack && panFrac != null && panMode()) im.style.objectPosition = (panFrac * 100).toFixed(2) + '% 50%';
       next.appendChild(im);
     }
     if (m && m.stack && dir && active >= 0 && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
@@ -1045,25 +1056,129 @@ body.card-open #floorInfo { display: none; }
     });
   }
 
-  /* La planta ocupa la pantalla como "cover" (o "contain" en pantallas verticales, para que se vean todas las unidades);
-     los puntos y las zonas se ubican en % sobre la imagen, así que se calcula el rectángulo real que ocupa. */
-  function fitMode() { return window.innerWidth / window.innerHeight < 0.9 ? 'contain' : 'cover'; }
+  /* La planta ocupa la pantalla como "cover": en una pantalla vertical (celular) la imagen llena el alto y es más ancha que la pantalla,
+     así que se recorre deslizando el dedo hacia la izquierda o la derecha (panFrac: 0 = borde izquierdo, 1 = borde derecho).
+     Los puntos y las zonas se ubican en % sobre la imagen, así que se calcula el rectángulo real que ocupa y cuánto está corrido. */
+  var panFrac = null;
+  function fitMode() { return 'cover'; }
+  function panMode() { return window.innerWidth / window.innerHeight < 0.9; }
 
-  function layoutStage() {
+  function stageGeom() {
     var f = floors[floorIdx];
     var n = f && imgNat[f.image];
-    if (!n) return;
-    var vw = window.innerWidth, vh = window.innerHeight, fit = fitMode();
-    var sc = fit === 'cover' ? Math.max(vw / n.w, vh / n.h) : Math.min(vw / n.w, vh / n.h);
-    var w = n.w * sc, h = n.h * sc;
-    floorStage.style.left = ((vw - w) / 2) + 'px';
-    floorStage.style.top = ((vh - h) / 2) + 'px';
-    floorStage.style.width = w + 'px';
-    floorStage.style.height = h + 'px';
-    var im = layers[active] && layers[active].querySelector('img');
-    if (im) im.style.objectFit = fit;
+    if (!n) return null;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var sc = Math.max(vw / n.w, vh / n.h);
+    return { w: n.w * sc, h: n.h * sc, vw: vw, vh: vh, f: f };
+  }
+
+  // arranca mirando donde están las unidades de ese piso (no el borde de la imagen)
+  function defaultPan(g) {
+    var xs = (g.f.units || []).filter(function (u) { return u && typeof u.x === 'number'; }).map(function (u) { return u.x; });
+    var avg = xs.length ? xs.reduce(function (p, q) { return p + q; }, 0) / xs.length : 0.5;
+    return Math.max(0, Math.min(1, (avg * g.w - g.vw / 2) / Math.max(g.w - g.vw, 1)));
+  }
+
+  function layoutStage() {
+    var g = stageGeom();
+    if (!g) return;
+    var over = panMode() && g.w > g.vw + 2;
+    if (over && panFrac == null) panFrac = defaultPan(g);
+    var frac = over ? Math.max(0, Math.min(1, panFrac)) : 0.5;
+    floorStage.style.left = (over ? -(g.w - g.vw) * frac : (g.vw - g.w) / 2) + 'px';
+    floorStage.style.top = ((g.vh - g.h) / 2) + 'px';
+    floorStage.style.width = g.w + 'px';
+    floorStage.style.height = g.h + 'px';
+    layers.forEach(function (l) {
+      var im = l.querySelector('img');
+      if (im) { im.style.objectFit = 'cover'; im.style.objectPosition = (frac * 100).toFixed(2) + '% 50%'; }
+    });
+    updatePanHint(over, frac, g);
   }
   window.addEventListener('resize', function () { if (document.body.classList.contains('in-floors')) layoutStage(); });
+
+  var panHint = document.createElement('div');
+  panHint.id = 'panHint';
+  panHint.innerHTML = '<span class="ph-t"><i></i></span><span class="ph-x">Deslizá para recorrer la planta</span>';
+  document.body.appendChild(panHint);
+  var panLayer = document.createElement('div');
+  panLayer.id = 'floorPan';
+  document.body.insertBefore(panLayer, floorStage);
+
+  function updatePanHint(over, frac, g) {
+    panHint.classList.toggle('on', !!over);
+    if (!over) return;
+    var th = panHint.firstChild.firstChild;
+    var wPct = Math.max(12, g.vw / g.w * 100);
+    th.style.width = wPct + '%';
+    th.style.left = ((100 - wPct) * frac) + '%';
+  }
+
+  function setPan(frac) {
+    panFrac = Math.max(0, Math.min(1, frac));
+    layoutStage();
+  }
+
+  var panAnim = 0;
+  function panTo(frac) {
+    cancelAnimationFrame(panAnim);
+    var from = panFrac == null ? frac : panFrac, t0 = null;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { setPan(frac); return; }
+    function step(ts) {
+      if (t0 === null) t0 = ts;
+      var t = Math.min(1, (ts - t0) / 420), e = 1 - Math.pow(1 - t, 3);
+      setPan(from + (frac - from) * e);
+      if (t < 1) panAnim = requestAnimationFrame(step);
+    }
+    panAnim = requestAnimationFrame(step);
+  }
+
+  // al elegir una unidad (desde la lista o un punto) la planta se corre para que quede a la vista
+  function panToUnit(u) {
+    var g = stageGeom();
+    if (!g || !panMode() || g.w <= g.vw + 2 || typeof u.x !== 'number') return;
+    var visible = g.vw - (window.innerWidth <= 760 ? 84 : 0);          // el costado derecho lo ocupa la botonera de pisos
+    var left = -(g.w - g.vw) * (panFrac == null ? 0.5 : panFrac);
+    var px = left + u.x * g.w;
+    if (px > 40 && px < visible - 40) return;                           // ya se ve
+    panTo((u.x * g.w - visible / 2) / (g.w - g.vw));
+  }
+
+  var drag = { id: null, x: 0, f: 0, moved: false, until: 0 };
+  window.addEventListener('pointerdown', function (e) {
+    if (!document.body.classList.contains('in-floors') || !panMode() || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    var t = e.target;
+    if (!(t === panLayer || (t.closest && t.closest('#floorStage')))) return;
+    var g = stageGeom();
+    if (!g || g.w <= g.vw + 2) return;
+    cancelAnimationFrame(panAnim);
+    drag = { id: e.pointerId, x: e.clientX, f: panFrac == null ? 0.5 : panFrac, moved: false, until: 0 };
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (drag.id !== e.pointerId) return;
+    var dx = e.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) < 8) return;
+    drag.moved = true;
+    panHint.classList.add('used');
+    var g = stageGeom();
+    if (g) setPan(drag.f - dx / Math.max(g.w - g.vw, 1));
+  });
+  function endDrag(e) {
+    if (drag.id !== e.pointerId) return;
+    if (drag.moved) drag.until = Date.now() + 350;       // el dedo que arrastró no tiene que "tocar" una unidad al soltar
+    drag.id = null;
+  }
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+  window.addEventListener('click', function (e) {
+    if (Date.now() < drag.until) { e.stopPropagation(); e.preventDefault(); drag.until = 0; }
+  }, true);
+  window.addEventListener('wheel', function (e) {
+    if (!document.body.classList.contains('in-floors') || !panMode() || Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+    var g = stageGeom();
+    if (g && g.w > g.vw + 2) setPan((panFrac == null ? 0.5 : panFrac) + e.deltaX / (g.w - g.vw));
+  }, { passive: true });
 
   function withDims(src, cb) {
     if (imgNat[src]) { cb(); return; }
@@ -1219,6 +1334,7 @@ body.card-open #floorInfo { display: none; }
     floorsScene = s;
     floors = floorsOf(s).map(function (f) { return f; });
     floorIdx = -1;
+    panFrac = null;
     buildFloorNav();
     document.body.classList.add('in-floors');
     var want = pendingUnit;
@@ -1272,6 +1388,7 @@ body.card-open #floorInfo { display: none; }
     track('depto', u.code);
     markSelected();
     hideTip();
+    panToUnit(u);
     openCard(u, floors[floorIdx]);
   }
 
