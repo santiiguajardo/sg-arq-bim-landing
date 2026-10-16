@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-HUf8WXsXMH65Yw+9DLJNJLadFiTbJZdqyDt+Qj4Th+U=&#x27; &#x27;sha256-FawvLCVDHIL5W3CUwcJ9wjeni21Uc2ONRLLV0FZdmBM=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-HUf8WXsXMH65Yw+9DLJNJLadFiTbJZdqyDt+Qj4Th+U=&#x27; &#x27;sha256-MAQGsifI1eRii6BQALOXhejX5+PNbPHBbbNM2bQ/rZA=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Edificio Plaza Londres · Showroom virtual</title>
@@ -178,6 +178,14 @@ body.in-floors #floorInfo { display: flex; }
 .fi-row { display: grid; grid-template-columns: 12px auto 1fr auto; gap: 10px; align-items: center; width: 100%; padding: 10px 16px; border: 0; border-top: 1px solid rgba(255,255,255,.06); background: transparent; color: inherit; text-align: left; font-size: 10.8px; }
 .fi-row:first-child { border-top: 0; }
 .fi-row:hover { background: rgba(255,255,255,.07); }
+/* mini ficha que acompaña al mouse sobre las zonas */
+#zoneTip { position: fixed; z-index: 40; pointer-events: none; min-width: 150px; max-width: 240px; padding: 10px 13px; border-radius: 12px; border: 1px solid var(--glass-line); background: rgba(12, 14, 19, .92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(0,0,0,.45); color: #fff; }
+#zoneTip[hidden] { display: none; }
+#zoneTip .zt-h { display: flex; align-items: center; gap: 8px; font-size: 13.6px; }
+#zoneTip .zt-h i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+#zoneTip .zt-h span { margin-left: auto; font-family: var(--font-mono); font-size: 9.6px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+#zoneTip .zt-m { margin-top: 5px; font-size: 12px; color: var(--ink-soft); }
+#zoneTip .zt-p { margin-top: 6px; font-size: 14.4px; font-weight: 800; letter-spacing: -.02em; }
 .fi-row i { width: 10px; height: 10px; border-radius: 50%; }
 .fi-row span { color: var(--ink-soft); font-size: 10px; }
 .fi-row em { font-style: normal; font-size: 9.6px; font-weight: 700; }
@@ -202,11 +210,11 @@ body.in-floors #floorStage { display: block; }
 #floorStage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 #floorStage .zone { fill: var(--c); fill-opacity: .26; stroke: var(--c); stroke-opacity: .75; stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: all; cursor: pointer; transition: fill .2s, stroke .2s, fill-opacity .2s, stroke-opacity .2s; }
 /* Colores: en reposo cada zona muestra el color de su estado; al pasar el mouse o tocarla (y abrirse la ficha) aparece el color propio que se le eligió (--h) */
-#floorStage .zone:hover, #floorStage .zone.hov { fill: var(--h, var(--c)); stroke: var(--h, var(--c)); fill-opacity: .5; stroke-opacity: 1; }
+#floorStage .zone:hover, #floorStage .zone.hov { fill: var(--h, var(--c)); stroke: var(--h, var(--c)); fill-opacity: .55; stroke-opacity: 1; stroke-width: 3; filter: drop-shadow(0 0 8px var(--h, var(--c))); }
 #floorStage .zone.sel { fill: var(--h, var(--c)); stroke: var(--h, var(--c)); fill-opacity: .6; stroke-opacity: 1; stroke-width: 3.5; }
 .pin { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; display: flex; align-items: center; gap: 6px; padding: 5px 11px 5px 8px; border: 0; border-radius: 999px; background: #fff; color: #10131a; font-weight: 700; font-size: 10.4px; letter-spacing: -.01em; box-shadow: 0 2px 10px rgba(0,0,0,.4); white-space: nowrap; transition: transform .15s, background .2s; }
 .pin i { width: 11px; height: 11px; border-radius: 50%; background: var(--c); flex: none; }
-.pin:hover, .pin.hov { transform: translate(-50%, -50%) scale(1.08); }
+.pin:hover, .pin.hov { transform: translate(-50%, -50%) scale(1.12); z-index: 3; }
 .pin:hover i, .pin.hov i { background: var(--h, var(--c)); }
 .pin.sel { background: var(--h, var(--c)); color: var(--hi, #0b0c10); transform: translate(-50%, -50%) scale(1.14); z-index: 2; }
 .pin.sel i { background: #fff; }
@@ -1005,11 +1013,48 @@ body.card-open #floorInfo { display: none; }
     Array.prototype.forEach.call(floorStage.querySelectorAll('[data-u]'), function (el) {
       el.addEventListener('click', function () { selectUnit(el.getAttribute('data-u')); });
       // pasar el mouse por la zona o por su punto resalta las dos cosas juntas
-      el.addEventListener('mouseenter', function () { setHover(el.getAttribute('data-u'), true); });
-      el.addEventListener('mouseleave', function () { setHover(el.getAttribute('data-u'), false); });
+      el.addEventListener('mouseenter', function (ev) { setHover(el.getAttribute('data-u'), true); showTip(el.getAttribute('data-u'), ev); });
+      el.addEventListener('mousemove', moveTip);
+      el.addEventListener('mouseleave', function () { setHover(el.getAttribute('data-u'), false); hideTip(); });
     });
     markSelected();
   }
+
+  /* Mini ficha al pasar el mouse por una zona, un punto o una fila de la lista: código, estado y datos principales.
+     La ficha completa se sigue abriendo al tocar. En pantallas táctiles no hay "pasar el mouse", así que ahí no aparece. */
+  var zoneTip = null;
+  function tipEl() {
+    if (!zoneTip) { zoneTip = document.createElement('div'); zoneTip.id = 'zoneTip'; zoneTip.hidden = true; document.body.appendChild(zoneTip); }
+    return zoneTip;
+  }
+  function showTip(id, ev) {
+    if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
+    var u = findUnit(id);
+    if (!u) return;
+    var st = u.status || 'disponible';
+    var col = STATUS_COLOR[st] || STATUS_COLOR.disponible;
+    var meta = [];
+    if (has(u.area)) meta.push(esc(u.area) + ' m²');
+    if (has(u.bedrooms)) meta.push(Number(u.bedrooms) === 0 ? 'Mono.' : esc(u.bedrooms) + ' dorm.');
+    if (has(u.bathrooms)) meta.push(esc(u.bathrooms) + (Number(u.bathrooms) === 1 ? ' baño' : ' baños'));
+    var t = tipEl();
+    t.innerHTML = '<div class="zt-h"><i style="background:' + col + '"></i><b>' + esc(UNIT) + ' ' + esc(u.code || '') + '</b><span style="color:' + col + '">' + esc(STATUS_LABEL[st] || st) + '</span></div>' +
+      (meta.length ? '<div class="zt-m">' + meta.join(' · ') + '</div>' : '') + '<div class="zt-p">' + priceText(u) + '</div>';
+    t.hidden = false;
+    moveTip(ev);
+  }
+  function moveTip(ev) {
+    if (!zoneTip || zoneTip.hidden || !ev) return;
+    var x = ev.clientX, y = ev.clientY;
+    if (x == null) { var r = ev.currentTarget && ev.currentTarget.getBoundingClientRect ? ev.currentTarget.getBoundingClientRect() : null; if (!r) return; x = r.right; y = r.top; }
+    var w = zoneTip.offsetWidth, h = zoneTip.offsetHeight;
+    var left = x + 16, top = y + 16;
+    if (left + w > window.innerWidth - 8) left = x - w - 16;
+    if (top + h > window.innerHeight - 8) top = y - h - 16;
+    zoneTip.style.left = Math.max(8, left) + 'px';
+    zoneTip.style.top = Math.max(8, top) + 'px';
+  }
+  function hideTip() { if (zoneTip) zoneTip.hidden = true; }
 
   function setHover(id, on) {
     Array.prototype.forEach.call(floorStage.querySelectorAll('[data-u]'), function (el) {
@@ -1077,7 +1122,11 @@ body.card-open #floorInfo { display: none; }
     if (us.length) {
       $('fiHead').addEventListener('click', function () { box.classList.toggle('open'); });
       Array.prototype.forEach.call(box.querySelectorAll('.fi-row'), function (b) {
-        b.addEventListener('click', function () { box.classList.remove('open'); selectUnit(b.getAttribute('data-u')); });
+        b.addEventListener('click', function () { box.classList.remove('open'); hideTip(); selectUnit(b.getAttribute('data-u')); });
+        // pasar el mouse por una fila muestra la zona de ese departamento sobre la planta
+        b.addEventListener('mouseenter', function (ev) { setHover(b.getAttribute('data-u'), true); showTip(b.getAttribute('data-u'), ev); });
+        b.addEventListener('mousemove', moveTip);
+        b.addEventListener('mouseleave', function () { setHover(b.getAttribute('data-u'), false); hideTip(); });
       });
     }
   }
@@ -1133,6 +1182,7 @@ body.card-open #floorInfo { display: none; }
     selUnit = String(id);
     track('depto', u.code);
     markSelected();
+    hideTip();
     openCard(u, floors[floorIdx]);
   }
 
