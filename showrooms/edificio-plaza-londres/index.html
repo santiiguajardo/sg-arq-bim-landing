@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-HUf8WXsXMH65Yw+9DLJNJLadFiTbJZdqyDt+Qj4Th+U=&#x27; &#x27;sha256-MAQGsifI1eRii6BQALOXhejX5+PNbPHBbbNM2bQ/rZA=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-HUf8WXsXMH65Yw+9DLJNJLadFiTbJZdqyDt+Qj4Th+U=&#x27; &#x27;sha256-rCf+YSP5CjO0wHsx/+9cV5bIvWt8LDIm0BUQspLfVBU=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Edificio Plaza Londres · Showroom virtual</title>
@@ -458,10 +458,72 @@ body.card-open #floorInfo { display: none; }
   var active = -1;
   var currentBg = '';
 
+  /* Cambio de piso. Cada planta tiene su propio encuadre y escala (no están alineadas entre sí), así que un fundido o un deslizamiento
+     superpone dos edificios corridos y se ve raro. En cambio se "barre" de un piso al otro: la planta nueva se descubre con un
+     borde suave que recorre la pantalla de arriba hacia abajo al bajar de piso y de abajo hacia arriba al subir, con una línea de luz
+     en el borde. La planta que se va queda quieta debajo; nunca se mezclan las dos de punta a punta. */
+  var SLAB_MS = 850;
+  var slabTimer = null;      // (nombre histórico) rAF del barrido en curso
+  var scanEl = null;
+
+  function scanLine() {
+    if (!scanEl) {
+      scanEl = document.createElement('div');
+      scanEl.id = 'scanLine';
+      scanEl.style.cssText = 'position:absolute;left:0;right:0;height:2px;z-index:3;pointer-events:none;opacity:0;' +
+        'background:linear-gradient(90deg,transparent,rgba(255,255,255,.7) 20%,rgba(255,255,255,.7) 80%,transparent);box-shadow:0 0 18px 4px rgba(255,255,255,.28);';
+      layers[0].parentNode.appendChild(scanEl);
+    }
+    return scanEl;
+  }
+
+  function clearMask(el) { el.style.webkitMaskImage = ''; el.style.maskImage = ''; }
+
+  function resetLayers() {
+    layers.forEach(function (l, i) {
+      l.style.transition = ''; l.style.transform = ''; l.style.opacity = ''; l.style.zIndex = '';
+      clearMask(l);
+      l.classList.toggle('on', i === active);
+    });
+    if (scanEl) scanEl.style.opacity = '0';
+  }
+
+  function scanSwap(next, old, down) {
+    var line = scanLine();
+    old.style.transition = 'none'; next.style.transition = 'none';
+    old.style.opacity = '1'; old.style.transform = 'none'; old.style.zIndex = '1';
+    next.style.opacity = '1'; next.style.transform = 'none'; next.style.zIndex = '2';
+    var FEATHER = 7;                       // % de alto del borde suave a cada lado de la línea
+    var from = -FEATHER, to = 100 + FEATHER;
+    var dirCss = down ? 'to bottom' : 'to top';
+    function paint(p) {
+      var g = 'linear-gradient(' + dirCss + ', #000 calc(' + p.toFixed(2) + '% - ' + FEATHER + '%), transparent calc(' + p.toFixed(2) + '% + ' + FEATHER + '%))';
+      next.style.webkitMaskImage = g; next.style.maskImage = g;
+      line.style.top = (down ? p : 100 - p) + '%';
+    }
+    paint(from);
+    next.classList.add('on');
+    line.style.opacity = '1';
+    var t0 = null;
+    function step(ts) {
+      if (t0 === null) t0 = ts;
+      var t = Math.min(1, (ts - t0) / SLAB_MS);
+      var e = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;     // entra y sale suave
+      paint(from + (to - from) * e);
+      if (t < 1) { slabTimer = requestAnimationFrame(step); return; }
+      slabTimer = null;
+      old.classList.remove('on');
+      var ov = old.querySelector('video'); if (ov) ov.pause();
+      resetLayers();
+    }
+    slabTimer = requestAnimationFrame(step);
+  }
+
   function setBackground(m, dir) {
     var key = (m && (m.video || m.image)) || '';
     if (key === currentBg) return;
     currentBg = key;
+    if (slabTimer) { cancelAnimationFrame(slabTimer); slabTimer = null; resetLayers(); }       // si había un cambio de piso a medias, se termina de golpe
     var next = layers[(active + 1) % 2];
     next.innerHTML = '';
     // dir > 0: se baja de piso (la imagen nueva entra desde arriba); dir < 0: se sube
@@ -483,6 +545,12 @@ body.card-open #floorInfo { display: none; }
       im.src = m.image; im.alt = '';
       if (m.fit) im.style.objectFit = m.fit;
       next.appendChild(im);
+    }
+    if (m && m.stack && dir && active >= 0 && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+      var cur = layers[active];
+      active = (active + 1) % 2;
+      scanSwap(next, cur, dir > 0);
+      return;
     }
     next.classList.add('on');
     if (active >= 0) {
@@ -1077,6 +1145,8 @@ body.card-open #floorInfo { display: none; }
     });
   }
 
+  var stageTimer = null;
+
   function selectFloor(i, force) {
     if (i < 0 || i >= floors.length) return;
     var dir = floorIdx < 0 ? 0 : (i > floorIdx ? 1 : (i < floorIdx ? -1 : 0));
@@ -1086,12 +1156,14 @@ body.card-open #floorInfo { display: none; }
     track('piso', f.short || f.label);
     closeCard();
     floorStage.classList.add('swap');
-    setBackground({ image: f.image, fit: fitMode() }, dir);
+    setBackground({ image: f.image, fit: fitMode(), stack: true }, dir);
     withDims(f.image, function () {
       if (floors[floorIdx] !== f) return;
       layoutStage();
       renderStage(f);
-      requestAnimationFrame(function () { floorStage.classList.remove('swap'); });
+      // las zonas y los puntos del piso nuevo aparecen cuando la planta ya se acomodó (no encima de la que se está yendo)
+      clearTimeout(stageTimer);
+      stageTimer = setTimeout(function () { floorStage.classList.remove('swap'); }, dir ? SLAB_MS - 100 : 0);
     });
     Array.prototype.forEach.call($('fList').children, function (b, k) {
       b.classList.toggle('on', k === i);
