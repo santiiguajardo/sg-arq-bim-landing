@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-S/721CznsvOPcLHjQNlaw7SfmNa9WFgRcq4Ffe3UHCo=&#x27; &#x27;sha256-5m5j3E/o0j4r3Qdlsjg/kRx83Av6D5qPQhA4WcEl2jU=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;self&#x27; https://gc.zgo.at https://cdnjs.cloudflare.com &#x27;sha256-S/721CznsvOPcLHjQNlaw7SfmNa9WFgRcq4Ffe3UHCo=&#x27; &#x27;sha256-7zBB/UcFvJezmnUPbISpU15bmAxwM1ci2GFqGIDEt5Q=&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; img-src &#x27;self&#x27; data: blob: https:; media-src &#x27;self&#x27; data: blob:; connect-src &#x27;self&#x27; https://tiles.openfreemap.org https://*.goatcounter.com https://script.google.com https://script.googleusercontent.com; worker-src blob:; child-src blob:; frame-src https://www.google.com https://www.openstreetmap.org; object-src &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;none&#x27;; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Edificio Plaza Londres · Showroom virtual</title>
@@ -55,6 +55,10 @@ a { color: inherit; }
 #brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; font-size: 12.8px; text-shadow: 0 1px 12px rgba(0,0,0,.5); }
 #brand img { height: 24px; width: auto; max-width: 96px; object-fit: contain; }
 .tb-right { display: flex; gap: 8px; }
+.tb-left { display: flex; align-items: center; gap: 8px; }
+/* "Volver": solo aparece si el showroom se abrió desde el sitio del estudio (la landing) */
+#backBtn { width: 36px; height: 36px; padding: 0; justify-content: center; }
+#backBtn[hidden] { display: none; }
 #fsBtn { gap: 8px; padding: 0 16px; }
 #fsBtn .ico { font-size: 12.8px; line-height: 1; }
 
@@ -400,7 +404,10 @@ body.card-open #floorInfo { display: none; }
 <div id="stage"><div id="shade"></div></div>
 
 <header id="topbar">
-  <button class="pill" id="menuBtn" type="button" aria-label="Abrir menú"><span class="burger"><i></i></span>Menú</button>
+  <div class="tb-left">
+    <a class="pill round" id="backBtn" hidden aria-label="Volver al sitio"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <button class="pill" id="menuBtn" type="button" aria-label="Abrir menú"><span class="burger"><i></i></span>Menú</button>
+  </div>
   <div id="brand" role="button" tabindex="0" aria-label="Volver al inicio"></div>
   <div class="tb-right">
     <a class="pill" id="waBtn" target="_blank" rel="noopener">WhatsApp</a>
@@ -765,6 +772,24 @@ body.card-open #floorInfo { display: none; }
 
   function openMenu() { document.body.classList.add('menu-open'); }
   function closeMenu() { document.body.classList.remove('menu-open'); }
+  /* Botón "volver": si se llegó desde otra página del mismo sitio (la landing del estudio) se muestra arriba a la izquierda y vuelve ahí.
+     El origen se recuerda en la sesión para que siga apareciendo después de recargar o de moverse por el showroom. */
+  (function () {
+    var back = $('backBtn');
+    if (!back) return;
+    var from = '';
+    try { from = sessionStorage.getItem('srFrom') || ''; } catch (e) { /* sin almacenamiento */ }
+    try {
+      var ref = document.referrer ? new URL(document.referrer) : null;
+      if (ref && ref.origin === location.origin && ref.pathname.indexOf('/showrooms/') < 0) {
+        from = ref.origin + ref.pathname + ref.search;
+        try { sessionStorage.setItem('srFrom', from); } catch (e) { /* sin almacenamiento */ }
+      }
+    } catch (e) { /* referrer inválido */ }
+    if (!from) return;
+    back.href = from;
+    back.hidden = false;
+  })();
   $('menuBtn').addEventListener('click', openMenu);
   $('menuClose').addEventListener('click', closeMenu);
   $('drawerBack').addEventListener('click', closeMenu);
