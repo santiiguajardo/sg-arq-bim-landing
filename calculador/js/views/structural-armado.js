@@ -544,7 +544,7 @@ export function slab2ArmadoFigure(res, pal = 'screen') {
 // X, Y: abscisas acumuladas de los ejes (m); panels: [{ i, j, bx, by }] con bx = barras paralelas a x, by = paralelas a y ({ db, s });
 // supportsX[i] / supportsY[j]: { M (kN·m/m), bar } de las barras superiores sobre el eje i (paralelas a x) o j (paralelas a y).
 // Cada paño muestra dos barras tipo de cada dirección y su rótulo; las barras superiores se dibujan a cada lado del eje.
-export function slabLevelArmadoFigure({ level, hCm, X, Y, panels, supportsX, supportsY, letter, pal = 'screen' }) {
+export function slabLevelArmadoFigure({ level, hCm, X, Y, panels, supportsX, supportsY, letter, on = () => true, pal = 'screen' }) {
   const p = PAL[pal];
   const W = 600;
   const Lx = X[X.length - 1];
@@ -557,7 +557,7 @@ export function slabLevelArmadoFigure({ level, hCm, X, Y, panels, supportsX, sup
   const tx = (b) => (b ? `ø${b.db} c/${nf(b.s / 10, b.s % 10 ? 1 : 0)}` : '—');
   const fx = (t) => t.replace('<text ', '<text data-fixed="1" ');       // los rótulos van en su lugar: no los mueve el acomodador de etiquetas
   let s = text(8, 16, `Nivel ${level} · planta de armado de la losa${hCm ? ` · e = ${nf(hCm, 0)} cm` : ''}`, { fill: p.ink, size: 12, weight: 600 });
-  s += `<rect x="${f1(px(0))}" y="${f1(py(Ly))}" width="${f1(Lx * k)}" height="${f1(Ly * k)}" fill="${p.fill}" fill-opacity="0.45" stroke="${p.line}"/>`;
+  X.slice(0, -1).forEach((x, i) => Y.slice(0, -1).forEach((y, j) => { if (on(i, j)) s += `<rect x="${f1(px(x))}" y="${f1(py(Y[j + 1]))}" width="${f1((X[i + 1] - x) * k)}" height="${f1((Y[j + 1] - y) * k)}" fill="${p.fill}" fill-opacity="0.45" stroke="${p.line}"/>`; }));
   // ejes
   X.forEach((x, i) => { s += `<line x1="${f1(px(x))}" y1="${f1(py(Ly) - 4)}" x2="${f1(px(x))}" y2="${f1(py(0) + 6)}" stroke="${p.soft}" stroke-width="0.8" stroke-dasharray="4 3"/>${text(px(x), py(0) + 18, String(i + 1), { fill: p.soft, size: 10, anchor: 'middle', weight: 600 })}`; });
   Y.forEach((y, j) => { s += `<line x1="${f1(px(0) - 6)}" y1="${f1(py(y))}" x2="${f1(px(Lx) + 4)}" y2="${f1(py(y))}" stroke="${p.soft}" stroke-width="0.8" stroke-dasharray="4 3"/>${text(px(0) - 12, py(y) + 3.5, letter(j), { fill: p.soft, size: 10, anchor: 'middle', weight: 600 })}`; });
@@ -582,10 +582,11 @@ export function slabLevelArmadoFigure({ level, hCm, X, Y, panels, supportsX, sup
   const dash = `stroke="${p.ink}" stroke-width="2" stroke-dasharray="7 2" stroke-linecap="round"`;
   supportsX.forEach((sp, i) => {
     if (!sp.bar || !(sp.M > 0.05)) return;
-    const wl = i > 0 ? (X[i] - X[i - 1]) * 0.3 : 0;
-    const wr = i < X.length - 1 ? (X[i + 1] - X[i]) * 0.3 : 0;
     const hook = (i === 0 || i === X.length - 1);
     for (let j = 0; j < Y.length - 1; j++) {
+      if (!on(i - 1, j) && !on(i, j)) continue;
+      const wl = i > 0 && on(i - 1, j) ? (X[i] - X[i - 1]) * 0.3 : 0;
+      const wr = i < X.length - 1 && on(i, j) ? (X[i + 1] - X[i]) * 0.3 : 0;
       [0.28, 0.72].forEach((f) => {
         const yy = py(Y[j + 1]) + (py(Y[j]) - py(Y[j + 1])) * f - 5;
         s += `<line x1="${f1(px(X[i]) - wl * k)}" y1="${f1(yy)}" x2="${f1(px(X[i]) + wr * k)}" y2="${f1(yy)}" ${dash}/>`;
@@ -596,9 +597,10 @@ export function slabLevelArmadoFigure({ level, hCm, X, Y, panels, supportsX, sup
   });
   supportsY.forEach((sp, j) => {
     if (!sp.bar || !(sp.M > 0.05)) return;
-    const wd = j > 0 ? (Y[j] - Y[j - 1]) * 0.3 : 0;
-    const wu = j < Y.length - 1 ? (Y[j + 1] - Y[j]) * 0.3 : 0;
     for (let i = 0; i < X.length - 1; i++) {
+      if (!on(i, j - 1) && !on(i, j)) continue;
+      const wd = j > 0 && on(i, j - 1) ? (Y[j] - Y[j - 1]) * 0.3 : 0;
+      const wu = j < Y.length - 1 && on(i, j) ? (Y[j + 1] - Y[j]) * 0.3 : 0;
       [0.28, 0.72].forEach((f) => {
         const xx = px(X[i]) + (px(X[i + 1]) - px(X[i])) * f + 5;
         s += `<line x1="${f1(xx)}" y1="${f1(py(Y[j]) + wd * k)}" x2="${f1(xx)}" y2="${f1(py(Y[j]) - wu * k)}" ${dash}/>`;

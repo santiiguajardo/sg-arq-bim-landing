@@ -2,7 +2,8 @@
 // Unidades: m, kN, kPa (los diseños de sección llaman a rc.js / column.js / footing.js en N y mm).
 //
 // Hipótesis (se informan en la memoria):
-//  - Grilla ortogonal con vigas en todos los ejes, losas apoyadas en vigas. Pórticos indesplazables (arriostrados).
+//  - Grilla ortogonal con losas apoyadas en vigas. Cada paño de la grilla puede estar vacío (planta en L, U, T, con patio…): hay
+//    vigas solo donde algún paño vecino tiene losa, y las vigas y franjas se parten en tramos continuos. Pórticos indesplazables (arriostrados).
 //  - Losas por franjas (art. 13.5.1): paños con relación de luces > 2 trabajan en una dirección (art. 13.6.1.2); los
 //    demás reparten la carga por igualdad de flechas (Rankine-Grashof) y cada franja es continua sobre apoyos rígidos.
 //  - Vigas y columnas por nivel (art. 8.9.1): sobrecarga solo en el nivel analizado y extremos lejanos de las
@@ -21,6 +22,31 @@ const cum = (arr) => arr.reduce((o, v) => { o.push(o[o.length - 1] + v); return 
 const sum = (arr) => arr.reduce((s, v) => s + v, 0);
 const NS = 20;
 
+// ---------------------------------------------------------------- paños vacíos (tipologías en planta)
+// inp.mask[i][j] === false marca un paño sin losa; todo lo demás es losa. Una columna existe solo en un nudo que toca algún paño con losa.
+export const panelOn = (inp, i, j) => i >= 0 && j >= 0 && i < inp.xSpans.length && j < inp.ySpans.length && !(inp.mask && inp.mask[i] && inp.mask[i][j] === false);
+export const nodeOn = (inp, i, j) => panelOn(inp, i - 1, j - 1) || panelOn(inp, i, j - 1) || panelOn(inp, i - 1, j) || panelOn(inp, i, j);
+const xBeamOn = (inp, i, j) => panelOn(inp, i, j - 1) || panelOn(inp, i, j);        // el tramo i de la línea x j lleva viga
+const yBeamOn = (inp, i, j) => panelOn(inp, i - 1, j) || panelOn(inp, i, j);        // el tramo j de la línea y i lleva viga
+export const hasVoids = (inp) => Boolean(inp.mask) && inp.xSpans.some((_, i) => inp.ySpans.some((__, j) => !panelOn(inp, i, j)));
+// rachas de tramos consecutivos: [{ start, ns }]
+function runsOf(len, on) {
+  const out = [];
+  let st = null;
+  for (let q = 0; q < len; q++) {
+    if (on(q)) { if (st === null) st = q; } else if (st !== null) { out.push({ start: st, ns: q - st }); st = null; }
+  }
+  if (st !== null) out.push({ start: st, ns: len - st });
+  return out;
+}
+// la racha (de vigas o de franjas) de una línea que pasa por el nudo/apoyo node
+export const runAt = (list, line, node) => list.find((r) => r.line === line && node >= r.start && node <= r.start + r.ns) || null;
+const loadsAt = (sols, line, node) => { const r = runAt(sols, line, node); return r ? nodeLoads(r, node - r.start) : { D: 0, L: 0 }; };
+const rowRun = (sl, i, j) => sl.rowsX.find((r) => r.j === j && i >= r.start && i < r.start + r.ns) || null;
+const colRun = (sl, i, j) => sl.colsY.find((c) => c.i === i && j >= c.start && j < c.start + c.ns) || null;
+const rowSupAt = (sl, i, j) => { const r = sl.rowsX.find((q) => q.j === j && i >= q.start && i <= q.start + q.ns); return r ? r.supports[i - r.start] : null; };
+const colSupAt = (sl, i, j) => { const c = sl.colsY.find((q) => q.i === i && j >= q.start && j <= q.start + q.ns); return c ? c.supports[j - c.start] : null; };
+
 // ---------------------------------------------------------------- geometría
 function geometry(inp) {
   const nx = inp.xSpans.length;
@@ -33,6 +59,7 @@ function geometry(inp) {
 // en los entrepisos 1..L: la columna de arriba nace sobre la viga del nivel L.
 function colExists(inp, m, i, j) {
   if (m < 1 || m > inp.levels.length) return false;
+  if (!nodeOn(inp, i, j)) return false;
   return !(inp.apeos || []).some((a) => a.i === i && a.j === j && m <= a.level);
 }
 const apeoAt = (inp, k, i, j) => (inp.apeos || []).find((a) => a.i === i && a.j === j && a.level === k) || null;
@@ -142,6 +169,7 @@ function slabRequiredH(inp, G, sizes, k) {
   let req = 0;
   for (let i = 0; i < nx; i++) {
     for (let j = 0; j < ny; j++) {
+      if (!panelOn(inp, i, j)) continue;
       const lx = inp.xSpans[i];
       const ly = inp.ySpans[j];
       const longL = Math.max(lx, ly);
@@ -178,7 +206,7 @@ function slabRequiredH(inp, G, sizes, k) {
         if (afm > 2) h = Math.max(0.09, f / (36 + 9 * beta));                       // (9-13)
         else if (afm > 0.2) h = Math.max(0.12, f / (36 + 5 * beta * (afm - 0.2)));  // (9-12)
         else h = Math.max(0.12, f / 36);                                             // art. 9.5.3.2 (aprox. sin vigas)
-        const edgeless = (i === 0 || i === nx - 1 || j === 0 || j === ny - 1) && alphas.some((a) => a < 0.8);
+        const edgeless = (!panelOn(inp, i - 1, j) || !panelOn(inp, i + 1, j) || !panelOn(inp, i, j - 1) || !panelOn(inp, i, j + 1)) && alphas.some((a) => a < 0.8);
         if (edgeless) h *= 1.10;                                                     // art. 9.5.3.3.d)
         req = Math.max(req, h);
       }
@@ -203,30 +231,35 @@ function slabStrips(inp, G, k, hs) {
     return ly ** 4 / (lx ** 4 + ly ** 4);
   };
   const cantL = (len) => (len > 0 ? { L: len, wD, wL: lv.cantLive ?? lv.live } : null);
+  // una franja por cada racha de paños con losa de una fila (x) o de una columna (y); los voladizos solo en los bordes de la grilla
   const rowsX = [];
   for (let j = 0; j < ny; j++) {
-    const spans = inp.xSpans.map((L, i) => ({ L, wD: share(i, j) * wD, wL: share(i, j) * wL }));
-    rowsX.push(analyzeStrip({ spans, cantLeft: cantL(inp.cant.left), cantRight: cantL(inp.cant.right) }));
+    runsOf(nx, (i) => panelOn(inp, i, j)).forEach((r) => {
+      const spans = Array.from({ length: r.ns }, (_, s) => ({ L: inp.xSpans[r.start + s], wD: share(r.start + s, j) * wD, wL: share(r.start + s, j) * wL }));
+      rowsX.push({ j, start: r.start, ns: r.ns, ...analyzeStrip({ spans, cantLeft: r.start === 0 ? cantL(inp.cant.left) : null, cantRight: r.start + r.ns === nx ? cantL(inp.cant.right) : null }) });
+    });
   }
   const colsY = [];
   for (let i = 0; i < nx; i++) {
-    const spans = inp.ySpans.map((L, j) => ({ L, wD: (1 - share(i, j)) * wD, wL: (1 - share(i, j)) * wL }));
-    colsY.push(analyzeStrip({ spans, cantLeft: cantL(inp.cant.front), cantRight: cantL(inp.cant.back) }));
+    runsOf(ny, (j) => panelOn(inp, i, j)).forEach((r) => {
+      const spans = Array.from({ length: r.ns }, (_, s) => ({ L: inp.ySpans[r.start + s], wD: (1 - share(i, r.start + s)) * wD, wL: (1 - share(i, r.start + s)) * wL }));
+      colsY.push({ i, start: r.start, ns: r.ns, ...analyzeStrip({ spans, cantLeft: r.start === 0 ? cantL(inp.cant.front) : null, cantRight: r.start + r.ns === ny ? cantL(inp.cant.back) : null }) });
+    });
   }
   return { wD, wL, rowsX, colsY, share };
 }
 
 // ---------------------------------------------------------------- subpórticos por nivel
 // Resuelve la línea (dir 'x' línea j, o dir 'y' línea i) del nivel k con los casos D, L por tramo y L de apeo.
-function solveLine(inp, G, sizes, k, dir, line, spansLoad, extra) {
+function solveLine(inp, G, sizes, k, dir, line, start, spansLoad, extra) {
   const { nx, ny, n } = G;
   const Ec = N.Ec(Number(inp.fc)) * 1000;
   const ns = spansLoad.length;
   const nodes = [];
-  const pos = (q) => (dir === 'x' ? G.X[q] : G.Y[q]);
+  const pos = (q) => (dir === 'x' ? G.X[q + start] : G.Y[q + start]);
   for (let q = 0; q <= ns; q++) nodes.push({ x: pos(q), y: 0 });
-  const gi = (q) => (dir === 'x' ? q : line);
-  const gj = (q) => (dir === 'x' ? line : q);
+  const gi = (q) => (dir === 'x' ? q + start : line);
+  const gj = (q) => (dir === 'x' ? line : q + start);
   const Hk = inp.levels[k - 1].h;
   const Hup = k < n ? inp.levels[k].h : 0;
   const bw = sizes.beamB[k][dir][line];
@@ -276,7 +309,7 @@ function solveLine(inp, G, sizes, k, dir, line, spansLoad, extra) {
   const Ls = spansLoad.map((_, s0) => run((s) => (s === s0 ? spansLoad[s].wL : 0), null));
   const hasLp = (extra || []).some((e) => e.L > 0);
   const Lp = hasLp ? run(() => 0, 'L') : null;
-  return { ns, idx, D, Ls, Lp, spans: spansLoad, bw, hb, transfers, dir, line };
+  return { ns, idx, D, Ls, Lp, spans: spansLoad, bw, hb, transfers, dir, line, start };
 }
 
 function memberOf(res, mi) { return res.members[mi]; }
@@ -385,51 +418,56 @@ function analyzeAll(inp, G, sizes) {
     const lv = inp.levels[k - 1];
     const wallX = (j) => ((j === 0 || j === ny) ? (inp.wall || 0) : 0);
     const wallY = (i) => ((i === 0 || i === nx) ? (inp.wall || 0) : 0);
-    // cargas lineales sobre vigas (servicio): reacciones de las franjas + peso propio + muros
-    const beamSpans = { x: [], y: [] };
+    // cargas lineales sobre vigas (servicio): reacciones de las franjas + peso propio + muros (solo en el borde exterior de la planta)
+    const perim = (a, b) => (a !== b ? (inp.wall || 0) : 0);
+    const beamRuns = { x: [], y: [] };
     for (let j = 0; j <= ny; j++) {
-      const spans = inp.xSpans.map((L, i) => {
-        const fromStrips = (col) => {
-          // franja en y de la columna de paños i, apoyo j
-          const sup = slabs.colsY[i].supports[j];
-          return col === 'D' ? sup.RD : sup.RL;
-        };
-        const self = sizes.beamB[k].x[j] * Math.max(0, sizes.beamH[k].x[j] - hs) * GAMMA;
-        return { L, wD: fromStrips('D') + self + wallX(j), wL: fromStrips('L') };
+      runsOf(nx, (i) => xBeamOn(inp, i, j)).forEach((r) => {
+        const spans = Array.from({ length: r.ns }, (_, s) => {
+          const i = r.start + s;
+          const sup = colSupAt(slabs, i, j);
+          const self = sizes.beamB[k].x[j] * Math.max(0, sizes.beamH[k].x[j] - hs) * GAMMA;
+          return { L: inp.xSpans[i], wD: (sup ? sup.RD : 0) + self + perim(panelOn(inp, i, j - 1), panelOn(inp, i, j)), wL: sup ? sup.RL : 0 };
+        });
+        beamRuns.x.push({ line: j, start: r.start, spans });
       });
-      beamSpans.x.push(spans);
     }
     for (let i = 0; i <= nx; i++) {
-      const spans = inp.ySpans.map((L, j) => {
-        const sup = slabs.rowsX[j].supports[i];
-        const self = sizes.beamB[k].y[i] * Math.max(0, sizes.beamH[k].y[i] - hs) * GAMMA;
-        return { L, wD: sup.RD + self + wallY(i), wL: sup.RL };
+      runsOf(ny, (j) => yBeamOn(inp, i, j)).forEach((r) => {
+        const spans = Array.from({ length: r.ns }, (_, s) => {
+          const j = r.start + s;
+          const sup = rowSupAt(slabs, i, j);
+          const self = sizes.beamB[k].y[i] * Math.max(0, sizes.beamH[k].y[i] - hs) * GAMMA;
+          return { L: inp.ySpans[j], wD: (sup ? sup.RD : 0) + self + perim(panelOn(inp, i - 1, j), panelOn(inp, i, j)), wL: sup ? sup.RL : 0 };
+        });
+        beamRuns.y.push({ line: i, start: r.start, spans });
       });
-      beamSpans.y.push(spans);
     }
+    const beamSpans = beamRuns;
     // apeos de este nivel: carga de la columna que apoya (axial en la base del entrepiso k+1) y reacciones cruzadas
     const apeos = (inp.apeos || []).filter((a) => a.level === k);
     const cross = new Map();   // clave "i,j" -> {D, L} reacción de la línea que NO transfiere
     let solX = [];
     let solY = [];
-    const extraFor = (dir, line) => {
+    const extraFor = (dir, line, start, ns) => {
       const out = [];
       apeos.filter((a) => a.dir === dir).forEach((a) => {
         const q = dir === 'x' ? a.i : a.j;
         const ln = dir === 'x' ? a.j : a.i;
-        if (ln !== line) return;
+        if (ln !== line || q < start || q > start + ns) return;
         const P = bottom[k + 1][a.i][a.j];
         const cr = cross.get(`${a.i},${a.j}`) || { D: 0, L: 0 };
-        out.push({ q, D: P.D + cr.D, L: P.L + cr.L });
+        out.push({ q: q - start, D: P.D + cr.D, L: P.L + cr.L });
       });
       return out;
     };
     for (let round = 0; round < (apeos.length ? 4 : 1); round++) {
-      solX = beamSpans.x.map((spans, j) => solveLine(inp, G, sizes, k, 'x', j, spans, extraFor('x', j)));
-      solY = beamSpans.y.map((spans, i) => solveLine(inp, G, sizes, k, 'y', i, spans, extraFor('y', i)));
+      solX = beamRuns.x.map((r) => solveLine(inp, G, sizes, k, 'x', r.line, r.start, r.spans, extraFor('x', r.line, r.start, r.spans.length)));
+      solY = beamRuns.y.map((r) => solveLine(inp, G, sizes, k, 'y', r.line, r.start, r.spans, extraFor('y', r.line, r.start, r.spans.length)));
       apeos.forEach((a) => {
-        const other = a.dir === 'x' ? solY[a.i] : solX[a.j];
-        const q = a.dir === 'x' ? a.j : a.i;
+        const other = a.dir === 'x' ? runAt(solY, a.i, a.j) : runAt(solX, a.j, a.i);
+        if (!other) return;
+        const q = (a.dir === 'x' ? a.j : a.i) - other.start;
         cross.set(`${a.i},${a.j}`, nodeLoads(other, q));
       });
     }
@@ -437,8 +475,8 @@ function analyzeAll(inp, G, sizes) {
     const F = Array.from({ length: nx + 1 }, () => Array.from({ length: ny + 1 }, () => ({ D: 0, L: 0 })));
     for (let i = 0; i <= nx; i++) {
       for (let j = 0; j <= ny; j++) {
-        const a = nodeLoads(solX[j], i);
-        const b = nodeLoads(solY[i], j);
+        const a = loadsAt(solX, j, i);
+        const b = loadsAt(solY, i, j);
         F[i][j] = { D: a.D + b.D, L: a.L + b.L };
       }
     }
@@ -462,6 +500,8 @@ function analyzeAll(inp, G, sizes) {
 // ---------------------------------------------------------------- diseño
 const patterns = ['all', 'alt1', 'alt2'];
 const loaded = (p, s) => p === 'all' || (p === 'alt1' ? s % 2 === 0 : s % 2 === 1);
+
+const patternMomentAt = (sols, line, node, which, p) => { const r = runAt(sols, line, node); return r ? patternMoment(r, node - r.start, which, p) : 0; };
 
 function patternMoment(sol, q, which, p) {
   // momento de extremo de columna en el nudo q de la línea sol, con el patrón p de sobrecarga (1,2 D + 1,6 L)
@@ -498,8 +538,11 @@ function designAll(inp, G, sizes, an) {
     const phiVc = (N.phiShear * Math.min(Math.sqrt(fc), N.maxSqrtFcShear) / 6 * 1000 * (hs * 1000 - 20 - 8)) / 1000; // kN/m, d ≈ h − 28 mm
     for (let j = 0; j < ny; j++) {
       for (let i = 0; i < nx; i++) {
-        const rowX = lv.slabs.rowsX[j].spans[i];
-        const colY = lv.slabs.colsY[i].spans[j];
+        if (!panelOn(inp, i, j)) continue;
+        const rr = rowRun(lv.slabs, i, j);
+        const cr = colRun(lv.slabs, i, j);
+        const rowX = rr.spans[i - rr.start];
+        const colY = cr.spans[j - cr.start];
         const px = sOpt(rowX.posM);
         const py = sOpt(colY.posM);
         const bx = sFmt(px);
@@ -513,17 +556,19 @@ function designAll(inp, G, sizes, an) {
     // apoyos (negativos): línea i de apoyos de las franjas en x, línea j de las franjas en y
     for (let i = 0; i <= nx; i++) {
       let M = 0;
-      lv.slabs.rowsX.forEach((r) => { M = Math.max(M, r.supports[i].negM); });
+      let any = false;
+      lv.slabs.rowsX.forEach((r) => { if (i >= r.start && i <= r.start + r.ns) { any = true; M = Math.max(M, r.supports[i - r.start].negM); } });
       const o = sOpt(M);
-      if (!o.options[0]) slabFail = true;
-      slabLv.supportsX.push({ line: i, M, bar: sFmt(o) });
+      if (any && !o.options[0]) slabFail = true;
+      slabLv.supportsX.push({ line: i, M, bar: any ? sFmt(o) : null });
     }
     for (let j = 0; j <= ny; j++) {
       let M = 0;
-      lv.slabs.colsY.forEach((c) => { M = Math.max(M, c.supports[j].negM); });
+      let any = false;
+      lv.slabs.colsY.forEach((c) => { if (j >= c.start && j <= c.start + c.ns) { any = true; M = Math.max(M, c.supports[j - c.start].negM); } });
       const o = sOpt(M);
-      if (!o.options[0]) slabFail = true;
-      slabLv.supportsY.push({ line: j, M, bar: sFmt(o) });
+      if (any && !o.options[0]) slabFail = true;
+      slabLv.supportsY.push({ line: j, M, bar: any ? sFmt(o) : null });
     }
     slabLv.fail = slabFail;
     if (slabFail && hs < 0.30) { sizes.slabExtra[k] = Math.max(sizes.slabExtra[k] || 0, hs + 0.01); out.changed = true; }
@@ -533,7 +578,8 @@ function designAll(inp, G, sizes, an) {
     const beamLv = { k, x: [], y: [] };
     ['x', 'y'].forEach((dir) => {
       const sols = dir === 'x' ? lv.solX : lv.solY;
-      sols.forEach((sol, line) => {
+      sols.forEach((sol) => {
+        const line = sol.line;
         const env = lineEnvelope(sol);
         // Diseña todos los tramos con (b, h); si algo no verifica devuelve la causa: 'flexión', 'ancho' o 'corte'.
         const evalLine = (b, h) => {
@@ -568,7 +614,7 @@ function designAll(inp, G, sizes, an) {
           sizes.beamH[k][dir][line] = h / 1000;
           out.changed = true;
         }
-        const rec = { dir, line, b: b / 1000, h: h / 1000, spans, fail, transfer: sol.transfers.length > 0,
+        const rec = { dir, line, start: sol.start, ns: sol.ns, b: b / 1000, h: h / 1000, spans, fail, transfer: sol.transfers.length > 0,
           exceeds: (b > inp.beamB * 10 + 1e-6 ? ['ancho'] : []).concat(inp.beamHmax > 0 && h > inp.beamHmax * 10 + 1e-6 ? ['altura'] : []) };
         beamLv[dir].push(rec);
       });
@@ -592,8 +638,8 @@ function designAll(inp, G, sizes, an) {
         const hBeam = Math.max(sizes.beamH[m].x[j], sizes.beamH[m].y[i]);
         const lu = (inp.levels[m - 1].h - hBeam) * 1000;
         const cases = patterns.map((p) => {
-          const top = { x: patternMoment(lvTop.solX[j], i, 'below', p), y: patternMoment(lvTop.solY[i], j, 'below', p) };
-          const bot = lvBot ? { x: patternMoment(lvBot.solX[j], i, 'above', p), y: patternMoment(lvBot.solY[i], j, 'above', p) } : { x: 0, y: 0 };
+          const top = { x: patternMomentAt(lvTop.solX, j, i, 'below', p), y: patternMomentAt(lvTop.solY, i, j, 'below', p) };
+          const bot = lvBot ? { x: patternMomentAt(lvBot.solX, j, i, 'above', p), y: patternMomentAt(lvBot.solY, i, j, 'above', p) } : { x: 0, y: 0 };
           const px = endMomentsPair(top.x, bot.x);
           const py = endMomentsPair(top.y, bot.y);
           return { Pu: Pu * 1000, sustained: sustained * 1000, M2x: px.M2 * 1e6, M1x: px.M1 * 1e6, M2y: py.M2 * 1e6, M1y: py.M1 * 1e6 };
@@ -625,17 +671,29 @@ function quantities(inp, G, sizes, des) {
   const KG = 7850 / 1e9;   // kg por mm3 de acero
   const xTot = sum(inp.xSpans) + inp.cant.left + inp.cant.right;
   const yTot = sum(inp.ySpans) + inp.cant.front + inp.cant.back;
-  q.area = xTot * yTot * n;
+  // superficie de losa de un nivel: con paños vacíos se suman solo los paños con losa y los voladizos de sus bordes
+  let areaLevel = xTot * yTot;
+  let frac = 1;
+  if (hasVoids(inp)) {
+    let act = 0;
+    inp.xSpans.forEach((lx, i) => inp.ySpans.forEach((ly, j) => { if (panelOn(inp, i, j)) act += lx * ly; }));
+    const edgeLen = (on, spans) => spans.reduce((t, l, q) => t + (on(q) ? l : 0), 0);
+    areaLevel = act
+      + inp.cant.left * edgeLen((j) => panelOn(inp, 0, j), inp.ySpans) + inp.cant.right * edgeLen((j) => panelOn(inp, inp.xSpans.length - 1, j), inp.ySpans)
+      + inp.cant.front * edgeLen((i) => panelOn(inp, i, 0), inp.xSpans) + inp.cant.back * edgeLen((i) => panelOn(inp, i, inp.ySpans.length - 1), inp.xSpans);
+    frac = act / (sum(inp.xSpans) * sum(inp.ySpans));
+  }
+  q.area = areaLevel * n;
   for (let k = 1; k <= n; k++) {
     const hs = sizes.slabH[k];
-    const lq = { k, slabVol: hs * xTot * yTot, slabKg: 0, beamVol: 0, beamKg: 0, colVol: 0, colKg: 0 };
+    const lq = { k, slabVol: hs * areaLevel, slabKg: 0, beamVol: 0, beamKg: 0, colVol: 0, colKg: 0 };
     // armadura de losas (orientativa): positiva en cada dirección y negativa en el 60 % de la luz sobre apoyos
     des.slabs[k].panels.forEach((p) => {
       if (p.bx) lq.slabKg += p.bx.As * 1e-6 * p.ly * p.lx * 7850;
       if (p.by) lq.slabKg += p.by.As * 1e-6 * p.ly * p.lx * 7850;
     });
-    des.slabs[k].supportsX.forEach((s) => { if (s.bar) lq.slabKg += s.bar.As * 1e-6 * sum(inp.ySpans) * 0.6 * (sum(inp.xSpans) / nx) * 7850; });
-    des.slabs[k].supportsY.forEach((s) => { if (s.bar) lq.slabKg += s.bar.As * 1e-6 * sum(inp.xSpans) * 0.6 * (sum(inp.ySpans) / ny) * 7850; });
+    des.slabs[k].supportsX.forEach((s) => { if (s.bar) lq.slabKg += s.bar.As * 1e-6 * sum(inp.ySpans) * frac * 0.6 * (sum(inp.xSpans) / nx) * 7850; });
+    des.slabs[k].supportsY.forEach((s) => { if (s.bar) lq.slabKg += s.bar.As * 1e-6 * sum(inp.xSpans) * frac * 0.6 * (sum(inp.ySpans) / ny) * 7850; });
     des.slabs[k].vol = lq.slabVol;
     des.slabs[k].kg = lq.slabKg;
     ['x', 'y'].forEach((dir) => {
@@ -695,6 +753,7 @@ export function validateBuilding(inp) {
   if (!inp.levels.length || inp.levels.some((l) => !(l.h > 0))) errs.push('Cargá al menos un nivel, con altura mayor que cero.');
   if (inp.levels.length > 12) errs.push('Hasta 12 niveles.');
   if (inp.xSpans.length > 8 || inp.ySpans.length > 8) errs.push('Hasta 8 vanos por dirección.');
+  if (!inp.xSpans.some((_, i) => inp.ySpans.some((__, j) => panelOn(inp, i, j)))) errs.push('La planta no tiene ningún paño con losa: dejá al menos uno.');
   (inp.apeos || []).forEach((a) => {
     if (a.level < 1 || a.level >= inp.levels.length) errs.push('El nivel del apeo tiene que ser menor que el último nivel.');
     if (a.i < 0 || a.i > inp.xSpans.length || a.j < 0 || a.j > inp.ySpans.length) errs.push('El apeo está fuera de la grilla.');

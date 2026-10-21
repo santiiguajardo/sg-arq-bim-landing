@@ -1,3 +1,4 @@
+import { designRanges } from './structural-rangos.js';
 import { addCalc, setCalcField, duplicateCalc, deleteCalc } from '../state.js';
 import { escapeHtml, formatDateShort, openModal, closeModal, showToast, confirmAction } from '../utils.js';
 import { CIRSOC201 as N, LIVE_LOADS, ARTICLES } from '../structural/norms.js';
@@ -349,7 +350,7 @@ function summaryOf(c) {
   if (c.element === 'scomp') return `cubierta cilíndrica, luz ${fmt(c.design.L, 1)} m, flecha ${fmt(c.design.f, 1)} m`;
   if (c.element === 'stens') return `${c.design.kind === 'hr' ? `hiperboloide, ${c.design.nNodes} nudos` : `${c.design.kind === 'jawerth' ? `cercha Jawerth ${c.design.layout === 'radial' ? 'radial' : c.design.layout === 'plana' || c.design.cover === 'a' || c.design.cover === 'b' ? 'plana' : 'espacial'}` : c.design.kind === 'heavy' ? 'cubierta pesada' : 'paraboloide hiperbólico'}, luz ${fmt(c.design.L, 1)} m, flecha ${fmt(c.design.f, 1)} m`}`;
   if (c.element === 'stie') return `T = ${fmt(c.design.T, 0)} kg, L = ${fmt(c.design.L, 1)} m`;
-  if (c.element === 'building') return `${c.design.levels.length} niveles, ${c.design.xSpans.length} × ${c.design.ySpans.length} vanos`;
+  if (c.element === 'building') return `${c.design.levels.length} niveles, ${c.design.xSpans.length} × ${c.design.ySpans.length} vanos${c.design.typo && c.design.typo !== 'rect' ? `, planta ${({ L: 'en L', U: 'en U', T: 'en T', cruz: 'en cruz', H: 'en H', patio: 'con patio', escalera: 'escalonada', custom: 'libre' })[c.design.typo] || ''}` : ''}`;
   if (c.element === 'column') return `${fmt(c.section.b, 0)} × ${fmt(c.section.h, 0)} cm, ${fmt(c.design.PD + c.design.PL, 0)} kN`;
   if (c.element === 'footing' && c.design.footType === 'combined') return `Base unificada, ${fmt(c.design.PD1 + c.design.PL1 + c.design.PD2 + c.design.PL2, 0)} kN, ℓ = ${fmt(c.design.ell, 0)} cm, suelo ${fmt(c.design.sigma, 1)} kg/cm²`;
   if (c.element === 'footing') return `${FOOTING_NAMES[c.design.footType] || 'Base aislada'}, ${fmt(c.design.PD + c.design.PL, 0)} kN, suelo ${fmt(c.design.sigma, 1)} kg/cm²`;
@@ -485,6 +486,7 @@ function renderCalc(root, state, calc, step) {
   if (step === 1) body.innerHTML = mod ? mod.step1(calc) : stepDesign(calc);
   else if (step === 2) body.innerHTML = mod ? mod.step2(calc) : stepPredim(calc);
   else body.innerHTML = mod ? mod.step3(calc, out) : stepDim(calc, out);
+  if (step === 3 && GL.has(calc.element)) body.insertAdjacentHTML('beforeend', designRanges(calc));
   applyForceUnits(body);
   tidySvgs(body);
   wireUnitToggle(root, () => window.dispatchEvent(new HashChangeEvent('hashchange')));

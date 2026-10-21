@@ -47,6 +47,17 @@ export function wallProps(w, hTot, gammaC = 2.4) {
   return { kind: 'rect', e, lw, J, area: e * lw, F: e * lw, W: J / (lw / 2), Pp: e * lw * hTot * gammaC };
 }
 
+// Sistemas estructurales de edificios en torre y la cantidad de pisos hasta la que se usan (resumen de la cátedra, "Edificio en torre")
+export const TOWER_SYSTEMS = [
+  { id: 'tabiques', name: 'Sistema de tabiques contraviento', max: 35, text: 'tabiques de hormigón armado que trabajan a flexocompresión como una ménsula empotrada en el suelo' },
+  { id: 'aporticado', name: 'Sistema aporticado', max: 20, text: 'pórtico múltiple de losas, vigas y columnas con nudos rígidos que trabaja como un solo elemento (flexión en los dinteles, normales en los pilares); la mayor deformación está en la base y disminuye hacia arriba' },
+  { id: 'combinado', name: 'Sistema combinado tabique-pórtico', max: 50, text: 'se usa cuando los tabiques no alcanzan para el viento: núcleo central de tabiques más pórticos perimetrales (planta libre); los pórticos se oponen mejor a la deformación arriba y los tabiques abajo' },
+  { id: 'tubo', name: 'Tubo y tubo calado', max: 60, text: 'fachada de columnas y vigas muy próximas (o enrejado con diagonales) que trabaja como un tubo; a igual área, un tubo ciego tiene el doble de inercia que 4 tabiques paralelos, y los vanos lo transforman en tubo calado (menos rígido)' },
+  { id: 'tubo-en-tubo', name: 'Tubo en tubo calado', max: 83, text: 'tubo exterior más núcleo interior de circulación vertical; aumenta notoriamente la rigidez y sirve para plantas libres' },
+  { id: 'haz', name: 'Haz de tubos', max: 110, text: 'conjunto de tubos cruzados por pantallas que actúan como diafragmas; resuelve el aumento de tensión en las esquinas del tubo calado' },
+];
+export const systemsFor = (floors) => TOWER_SYSTEMS.map((q) => ({ ...q, ok: floors <= q.max }));
+
 // p: { B, L, nTipo, hTipo, hPB, nSub, hSub, B1, L1, V, exposure, Kd, I, Kzt, G, closed, gcpi, qpp0, qpp1, fc (kg/cm²: σbk), E, tauAdm, sigmaS, sigmaBadm (0 = automática), gammaSeg, sigmaT (kg/cm²),
 //      flechaRatio, walls: [...], barD, barDh }
 export function designTower(p) {
@@ -88,7 +99,7 @@ export function designTower(p) {
   // ---- período, frecuencia y esbeltez
   const T = 0.08 * h / Math.sqrt(L) * Math.sqrt(h / (L + h));
   const freq = 1 / T;
-  const slender = h / L;
+  const slender = h / Math.min(B, L);                                          // esbeltez = altura / lado menor (resumen de la cátedra: torre si > 3)
   // ---- pesos
   const B1 = Number(p.B1); const L1 = Number(p.L1);
   const q0 = Number(p.qpp0); const q1 = Number(p.qpp1);
@@ -101,7 +112,7 @@ export function designTower(p) {
   const e0 = Mbase / G0;
   const F = B1 * L1; const Wf = B1 * L1 * L1 / 6;
   const sMax = G1 / F + Mbase / Wf; const sMin = G1 / F - Mbase / Wf;
-  const sigmaT = Number(p.sigmaT) || 2.5;
+  const sigmaT = Number(p.sigmaT) || 1.9;
   const qvMax = wind.length > 1 ? wind[top].pTm2 * B : 0;
   const qvMin = wind.length > 1 ? wind[1].pTm2 * B : 0;
   const qv = (qvMax + qvMin) / 2;
@@ -183,7 +194,7 @@ export function designTower(p) {
   });
   res.stateLabels = ['Sin sobrecarga', 'Con sobrecarga'];
   // ---- verificaciones
-  const f1 = (v, n = 0) => Number(v).toFixed(n);
+  const f1 = (v, n = 0) => Number(v).toFixed(n).replace('.', ',');
   res.checks.push({ ok: volc >= 1.5 - 1e-9, label: 'Volcamiento', text: `M equil / M volc = G L1 / 2 / M = ${f1(G0)} t × ${f1(L1 / 2, 1)} m / ${f1(Mbase)} tm = ${f1(volc, 2)} ≥ 1,5 (G sin sobrecarga)` });
   res.checks.push({ ok: e0 <= L1 / 6 + 1e-9, label: 'Resultante en el núcleo central de la base', text: `e = M / N = ${f1(Mbase)} / ${f1(G0)} = ${f1(e0, 2)} m ≤ L1 / 6 = ${f1(L1 / 6, 2)} m` });
   res.checks.push({ ok: sMax / 10 <= sigmaT + 1e-9, label: 'Tensión del terreno (platea de fundación)', text: `σ = −G / F ± M / W = −${f1(G1 / F, 2)} ± ${f1(Mbase / Wf, 2)} t/m² → ${f1(-sMax, 2)} / ${f1(-sMin, 2)} t/m² (σmáx = ${f1(sMax / 10, 2)} kg/cm²) ≤ ${f1(sigmaT, 2)} kg/cm²` });
@@ -196,8 +207,38 @@ export function designTower(p) {
     if (w.kind === 'U') res.checks.push({ ok: w.flange.sigma / 10 <= sBadm + 1e-9 && w.flange.sigma > 0, label: `Tabique ${w.name}: ala comprimida`, text: `N = par + losas + peso = ${f1(w.flange.par, 0)} + ${f1(q1 * w.flange.a * nOver, 0)} + ${f1(w.flange.Pp, 0)} = ${f1(w.flange.N, 0)} t; σ = ${f1(w.flange.sigma, 1)} ≤ ${f1(sBadm, 0)} kg/cm²` });
     if (w.dintel) res.checks.push({ ok: w.dintel.tau <= tauAdm + 1e-9, label: `Tabique ${w.name}: dintel al corte`, text: `τ = T / (hd e) = ${f1(w.dintel.T, 2)} t / (${f1(w.dintel.hd * 100, 0)} × ${f1(w.e * 100, 0)} cm) = ${f1(w.dintel.tau, 2)} ≤ ${tauAdm} kg/cm² (Qj = ${f1(w.dintel.Qj, 1)} t, ti = Q S / J = ${f1(w.dintel.ti, 2)} t/m)` });
   });
-  if (slender > 5) res.notes.push(`Esbeltez λ = h / L = ${f1(slender, 1)}: entre 5 y 10 los efectos laterales son más complejos y pueden aparecer problemas de volcamiento; con λ ≥ 10 la materialización se hace muy difícil.`);
-  else if (slender > 3) res.notes.push(`Esbeltez λ = h / L = ${f1(slender, 1)} (> 3): se toman en cuenta las cargas de viento; los problemas de volcamiento no suelen ser de gran relevancia.`);
+  // esbeltez λ = h / lado menor (resumen de la cátedra): torre si λ > 3; con λ < 5 puede omitirse el viento; entre 5 y 10 hay que considerar la estructura contraviento; con λ > 10 hacen falta estudios especiales
+  const lmin = Math.min(B, L);
+  res.slenderClass = slender <= 3 ? 'no-torre' : slender < 5 ? 'omitible' : slender <= 10 ? 'contraviento' : 'especial';
+  if (slender <= 3) res.notes.push(`Esbeltez λ = h / lado menor = ${f1(h, 1)} / ${f1(lmin, 1)} = ${f1(slender, 2)} ≤ 3: no se considera un edificio en torre (ni el viento ni el volcamiento suelen gobernar); se calcula igual como ménsula.`);
+  else if (slender < 5) res.notes.push(`Esbeltez λ = h / lado menor = ${f1(slender, 2)} (entre 3 y 5): es un edificio en torre pero, según el resumen de la cátedra, podría omitirse la consideración del viento. Acá se calcula igual, del lado de la seguridad.`);
+  else if (slender <= 10) res.notes.push(`Esbeltez λ = h / lado menor = ${f1(slender, 2)} (entre 5 y 10): se debe considerar estructura contraviento (tabiques, pórticos o tubos), como en este cálculo.`);
+  else { res.notes.push(`Esbeltez λ = h / lado menor = ${f1(slender, 2)} > 10: requiere estudios especiales para su materialización (túnel de viento, análisis dinámico). Este predimensionado no alcanza.`); res.checks.push({ ok: false, label: 'Esbeltez', text: `λ = ${f1(slender, 1)} > 10: requiere estudios especiales` }); }
+  // sistema de tabiques contraviento: se usa hasta 35 pisos
+  const floors = nTipo + 1;                                                  // plantas sobre el nivel 0,00 (planta baja y pisos tipo; la azotea es la cubierta)
+  res.floors = floors;
+  res.systems = systemsFor(floors);
+  if (floors > 35) res.notes.push(`${floors} pisos: el sistema de tabiques contraviento se usa hasta 35 pisos. Para esta altura corresponde un sistema combinado tabique-pórtico (hasta 50), un tubo (hasta 60), tubo en tubo (hasta 83) o un haz de tubos (hasta 110); este cálculo solo dimensiona tabiques.`);
+  // comportamiento en planta (resumen de la cátedra): traslación o rototraslación y estabilidad de la disposición de tabiques
+  const xs = [...new Set(walls.map((w) => Math.round(Number(w.x) * 100) / 100))];
+  const nU = walls.filter((w) => w.kind === 'U').length;
+  const nPar = walls.length; const nPer = 2 * nU;                             // paralelos al viento (almas y tabiques rectos) y perpendiculares (alas de los U)
+  const hasU = nU > 0;
+  const mode = Math.abs(eRot) > 0.005 ? 'rototraslación' : 'traslación';
+  const sumMj = walls.reduce((a, w) => a + M0 * w.share, 0);
+  let stab; let stabText;
+  if (xs.length >= 2 && nPer >= 2) { stab = true; stabText = `${nPar} tabiques paralelos al viento y ${nPer} perpendiculares (alas de los tabiques en U): los paralelos toman la traslación y, por estar separados, un par reactivo que toma la rotación; los perpendiculares colaboran con la rotación. Buen sistema.`; }
+  else if (xs.length >= 2) { stab = true; stabText = `${nPar} tabiques paralelos al viento sobre ${xs.length} líneas distintas: todos toman la traslación y los separados generan un par reactivo que toma la rotación.`; }
+  else if (hasU) { stab = true; stabText = 'un núcleo en U: el alma paralela toma la traslación y las alas perpendiculares toman la rotación; todos se complementan.'; }
+  else { stab = false; stabText = 'un solo tabique, o varios sobre la misma línea, no pueden tomar la rotación: el sistema es inestable. Agregá otro tabique paralelo, separado del primero, o dos tabiques perpendiculares.'; }
+  const nuclei = walls.filter((w) => w.kind === 'U').map((w) => ({ name: w.name, J: w.J, Jw: w.Jw, ratio: w.J / w.Jw }));
+  res.behavior = { mode, nPar, nPer, lines: xs.length, e: eRot, sumMj, M0, stab, text: stabText, nuclei,
+    modeText: mode === 'traslación'
+      ? 'Traslación: el eje de inercia coincide con la recta de acción del viento y el edificio solo se traslada; trabajan únicamente los tabiques paralelos al viento (los perpendiculares tienen una inercia muy reducida para tomar la traslación). Puede pasar en plantas simétricas o asimétricas.'
+      : `Rototraslación: el eje de inercia no coincide con la recta de acción del viento (e = ${f1(eRot, 2)} m), así que el edificio además de trasladarse rota; colaboran todos los tabiques.` };
+  res.checks.push({ ok: stab, label: 'Estabilidad del sistema de tabiques', text: stabText });
+  if (stab && !hasU) res.notes.push('Todos los tabiques son paralelos a este viento: con el viento en el otro sentido ninguno trabajaría de canto y el sistema sería inestable. Agregá tabiques en esa dirección (por ejemplo, un núcleo o tabiques en U) y repetí el cálculo girado.');
+  if (nuclei.length && !res.notes.some((n) => /núcleo/.test(n))) res.notes.push(`Un núcleo de tabiques unidos toma traslación y rotación y es más eficaz que los tabiques aislados: ${nuclei.map((q) => `${q.name} tiene J = ${f1(q.J, 1)} m⁴, ${f1(q.ratio, 1)} veces la de su alma sola (${f1(q.Jw, 1)} m⁴)`).join('; ')}. Además tiene rigidez en las dos direcciones.`);
   if (freq < 1) res.notes.push(`Período T = ${f1(T, 2)} s, frecuencia ${f1(freq, 2)} Hz < 1 Hz: el edificio es flexible y correspondería amplificar el viento con el factor Gf (CIRSOC 102, 5.8.2). Como la guía, se sigue con G = ${G} (edificio rígido).`);
   if (Math.abs(eRot) > 0.005) res.notes.push(`El centro de rigidez de los tabiques (x = ${f1(xr, 2)} m) no coincide con la recta de acción del viento (B / 2 = ${f1(B / 2, 2)} m): excentricidad e = ${f1(eRot, 2)} m. Se suma la rotación al reparto por traslación.`);
   res.notes.push('Se verifica la dirección más crítica (viento sobre la cara mayor). Falta repetir el cálculo con el viento sobre la cara menor (intercambiando B y L y la orientación de los tabiques) y la flecha en ese sentido.');

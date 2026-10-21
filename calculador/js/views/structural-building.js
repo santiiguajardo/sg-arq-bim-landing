@@ -1,5 +1,5 @@
 import { CIRSOC201 as N, LIVE_LOADS } from '../structural/norms.js';
-import { designBuilding, colExists, lineCurves } from '../structural/building.js';
+import { designBuilding, colExists, lineCurves, panelOn, nodeOn, hasVoids } from '../structural/building.js';
 import { lineFigure, columnStackFigure } from './structural-draw.js';
 import { armadoFigure, slabLevelArmadoFigure } from './structural-armado.js';
 import * as rc from '../structural/rc.js';
@@ -45,7 +45,90 @@ function inputOf(calc) {
     fc: Number(calc.materials.fc), placement: calc.materials.placement, exposure: calc.materials.exposure,
     dagg: Number(calc.materials.dagg), dStirrup: Number(calc.materials.dStirrup), rhoMax: Number(calc.materials.rhoMax),
     soil: { sigma: Number(calc.foundation.sigma), Df: Number(calc.foundation.Df), gamma: Number(calc.foundation.gamma) },
+    mask: maskOf(calc),
   };
+}
+
+// ---------------------------------------------------------------- tipología de la planta (paños con y sin losa)
+const TYPOS = [['rect', 'Rectangular'], ['L', 'En L'], ['U', 'En U'], ['T', 'En T'], ['cruz', 'En cruz'], ['H', 'En H'], ['patio', 'Con patio central'], ['escalera', 'Escalonada'], ['custom', 'Libre (la dibujo yo)']];
+// Cada forma se define sobre coordenadas normalizadas (u, v) del centro de cada paño (0 a 1); "orientación" gira esas coordenadas de a 90°
+const TYPO_VOID = {
+  L: (u, v) => u > 0.49 && v > 0.49,
+  U: (u, v) => u > 0.34 && u < 0.66 && v > 0.49,
+  T: (u, v) => (u < 0.34 || u > 0.66) && v < 0.67,
+  cruz: (u, v) => (u < 0.34 || u > 0.66) && (v < 0.34 || v > 0.66),
+  H: (u, v) => u > 0.34 && u < 0.66 && (v < 0.34 || v > 0.66),
+  patio: (u, v) => u > 0.34 && u < 0.66 && v > 0.34 && v < 0.66,
+  escalera: (u, v) => u + v > 1.25,
+};
+function presetMask(typo, rot, nx, ny) {
+  const isVoid = TYPO_VOID[typo];
+  return Array.from({ length: nx }, (_, i) => Array.from({ length: ny }, (__, j) => {
+    if (!isVoid) return true;
+    const cx = (i + 0.5) / nx;
+    const cy = (j + 0.5) / ny;
+    const [u, v] = [[cx, cy], [cy, 1 - cx], [1 - cx, 1 - cy], [1 - cy, cx]][((rot % 4) + 4) % 4];
+    return !isVoid(u, v);
+  }));
+}
+// mask[i][j] = true si el paño (columna i, fila j; la fila A es j = 0) lleva losa
+function maskOf(calc) {
+  const d = calc.design;
+  const nx = d.xSpans.length;
+  const ny = d.ySpans.length;
+  if (d.typo === 'custom' && Array.isArray(d.mask)) return Array.from({ length: nx }, (_, i) => Array.from({ length: ny }, (__, j) => !(d.mask[j] && d.mask[j][i] === '0')));
+  return presetMask(d.typo || 'rect', Number(d.rot) || 0, nx, ny);
+}
+const maskRows = (m, nx, ny) => Array.from({ length: ny }, (_, j) => Array.from({ length: nx }, (__, i) => (m[i][j] ? '1' : '0')).join(''));
+
+// Dibujo de la planta con los paños: tocar un paño le saca o le pone losa
+function maskSketch(calc, m) {
+  const d = calc.design;
+  const xs = d.xSpans.map(Number);
+  const ys = d.ySpans.map(Number);
+  const cum = (a) => a.reduce((o, v) => { o.push(o[o.length - 1] + v); return o; }, [0]);
+  const cx = cum(xs);
+  const cy = cum(ys);
+  const W = 560;
+  const pad = 36;
+  const k = Math.min((W - 2 * pad) / cx[cx.length - 1], 260 / cy[cy.length - 1]);
+  const H = cy[cy.length - 1] * k + 2 * pad;
+  const X = (v) => pad + v * k;
+  const Y = (v) => pad + (cy[cy.length - 1] - v) * k;
+  const on = (i, j) => i >= 0 && j >= 0 && i < xs.length && j < ys.length && m[i][j];
+  let s = '';
+  xs.forEach((lx, i) => ys.forEach((ly, j) => {
+    const act = m[i][j];
+    s += `<rect data-cell="${i},${j}" x="${X(cx[i])}" y="${Y(cy[j + 1])}" width="${lx * k}" height="${ly * k}" fill="${act ? 'var(--accent)' : 'var(--panel)'}" fill-opacity="${act ? 0.26 : 1}" stroke="${act ? 'var(--accent)' : 'var(--line)'}" stroke-width="${act ? 1.2 : 1}" ${act ? '' : 'stroke-dasharray="4 3"'} style="cursor:pointer;"><title>${act ? 'Con losa: tocá para sacársela' : 'Sin losa: tocá para ponérsela'}</title></rect>`;
+    s += `<text x="${X(cx[i]) + lx * k / 2}" y="${Y(cy[j]) - ly * k / 2 + 4}" font-size="10.5" text-anchor="middle" pointer-events="none" fill="${act ? 'var(--accent-ink)' : 'var(--ink-soft)'}">${act ? `${fmt(lx, 2)} × ${fmt(ly, 2)}` : 'vacío'}</text>`;
+  }));
+  for (let i = 0; i <= xs.length; i++) {
+    for (let j = 0; j <= ys.length; j++) {
+      if (on(i - 1, j - 1) || on(i, j - 1) || on(i - 1, j) || on(i, j)) s += `<rect x="${X(cx[i]) - 4}" y="${Y(cy[j]) - 4}" width="8" height="8" fill="var(--ink)" pointer-events="none"/>`;
+    }
+  }
+  cx.forEach((v, i) => { s += `<text x="${X(v)}" y="${Y(0) + 20}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--accent-ink)" pointer-events="none">${i + 1}</text>`; });
+  cy.forEach((v, j) => { s += `<text x="${X(0) - 16}" y="${Y(v) + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--accent-ink)" pointer-events="none">${letter(j)}</text>`; });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%; max-width:600px; height:auto; display:block; margin:8px 0;" role="img" aria-label="Planta con los paños que llevan losa">${s}</svg>`;
+}
+
+function typologyCard(calc) {
+  const d = calc.design;
+  const typo = d.typo || 'rect';
+  const m = maskOf(calc);
+  const nx = d.xSpans.length;
+  const ny = d.ySpans.length;
+  const noVoid = m.every((col) => col.every(Boolean));
+  return `<div class="card" style="margin-top:16px;">
+    <h3 style="margin-top:0;">Forma de la planta <span class="text-muted" style="font-weight:400; font-size:12.5px;">(tipología)</span></h3>
+    <p class="text-muted" style="font-size:12.5px; margin:-6px 0 8px;">Elegí una forma y se arma sola sobre la grilla de arriba (con más vanos salen formas más finas: por ejemplo, una L de 4 × 4 vanos con un sector de 2 × 2 vacío). Después tocá cualquier paño del dibujo para sacarle o ponerle losa y armar la planta que necesites. Hay vigas solo donde hay losa a algún lado; las columnas nacen solo en los nudos que tocan una losa.</p>
+    <div class="field-row" style="flex-wrap:wrap;">
+      ${selField('design.typo', 'Tipología', typo, TYPOS)}
+      ${typo === 'rect' || typo === 'custom' ? '' : selField('design.rot', 'Orientación', String(Number(d.rot) || 0), [['0', 'Como se ve (huecos arriba o a la derecha)'], ['1', 'Girada 90°'], ['2', 'Girada 180°'], ['3', 'Girada 270°']])}
+    </div>
+    ${maskSketch(calc, m)}
+    <p class="text-muted" style="font-size:12px; margin:0;">${noVoid ? 'Todos los paños llevan losa.' : `${m.flat().filter(Boolean).length} de ${nx * ny} paños con losa.`} Azul: con losa. Punteado: vacío (patio, hueco o fuera del edificio). Cuadrados negros: columnas.${nx < 3 && ny < 3 && !noVoid ? '' : ''}</p>
+  </div>`;
 }
 
 // El cálculo del edificio puede tardar unos segundos: se guarda el resultado por entrada.
@@ -133,6 +216,14 @@ export const buildingModule = {
     root.querySelector('#schLevel')?.addEventListener('change', (e) => { schLevel = Number(e.target.value); rerender(); });
     root.querySelector('#schLine')?.addEventListener('change', (e) => { schLine = e.target.value; rerender(); });
     root.querySelector('#schCol')?.addEventListener('change', (e) => { schCol = e.target.value; rerender(); });
+    root.querySelectorAll('[data-cell]').forEach((el) => el.addEventListener('click', () => {
+      const [i, j] = el.dataset.cell.split(',').map(Number);
+      const m = maskOf(calc);
+      m[i][j] = !m[i][j];
+      if (!m.some((col) => col.some(Boolean))) { showToast('La planta necesita al menos un paño con losa.'); return; }
+      setCalcField(calc.id, 'design.mask', maskRows(m, calc.design.xSpans.length, calc.design.ySpans.length));
+      setCalcField(calc.id, 'design.typo', 'custom');
+    }));
   },
 
   step1(calc) {
@@ -177,6 +268,7 @@ export const buildingModule = {
           </div>
         </div>
       </div>
+      ${typologyCard(calc)}
       <div class="card" style="margin-top:16px;">
         <h3 style="margin-top:0;">Apeos <span class="text-muted" style="font-weight:400; font-size:12.5px;">(columnas que no bajan a la fundación)</span></h3>
         <p class="text-muted" style="font-size:12.5px; margin:-6px 0 10px;">La columna del eje elegido nace sobre una viga del nivel indicado: debajo de ese nivel no hay columna en ese eje. La viga que la recibe se calcula con esa carga puntual.</p>
@@ -336,6 +428,7 @@ function resumenTab(calc, res) {
   <div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Hipótesis del cálculo</h3>
     <ul class="text-muted" style="font-size:12.5px; margin:0; padding-left:18px; line-height:1.55;">
       <li><b>Solo cargas gravitatorias</b> (peso propio, permanentes y sobrecarga; ${ART.combos}). Viento y sismo no están incluidos. Se supone pórtico indesplazable (arriostrado).</li>
+      ${hasVoids(inp) ? '<li><b>Planta con paños vacíos</b> (tipología en L, U, T, con patio…): hay vigas solo donde algún paño vecino tiene losa; las vigas y las franjas de losa se parten en tramos continuos, y las columnas nacen solo en los nudos que tocan una losa.</li>' : ''}
       <li><b>Losas</b> por franjas continuas (${ART.slabs}): los paños con relación de luces mayor que 2 trabajan en una dirección; los demás reparten la carga por igualdad de flechas (Rankine-Grashof). No se calculan los refuerzos de esquina (art. 13.3.6) ni la torsión de las vigas de borde bajo voladizos.</li>
       <li><b>Vigas y columnas</b> por nivel (${ART.levelAnalysis}): sobrecarga solo en el nivel analizado, extremos lejanos de columnas empotrados (articulados en la base) y envolvente de sobrecarga por tramos independientes. Rigideces con la sección bruta (art. 8.6.1).</li>
       <li><b>Bases</b> aisladas con carga axial centrada: los momentos de columna no se transmiten a la fundación (bases excéntricas y medianeras: próximamente).</li>
@@ -346,22 +439,35 @@ function resumenTab(calc, res) {
 }
 
 // ---------------------------------------------------------------- esquemas
-function lineFig(res, k, dir, line, pal) {
-  const { G, des, an } = res;
-  const sol = (dir === 'x' ? an.levels[k].solX : an.levels[k].solY)[line];
+// Nombre de una viga: eje y, si la línea se parte en varios tramos continuos, entre qué ejes va
+function beamName(b, dir, G) {
+  const full = b.ns === (dir === 'x' ? G.nx : G.ny);
+  const eje = dir === 'x' ? `Eje ${letter(b.line)}` : `Eje ${b.line + 1}`;
+  if (full) return eje;
+  const ax = (q) => (dir === 'x' ? String(q + 1) : letter(q));
+  return `${eje} (de ${ax(b.start)} a ${ax(b.start + b.ns)})`;
+}
+
+// r = índice de la viga (racha de tramos) en la lista del nivel
+function lineSol(res, k, dir, r) {
+  const { des, an } = res;
+  const sols = dir === 'x' ? an.levels[k].solX : an.levels[k].solY;
+  return { sol: sols[r], rec: des.beams[k][dir][r] };
+}
+
+function lineFig(res, k, dir, r, pal) {
+  const { G } = res;
+  const { sol, rec } = lineSol(res, k, dir, r);
   const curves = lineCurves(sol);
-  const rec = des.beams[k][dir][line];
-  const supports = Array.from({ length: sol.ns + 1 }, (_, q) => (dir === 'x' ? colName(q, line) : colName(line, q)));
-  const nameLine = dir === 'x' ? `eje ${letter(line)} (dirección X)` : `eje ${line + 1} (dirección Y)`;
-  return lineFigure({ curves, design: rec.spans, supports, pal, title: `Nivel ${k} · viga ${nameLine} · ${fmt(rec.b * 100, 0)} × ${fmt(rec.h * 100, 0)} cm` });
+  const supports = Array.from({ length: sol.ns + 1 }, (_, q) => (dir === 'x' ? colName(rec.start + q, rec.line) : colName(rec.line, rec.start + q)));
+  return lineFigure({ curves, design: rec.spans, supports, pal, title: `Nivel ${k} · viga ${beamName(rec, dir, G)} (dirección ${dir.toUpperCase()}) · ${fmt(rec.b * 100, 0)} × ${fmt(rec.h * 100, 0)} cm` });
 }
 
 // Armado de una viga continua de un nivel: elevación con las barras y los estribos de cada tramo, y diagramas de las envolventes
-function lineArmadoFig(res, k, dir, line, pal) {
-  const { des, an, inp } = res;
-  const sol = (dir === 'x' ? an.levels[k].solX : an.levels[k].solY)[line];
+function lineArmadoFig(res, k, dir, r, pal) {
+  const { inp, G } = res;
+  const { sol, rec } = lineSol(res, k, dir, r);
   const curves = lineCurves(sol);
-  const rec = des.beams[k][dir][line];
   const bmm = rec.b * 1000;
   const hmm = rec.h * 1000;
   const dSt = Number(inp.dStirrup) || 8;
@@ -374,10 +480,9 @@ function lineArmadoFig(res, k, dir, line, pal) {
       shearAt: (V) => rc.shearDesign({ Vu: V * 1000, b: bmm, d, h: hmm, fc: inp.fc, fyt: 420, dStirrup: dSt }),
     };
   });
-  const names = Array.from({ length: sol.ns + 1 }, (_, q) => (dir === 'x' ? colName(q, line) : colName(line, q)));
-  const nameLine = dir === 'x' ? `eje ${letter(line)} (dirección X)` : `eje ${line + 1} (dirección Y)`;
+  const names = Array.from({ length: sol.ns + 1 }, (_, q) => (dir === 'x' ? colName(rec.start + q, rec.line) : colName(rec.line, rec.start + q)));
   return armadoFigure({
-    pal, kind: 'continuous', title: `Nivel ${k} · viga ${nameLine} · ${fmt(rec.b * 100, 0)} × ${fmt(rec.h * 100, 0)} cm`,
+    pal, kind: 'continuous', title: `Nivel ${k} · viga ${beamName(rec, dir, G)} (dirección ${dir.toUpperCase()}) · ${fmt(rec.b * 100, 0)} × ${fmt(rec.h * 100, 0)} cm`,
     spans, names, dSt, curves: curves.spans.map((c) => ({ pts: c.pts })), reactions: curves.reactions,
   });
 }
@@ -385,7 +490,7 @@ function lineArmadoFig(res, k, dir, line, pal) {
 function slabArmadoFig(res, k, pal) {
   const { G, des } = res;
   const sl = des.slabs[k];
-  return slabLevelArmadoFigure({ level: k, hCm: sl.h * 100, X: G.X, Y: G.Y, panels: sl.panels, supportsX: sl.supportsX, supportsY: sl.supportsY, letter, pal });
+  return slabLevelArmadoFigure({ level: k, hCm: sl.h * 100, X: G.X, Y: G.Y, panels: sl.panels, supportsX: sl.supportsX, supportsY: sl.supportsY, letter, on: (i, j) => panelOn(res.inp, i, j), pal });
 }
 
 function colStackFig(res, i, j, pal) {
@@ -406,10 +511,11 @@ function esquemasTab(calc, res) {
   const { G, des, inp } = res;
   const k = Math.min(Math.max(1, schLevel), G.n);
   const lineOpts = [];
-  for (let j = 0; j <= G.ny; j++) lineOpts.push([`x:${j}`, `Eje ${letter(j)} (dirección X)`]);
-  for (let i = 0; i <= G.nx; i++) lineOpts.push([`y:${i}`, `Eje ${i + 1} (dirección Y)`]);
-  const [dir, lineStr] = schLine.split(':');
-  const line = Math.min(Number(lineStr), dir === 'x' ? G.ny : G.nx);
+  des.beams[k].x.forEach((b, r) => lineOpts.push([`x:${r}`, `${beamName(b, 'x', G)} (dirección X)`]));
+  des.beams[k].y.forEach((b, r) => lineOpts.push([`y:${r}`, `${beamName(b, 'y', G)} (dirección Y)`]));
+  const [dirRaw, lineStr] = schLine.split(':');
+  const dir = dirRaw === 'y' && des.beams[k].y.length ? 'y' : 'x';
+  const line = Math.min(Number(lineStr) || 0, des.beams[k][dir].length - 1);
   const colOpts = [];
   for (let i = 0; i <= G.nx; i++) for (let j = 0; j <= G.ny; j++) if (colExists(inp, 1, i, j)) colOpts.push([`${i},${j}`, colName(i, j)]);
   const [ci, cj] = schCol.split(',').map(Number);
@@ -448,21 +554,23 @@ function planSVG(inp, G, sizes, des, k) {
   const W = totW * sc + 140;
   const H = totH * sc + 56;
   let s = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; max-width:640px;" role="img" aria-label="Planta estructural del nivel ${k}">`;
-  s += `<rect x="${px(-cl)}" y="${py(Y[Y.length - 1] + cb)}" width="${totW * sc}" height="${totH * sc}" fill="var(--accent)" fill-opacity="0.07" stroke="var(--line)"/>`;
-  // vigas
+  if (!hasVoids(inp)) s += `<rect x="${px(-cl)}" y="${py(Y[Y.length - 1] + cb)}" width="${totW * sc}" height="${totH * sc}" fill="var(--accent)" fill-opacity="0.07" stroke="var(--line)"/>`;
+  else X.slice(0, -1).forEach((x, i) => Y.slice(0, -1).forEach((y, j) => { if (panelOn(inp, i, j)) s += `<rect x="${px(x)}" y="${py(Y[j + 1])}" width="${(X[i + 1] - x) * sc}" height="${(Y[j + 1] - y) * sc}" fill="var(--accent)" fill-opacity="0.07" stroke="var(--line)"/>`; }));
+  // vigas (cada racha de tramos continuos)
   des.beams[k].x.forEach((b) => {
     const y = Y[b.line];
-    s += `<line x1="${px(0)}" y1="${py(y)}" x2="${px(X[X.length - 1])}" y2="${py(y)}" stroke="var(--ink-soft)" stroke-width="${Math.max(2, b.b * sc * 0.9)}" ${b.transfer ? 'stroke-opacity="1"' : 'stroke-opacity="0.55"'}/>`;
-    s += `<text x="${px(X[X.length - 1]) + 6}" y="${py(y) + 14}" font-size="9.5" fill="var(--ink-soft)">${letter(b.line)} · ${fmt(b.b * 100, 0)}×${fmt(b.h * 100, 0)}</text>`;
+    s += `<line x1="${px(X[b.start])}" y1="${py(y)}" x2="${px(X[b.start + b.ns])}" y2="${py(y)}" stroke="var(--ink-soft)" stroke-width="${Math.max(2, b.b * sc * 0.9)}" ${b.transfer ? 'stroke-opacity="1"' : 'stroke-opacity="0.55"'}/>`;
+    s += `<text x="${px(X[b.start + b.ns]) + 6}" y="${py(y) + 14}" font-size="9.5" fill="var(--ink-soft)">${letter(b.line)} · ${fmt(b.b * 100, 0)}×${fmt(b.h * 100, 0)}</text>`;
   });
   des.beams[k].y.forEach((b) => {
     const x = X[b.line];
-    s += `<line x1="${px(x)}" y1="${py(0)}" x2="${px(x)}" y2="${py(Y[Y.length - 1])}" stroke="var(--ink-soft)" stroke-width="${Math.max(2, b.b * sc * 0.9)}" stroke-opacity="${b.transfer ? 1 : 0.55}"/>`;
-    s += `<text x="${px(x)}" y="${py(0) + 18}" font-size="9.5" text-anchor="middle" fill="var(--ink-soft)">${b.line + 1}</text><text x="${px(x)}" y="${py(0) + 29}" font-size="9" text-anchor="middle" fill="var(--ink-soft)">${fmt(b.b * 100, 0)}×${fmt(b.h * 100, 0)}</text>`;
+    s += `<line x1="${px(x)}" y1="${py(Y[b.start])}" x2="${px(x)}" y2="${py(Y[b.start + b.ns])}" stroke="var(--ink-soft)" stroke-width="${Math.max(2, b.b * sc * 0.9)}" stroke-opacity="${b.transfer ? 1 : 0.55}"/>`;
+    s += `<text x="${px(x)}" y="${py(Y[b.start]) + 18}" font-size="9.5" text-anchor="middle" fill="var(--ink-soft)">${b.line + 1}</text><text x="${px(x)}" y="${py(Y[b.start]) + 29}" font-size="9" text-anchor="middle" fill="var(--ink-soft)">${fmt(b.b * 100, 0)}×${fmt(b.h * 100, 0)}</text>`;
   });
   // columnas
   for (let i = 0; i <= G.nx; i++) {
     for (let j = 0; j <= G.ny; j++) {
+      if (!nodeOn(inp, i, j)) continue;
       const c = sizes.col[k][i][j];
       const exists = colExists(inp, k, i, j);
       const ap = (inp.apeos || []).find((a) => a.i === i && a.j === j && a.level === k);
@@ -474,7 +582,7 @@ function planSVG(inp, G, sizes, des, k) {
       } else {
         s += `<rect x="${px(X[i]) - 5}" y="${py(Y[j]) - 5}" width="10" height="10" fill="none" stroke="var(--bad)" stroke-dasharray="2 2"/>`;
       }
-      if (ap) s += `<polygon points="${px(X[i])},${py(Y[j]) - 11} ${px(X[i]) + 9},${py(Y[j])} ${px(X[i])},${py(Y[j]) + 11} ${px(X[i]) - 9},${py(Y[j])}" fill="none" stroke="var(--bad)" stroke-width="1.5"/>`;
+      if (ap) s += `<polygon points="${px(X[i])},${py(Y[j]) - 11} ${px(X[i]) + 9},${py(Y[j])} ${px(X[i]) },${py(Y[j]) + 11} ${px(X[i]) - 9},${py(Y[j])}" fill="none" stroke="var(--bad)" stroke-width="1.5"/>`;
     }
   }
   s += '</svg>';
@@ -490,8 +598,8 @@ function losasTab(calc, res) {
     const sl = des.slabs[k];
     const rows = sl.panels.map((p) => `<tr><td>${p.i + 1}-${letter(p.j)}</td><td>${fmt(p.lx, 2)} × ${fmt(p.ly, 2)} m</td><td>${p.twoWay ? 'dos direcciones' : 'una dirección'}</td>
       <td style="text-align:right;">${fmt(p.Mx, 1)}</td><td>${barTxt(p.bx)}</td><td style="text-align:right;">${fmt(p.My, 1)}</td><td>${barTxt(p.by)}</td><td style="text-align:right;">${fmt(p.Vmax, 1)}</td></tr>`).join('');
-    const sup = (arr, name) => arr.map((s) => `<tr><td>${name} ${name === 'Eje' ? s.line + 1 : letter(s.line)}</td><td style="text-align:right;">${fmt(s.M, 1)}</td><td>${barTxt(s.bar)}</td></tr>`).join('');
-    return `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Nivel ${k} — losa de ${fmt(sl.h * 100, 0)} cm <span class="text-muted" style="font-weight:400; font-size:12.5px;">Fe ≈ ${fmt(sl.kg || 0, 0)} kg (${fmt((sl.kg || 0) / ((G.X[G.X.length - 1] + inp.cant.left + inp.cant.right) * (G.Y[G.Y.length - 1] + inp.cant.front + inp.cant.back)), 1)} kg/m²)</span> ${sl.fail ? '<span class="tag tag-alta">No verifica</span>' : ''}</h3>
+    const sup = (arr, name) => arr.filter((s) => s.bar || s.M > 0).map((s) => `<tr><td>${name} ${name === 'Eje' ? s.line + 1 : letter(s.line)}</td><td style="text-align:right;">${fmt(s.M, 1)}</td><td>${barTxt(s.bar)}</td></tr>`).join('');
+    return `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Nivel ${k} — losa de ${fmt(sl.h * 100, 0)} cm <span class="text-muted" style="font-weight:400; font-size:12.5px;">Fe ≈ ${fmt(sl.kg || 0, 0)} kg (${fmt((sl.kg || 0) / (res.quantities.area / G.n), 1)} kg/m²)</span> ${sl.fail ? '<span class="tag tag-alta">No verifica</span>' : ''}</h3>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Paño</th><th>Luces</th><th>Trabajo</th><th style="text-align:right;">Mx⁺ (kN·m/m)</th><th>Arm. inferior X</th><th style="text-align:right;">My⁺ (kN·m/m)</th><th>Arm. inferior Y</th><th style="text-align:right;">Vu máx (kN/m)</th></tr></thead><tbody>${rows}</tbody></table></div>
       <div class="grid grid-2" style="margin-top:10px;"><div class="table-wrap"><table class="data-table"><thead><tr><th>Apoyos (franjas en X)</th><th style="text-align:right;">M⁻ (kN·m/m)</th><th>Arm. superior</th></tr></thead><tbody>${sup(sl.supportsX, 'Eje')}</tbody></table></div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Apoyos (franjas en Y)</th><th style="text-align:right;">M⁻ (kN·m/m)</th><th>Arm. superior</th></tr></thead><tbody>${sup(sl.supportsY, 'Eje')}</tbody></table></div></div>
@@ -508,7 +616,7 @@ function vigasTab(calc, res) {
   return Array.from({ length: G.n }, (_, idx) => {
     const k = G.n - idx;
     const rows = ['x', 'y'].flatMap((dir) => des.beams[k][dir].map((b) => b.spans.map((s, si) => `<tr>
-      ${si === 0 ? `<td rowspan="${b.spans.length}"><b>${dir === 'x' ? `Eje ${letter(b.line)}` : `Eje ${b.line + 1}`}</b> (${dir === 'x' ? 'dir. X' : 'dir. Y'})<br>${fmt(b.b * 100, 0)} × ${fmt(b.h * 100, 0)} cm${b.transfer ? '<br><span class="tag tag-media">viga de apeo</span>' : ''}${excTag(b.exceeds)}<br><span class="text-muted" style="font-size:12px;">Fe ≈ ${fmt(b.kg || 0, 0)} kg · ${fmt(b.vol || 0, 2)} m³</span>${b.fail ? '<br><span class="tag tag-alta">No verifica</span>' : ''}</td>` : ''}
+      ${si === 0 ? `<td rowspan="${b.spans.length}"><b>${beamName(b, dir, G)}</b> (${dir === 'x' ? 'dir. X' : 'dir. Y'})<br>${fmt(b.b * 100, 0)} × ${fmt(b.h * 100, 0)} cm${b.transfer ? '<br><span class="tag tag-media">viga de apeo</span>' : ''}${excTag(b.exceeds)}<br><span class="text-muted" style="font-size:12px;">Fe ≈ ${fmt(b.kg || 0, 0)} kg · ${fmt(b.vol || 0, 2)} m³</span>${b.fail ? '<br><span class="tag tag-alta">No verifica</span>' : ''}</td>` : ''}
       <td>${si + 1} (${fmt(s.L, 2)} m)</td><td style="text-align:right;">${fmt(s.posM, 1)}</td><td>${bars(s.pos)}</td>
       <td style="text-align:right;">${fmt(s.negL, 1)} / ${fmt(s.negR, 1)}</td><td>${bars(s.negLbars)} / ${bars(s.negRbars)}</td>
       <td style="text-align:right;">${fmt(s.Vu, 0)}</td><td>${s.shear && s.shear.stirrups ? `ø${calc.materials.dStirrup} c/${fmt(s.shear.s / 10, 0)}` : (s.shear && s.shear.ok ? 'mínimos' : '✗')}</td></tr>`).join(''))).join('');
@@ -590,7 +698,7 @@ function buildingMemoria(calc, res) {
   const schemes = [];
   for (let k = G.n; k >= 1; k--) {
     let best = null;
-    ['x', 'y'].forEach((dr) => des.beams[k][dr].forEach((b) => { const m = Math.max(...b.spans.map((s) => s.posM)); if (!best || m > best.m) best = { m, dir: dr, line: b.line }; }));
+    ['x', 'y'].forEach((dr) => des.beams[k][dr].forEach((b, r) => { const m = Math.max(...b.spans.map((s) => s.posM)); if (!best || m > best.m) best = { m, dir: dr, line: r }; }));
     if (best) schemes.push(lineFig(res, k, best.dir, best.line, 'print'), lineArmadoFig(res, k, best.dir, best.line, 'print'));
   }
   let topFoot = null;
