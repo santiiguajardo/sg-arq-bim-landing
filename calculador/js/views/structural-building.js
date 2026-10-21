@@ -1,6 +1,8 @@
 import { CIRSOC201 as N, LIVE_LOADS } from '../structural/norms.js';
 import { designBuilding, colExists, lineCurves } from '../structural/building.js';
 import { lineFigure, columnStackFigure } from './structural-draw.js';
+import { armadoFigure, slabLevelArmadoFigure } from './structural-armado.js';
+import * as rc from '../structural/rc.js';
 import { axisEditor, gridSketch } from './structural-spans.js';
 import { SOIL_UNIT_WEIGHTS } from '../structural/footing.js';
 import { setCalcField } from '../state.js';
@@ -354,6 +356,38 @@ function lineFig(res, k, dir, line, pal) {
   return lineFigure({ curves, design: rec.spans, supports, pal, title: `Nivel ${k} · viga ${nameLine} · ${fmt(rec.b * 100, 0)} × ${fmt(rec.h * 100, 0)} cm` });
 }
 
+// Armado de una viga continua de un nivel: elevación con las barras y los estribos de cada tramo, y diagramas de las envolventes
+function lineArmadoFig(res, k, dir, line, pal) {
+  const { des, an, inp } = res;
+  const sol = (dir === 'x' ? an.levels[k].solX : an.levels[k].solY)[line];
+  const curves = lineCurves(sol);
+  const rec = des.beams[k][dir][line];
+  const bmm = rec.b * 1000;
+  const hmm = rec.h * 1000;
+  const dSt = Number(inp.dStirrup) || 8;
+  const spans = rec.spans.map((sp, i) => {
+    const used = [sp.pos, sp.negLbars, sp.negRbars].filter(Boolean).map((o) => o.d);
+    const d = Math.min(...(used.length ? used : [hmm - 60]), hmm - 60);
+    return {
+      L: sp.L, wu: 1.2 * curves.spans[i].wD + 1.6 * curves.spans[i].wL, d, vL: sp.vL, vR: sp.vR,
+      pos: sp.pos, negL: sp.negLbars, negR: sp.negRbars,
+      shearAt: (V) => rc.shearDesign({ Vu: V * 1000, b: bmm, d, h: hmm, fc: inp.fc, fyt: 420, dStirrup: dSt }),
+    };
+  });
+  const names = Array.from({ length: sol.ns + 1 }, (_, q) => (dir === 'x' ? colName(q, line) : colName(line, q)));
+  const nameLine = dir === 'x' ? `eje ${letter(line)} (dirección X)` : `eje ${line + 1} (dirección Y)`;
+  return armadoFigure({
+    pal, kind: 'continuous', title: `Nivel ${k} · viga ${nameLine} · ${fmt(rec.b * 100, 0)} × ${fmt(rec.h * 100, 0)} cm`,
+    spans, names, dSt, curves: curves.spans.map((c) => ({ pts: c.pts })), reactions: curves.reactions,
+  });
+}
+
+function slabArmadoFig(res, k, pal) {
+  const { G, des } = res;
+  const sl = des.slabs[k];
+  return slabLevelArmadoFigure({ level: k, hCm: sl.h * 100, X: G.X, Y: G.Y, panels: sl.panels, supportsX: sl.supportsX, supportsY: sl.supportsY, letter, pal });
+}
+
 function colStackFig(res, i, j, pal) {
   const { G, des, inp } = res;
   const levels = [];
@@ -380,9 +414,10 @@ function esquemasTab(calc, res) {
   for (let i = 0; i <= G.nx; i++) for (let j = 0; j <= G.ny; j++) if (colExists(inp, 1, i, j)) colOpts.push([`${i},${j}`, colName(i, j)]);
   const [ci, cj] = schCol.split(',').map(Number);
   const sel = (id, opts, cur) => `<select id="${id}">${opts.map(([v, t]) => `<option value="${v}" ${String(v) === String(cur) ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}</select>`;
-  return `<div class="card" style="margin-bottom:16px;"><div class="card-title-row"><h3>Viga continua: cargas, reacciones, corte y momento</h3>
+  return `<div class="card" style="margin-bottom:16px;"><div class="card-title-row"><h3>Viga continua: armado, corte y momento</h3>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">${sel('schLevel', Array.from({ length: G.n }, (_, x) => [x + 1, `Nivel ${x + 1}`]), k)}${sel('schLine', lineOpts, `${dir}:${line}`)}</div></div>
-      ${lineFig(res, k, dir, line, 'screen')}
+      ${lineArmadoFig(res, k, dir, line, 'screen')}
+      <details style="margin-top:10px;"><summary style="cursor:pointer; font-size:12.5px;">Ver el esquema de cargas con las envolventes completas</summary>${lineFig(res, k, dir, line, 'screen')}</details>
       <p class="text-muted" style="font-size:12px; margin:6px 0 0;">Son los esfuerzos mayorados (1,2 D + 1,6 L, con la sobrecarga alternada por tramos) con los que se dimensiona cada viga; las reacciones Ru son las cargas que llegan a las columnas.</p></div>
     <div class="card"><div class="card-title-row"><h3>Columna: bajada de cargas</h3>${sel('schCol', colOpts, `${ci},${cj}`)}</div>
       ${colStackFig(res, ci, cj, 'screen') || '<p class="text-muted">Esa columna no existe en ese eje.</p>'}</div>`;
@@ -460,7 +495,8 @@ function losasTab(calc, res) {
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Paño</th><th>Luces</th><th>Trabajo</th><th style="text-align:right;">Mx⁺ (kN·m/m)</th><th>Arm. inferior X</th><th style="text-align:right;">My⁺ (kN·m/m)</th><th>Arm. inferior Y</th><th style="text-align:right;">Vu máx (kN/m)</th></tr></thead><tbody>${rows}</tbody></table></div>
       <div class="grid grid-2" style="margin-top:10px;"><div class="table-wrap"><table class="data-table"><thead><tr><th>Apoyos (franjas en X)</th><th style="text-align:right;">M⁻ (kN·m/m)</th><th>Arm. superior</th></tr></thead><tbody>${sup(sl.supportsX, 'Eje')}</tbody></table></div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Apoyos (franjas en Y)</th><th style="text-align:right;">M⁻ (kN·m/m)</th><th>Arm. superior</th></tr></thead><tbody>${sup(sl.supportsY, 'Eje')}</tbody></table></div></div>
-      ${(inp.cant.left + inp.cant.right + inp.cant.front + inp.cant.back) > 0 ? '<p class="text-muted" style="font-size:12px; margin:8px 0 0;">Los momentos negativos de los apoyos de borde incluyen el voladizo.</p>' : ''}</div>`;
+      ${(inp.cant.left + inp.cant.right + inp.cant.front + inp.cant.back) > 0 ? '<p class="text-muted" style="font-size:12px; margin:8px 0 0;">Los momentos negativos de los apoyos de borde incluyen el voladizo.</p>' : ''}
+      <details style="margin-top:10px;" open><summary style="cursor:pointer; font-size:12.5px;">Planta de armado: dónde va el hierro</summary>${slabArmadoFig(res, k, 'screen')}</details></div>`;
   }).join('');
 }
 
@@ -555,7 +591,7 @@ function buildingMemoria(calc, res) {
   for (let k = G.n; k >= 1; k--) {
     let best = null;
     ['x', 'y'].forEach((dr) => des.beams[k][dr].forEach((b) => { const m = Math.max(...b.spans.map((s) => s.posM)); if (!best || m > best.m) best = { m, dir: dr, line: b.line }; }));
-    if (best) schemes.push(lineFig(res, k, best.dir, best.line, 'print'));
+    if (best) schemes.push(lineFig(res, k, best.dir, best.line, 'print'), lineArmadoFig(res, k, best.dir, best.line, 'print'));
   }
   let topFoot = null;
   des.footings.forEach((f) => { if (!topFoot || f.PD + f.PL > topFoot.PD + topFoot.PL) topFoot = f; });
@@ -568,7 +604,7 @@ function buildingMemoria(calc, res) {
     <table>${memoRow('Acciones', 'Solo gravitatorias; pórtico indesplazable', ART.combos)}${memoRow('Losas', 'Franjas continuas; una dirección si la relación de luces > 2; Rankine-Grashof en las demás', ART.slabs)}
       ${memoRow('Vigas y columnas', 'Subpórtico por nivel, extremos lejanos empotrados (articulado en la base), envolvente de sobrecarga', ART.levelAnalysis)}${memoRow('Bases', 'Aisladas, carga axial centrada', 'CIRSOC 201 Cap. 15')}
       ${memoRow('Hormigón / acero', `H-${inp.fc} / ADN 420`)}${memoRow('Suelo', `${fmt(calc.foundation.sigma, 2)} kg/cm², Df = ${fmt(calc.foundation.Df, 2)} m`)}${memoRow('Cargas', 'Pesos unitarios y sobrecargas', ART.loads)}</table>
-    <h2>2. Niveles y losas</h2><table>${levelRows}</table>
+    <h2>2. Niveles y losas</h2><table>${levelRows}</table>${Array.from({ length: G.n }, (_, i) => slabArmadoFig(res, G.n - i, 'print')).join('')}
     <h2>3. Vigas</h2><table>${beamRows.join('')}</table>
     <h2>Esquemas de cálculo</h2><p class="mem-sub">Viga más solicitada de cada nivel (cargas, reacciones, envolventes de corte y momento mayorados) y bajada de cargas de la columna más cargada.</p>${schemes.join('')}${stack}
     <h2>4. Columnas</h2><table>${colRows.join('')}</table>

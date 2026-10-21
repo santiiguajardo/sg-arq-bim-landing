@@ -673,12 +673,18 @@ export const steelFloorModule = {
     return { res, input };
   },
   wire(root, calc) {
-    root.querySelector('#exX')?.addEventListener('change', (e) => setCalcField(calc.id, 'design.existingX', parseIdx(e.target.value, false).filter((i) => i <= calc.design.xSpans.length)));
-    root.querySelector('#exY')?.addEventListener('change', (e) => setCalcField(calc.id, 'design.existingY', parseIdx(e.target.value, true).filter((j) => j <= calc.design.ySpans.length)));
+    const P = calc.floorPrefix || 'design.';
+    const SP = calc.floorSecPrefix || 'section.';
+    const emb = Boolean(calc.floorPrefix);
+    root.querySelector('#exX')?.addEventListener('change', (e) => setCalcField(calc.id, P + 'existingX', parseIdx(e.target.value, false).filter((i) => i <= calc.design.xSpans.length)));
+    root.querySelector('#exY')?.addEventListener('change', (e) => setCalcField(calc.id, P + 'existingY', parseIdx(e.target.value, true).filter((j) => j <= calc.design.ySpans.length)));
     root.querySelectorAll('[data-ftab]').forEach((b) => b.addEventListener('click', () => { ftab = b.dataset.ftab; rerender(); }));
     root.querySelector('#fLine')?.addEventListener('change', (e) => { fline = Number(e.target.value); rerender(); });
   },
   step1(calc) {
+    const P = calc.floorPrefix || 'design.';
+    const SP = calc.floorSecPrefix || 'section.';
+    const emb = Boolean(calc.floorPrefix);
     const d = calc.design;
     const nx = d.xSpans.length;
     const ny = d.ySpans.length;
@@ -688,22 +694,22 @@ export const steelFloorModule = {
       <div class="grid grid-2" style="align-items:start;">
         <div class="card">
           <h3 style="margin-top:0;">Esquema estructural del entrepiso</h3>
-          ${axisEditor({ path: 'design.xSpans', spans: d.xSpans, title: 'Vigas principales (eje X): luz entre ejes de columnas', kind: 'num', sketch: false, hint: `Los ejes 1 a ${nx + 1} llevan las columnas; cada casillero es la luz del tramo entre dos ejes.`, cant: { left: { path: 'design.cantXL', value: d.cantXL, label: `Voladizo eje 1` }, right: { path: 'design.cantXR', value: d.cantXR, label: `Voladizo eje ${nx + 1}` } } })}
-          ${axisEditor({ path: 'design.ySpans', spans: d.ySpans, title: 'Correas (eje Y): luz entre líneas de vigas', kind: 'letter', sketch: false, hint: `Las líneas de vigas son ${Array.from({ length: ny + 1 }, (_, i) => letter(i)).join(', ')}; las correas apoyan sobre ellas y son continuas.`, cant: { left: { path: 'design.cantYB', value: d.cantYB, label: 'Voladizo línea A' }, right: { path: 'design.cantYF', value: d.cantYF, label: `Voladizo línea ${letter(ny)}` } } })}
+          ${axisEditor({ path: P + 'xSpans', spans: d.xSpans, title: 'Vigas principales (eje X): luz entre ejes de columnas', kind: 'num', sketch: false, hint: `Los ejes 1 a ${nx + 1} llevan las columnas; cada casillero es la luz del tramo entre dos ejes.`, cant: { left: { path: P + 'cantXL', value: d.cantXL, label: `Voladizo eje 1` }, right: { path: P + 'cantXR', value: d.cantXR, label: `Voladizo eje ${nx + 1}` } } })}
+          ${axisEditor({ path: P + 'ySpans', spans: d.ySpans, title: 'Correas (eje Y): luz entre líneas de vigas', kind: 'letter', sketch: false, hint: `Las líneas de vigas son ${Array.from({ length: ny + 1 }, (_, i) => letter(i)).join(', ')}; las correas apoyan sobre ellas y son continuas.`, cant: { left: { path: P + 'cantYB', value: d.cantYB, label: 'Voladizo línea A' }, right: { path: P + 'cantYF', value: d.cantYF, label: `Voladizo línea ${letter(ny)}` } } })}
           <div class="axed-sketch" style="border:0; padding:0 0 10px;">${gridSketch({ xs: d.xSpans.map(Number), ys: d.ySpans.map(Number), cantXL: Number(d.cantXL) || 0, cantXR: Number(d.cantXR) || 0, cantYB: Number(d.cantYB) || 0, cantYF: Number(d.cantYF) || 0 })}</div>
-          ${numField('design.sCorr', 'Separación entre correas', d.sCorr, { unit: 'm', hint: 'Entre ejes. TP 4 de la cátedra: 61 cm.' })}
+          ${numField(P + 'sCorr', 'Separación entre correas', d.sCorr, { unit: 'm', hint: 'Entre ejes. TP 4 de la cátedra: 61 cm.' })}
         </div>
         <div class="card">
           <h3 style="margin-top:0;">Cargas y columnas</h3>
           <div class="field-row" style="flex-wrap:wrap;">
-            ${numField('design.g', 'Carga permanente g', d.g, { unit: 'kg/m²', hint: 'Piso, contrapiso, cielorraso, instalaciones (sin las correas ni las vigas, que se suman).' })}
-            ${numField('design.p', 'Sobrecarga p', d.p, { unit: 'kg/m²', hint: 'CIRSOC 101. TP 4: 250 kg/m².' })}
+            ${numField(P + 'g', 'Carga permanente g', d.g, { unit: 'kg/m²', hint: 'Piso, contrapiso, cielorraso, instalaciones (sin las correas ni las vigas, que se suman).' })}
+            ${numField(P + 'p', 'Sobrecarga p', d.p, { unit: 'kg/m²', hint: 'CIRSOC 101. TP 4: 250 kg/m².' })}
           </div>
-          ${numField('design.edgeLoad', 'Carga lineal permanente en las vigas de borde', d.edgeLoad, { unit: 'kg/m', hint: 'Muros o parapetos sobre las líneas A y ' + letter(ny) + '.' })}
-          ${deflSelect('design.deflLimit', d.deflLimit || 'course')}
+          ${numField(P + 'edgeLoad', 'Carga lineal permanente en las vigas de borde', d.edgeLoad, { unit: 'kg/m', hint: 'Muros o parapetos sobre las líneas A y ' + letter(ny) + '.' })}
+          ${deflSelect(P + 'deflLimit', d.deflLimit || 'course')}
           <div class="field-row" style="flex-wrap:wrap;">
-            ${numField('design.H', 'Altura de las columnas', d.H, { unit: 'm' })}
-            ${selField('design.support', 'Sustentación de las columnas', d.support, SUP_OPTS)}
+            ${numField(P + 'H', 'Altura de las columnas', d.H, { unit: 'm' })}
+            ${selField(P + 'support', 'Sustentación de las columnas', d.support, SUP_OPTS)}
           </div>
         </div>
       </div>
@@ -717,18 +723,21 @@ export const steelFloorModule = {
       </div>`;
   },
   step2(calc) {
+    const P = calc.floorPrefix || 'design.';
+    const SP = calc.floorSecPrefix || 'section.';
+    const emb = Boolean(calc.floorPrefix);
     const out = this.run(calc);
     const res = out.res;
     const s = calc.section;
     const fam = [['C', 'Costanera C (PGC)'], ...BEAM_TYPES];
     return `
       <div class="grid grid-2" style="align-items:start;">
-        ${materialsCard(calc)}
+        ${emb ? '' : materialsCard(calc)}
         <div class="card">
           <h3 style="margin-top:0;">Familias de perfiles</h3>
-          ${selField('section.corrType', 'Correas', s.corrType, fam)}
-          <div class="field-row" style="flex-wrap:wrap;">${selField('section.beamType', 'Vigas principales', s.beamType, BEAM_TYPES)}${selField('section.beamDouble', 'Cantidad', s.beamDouble === 'yes' ? 'yes' : 'no', [['no', 'Un perfil'], ['yes', 'Dos perfiles (2 ×)']])}</div>
-          ${selField('section.colType', 'Columnas', s.colType, [['CAÑO', 'Caño circular'], ...BEAM_TYPES])}
+          ${selField(SP + 'corrType', 'Correas', s.corrType, fam)}
+          <div class="field-row" style="flex-wrap:wrap;">${selField(SP + 'beamType', 'Vigas principales', s.beamType, BEAM_TYPES)}${selField(SP + 'beamDouble', 'Cantidad', s.beamDouble === 'yes' ? 'yes' : 'no', [['no', 'Un perfil'], ['yes', 'Dos perfiles (2 ×)']])}</div>
+          ${selField(SP + 'colType', 'Columnas', s.colType, [['CAÑO', 'Caño circular'], ...BEAM_TYPES])}
           ${res ? `<table class="data-table" style="margin-top:8px;"><tbody>
             <tr><td>Correa: Wx necesario</td><td style="text-align:right;">${fmt(res.corr.Wnec, 1)} cm³</td></tr>
             ${res.lines.map((l, j) => `<tr><td>Viga línea ${letter(j)}: Wx necesario</td><td style="text-align:right;">${fmt(l.Wnec, 1)} cm³ (carga ${fmt(res.lineD[j] + res.lineL[j], 0)} kg/m)</td></tr>`).join('')}
@@ -737,11 +746,29 @@ export const steelFloorModule = {
         </div>
       </div>`;
   },
-  step3(calc, out) {
-    const inputs = `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
-      ${selField('design.unify', 'Perfiles', calc.design.unify === 'no' ? 'no' : 'yes', [['yes', 'Unificados (el más exigente para todas las vigas y columnas)'], ['no', 'Cada elemento con su perfil mínimo']])}
-      ${selField('design.pattern', 'Sobrecarga en los tramos', calc.design.pattern === 'alt' ? 'alt' : 'all', [['all', 'En todos los tramos (como en la cátedra)'], ['alt', 'Alternada: envolvente']])}
-      ${selField('materials.omegaTable', 'Coeficiente de pandeo ω', calc.materials.omegaTable, OMEGA_OPTS)}
+  step3(calc, out) { return floorStep3(calc, out, floorInputsCard(calc)); },
+  memoria(calc, out) { return floorMemoria(calc, out); },
+};
+
+function floorStep3(calc, out, inputs) {
+  if (out.error) return `<div class="grid grid-2" style="align-items:start;">${inputs}<div class="card"><div class="empty-state">${out.error}</div></div></div>`;
+  return `<div class="grid grid-2" style="align-items:start;">${inputs}<div>${floorResults(calc, out)}</div></div>`;
+}
+
+// Entrepiso dentro de otro cálculo (la nave): el cálculo "virtual" lee el diseño y los perfiles del entrepiso del cálculo que lo contiene y
+// escribe en sus mismos campos (floorPrefix / floorSecPrefix); el acero, el hormigón y el suelo son los del cálculo de la nave.
+export function floorVirtual(calc) {
+  const d = calc.design;
+  return { id: calc.id, name: calc.name, element: 'sfloor', design: d.mezz, section: d.mezzSec, materials: calc.materials, foundation: calc.foundation, floorPrefix: 'design.mezz.', floorSecPrefix: 'design.mezzSec.' };
+}
+
+function floorInputsCard(calc) {
+  const P = calc.floorPrefix || 'design.';
+  const emb = Boolean(calc.floorPrefix);
+  return `<div class="card"><h3 style="margin-top:0;">${emb ? 'Entrepiso: datos de dimensionado' : 'Datos de dimensionado'}</h3>
+      ${selField(P + 'unify', 'Perfiles', calc.design.unify === 'no' ? 'no' : 'yes', [['yes', 'Unificados (el más exigente para todas las vigas y columnas)'], ['no', 'Cada elemento con su perfil mínimo']])}
+      ${selField(P + 'pattern', 'Sobrecarga en los tramos', calc.design.pattern === 'alt' ? 'alt' : 'all', [['all', 'En todos los tramos (como en la cátedra)'], ['alt', 'Alternada: envolvente']])}
+      ${emb ? '<p class="text-muted" style="font-size:12px; margin:0;">El acero, el coeficiente de pandeo, el hormigón de las bases y el suelo son los de la nave (pasos 2 y 3).</p>' : `${selField('materials.omegaTable', 'Coeficiente de pandeo ω', calc.materials.omegaTable, OMEGA_OPTS)}
       <div class="field-row" style="flex-wrap:wrap;">
         ${selField('materials.fc', "Hormigón de las bases (f'c)", calc.materials.fc, [20, 25, 30].map((c) => [c, `H-${c}`]))}
         ${numField('foundation.sigma', 'Tensión admisible del suelo', calc.foundation.sigma, { unit: 'kg/cm²' })}
@@ -750,14 +777,11 @@ export const steelFloorModule = {
         ${numField('foundation.Df', 'Profundidad de fundación', calc.foundation.Df, { unit: 'm' })}
         ${numField('foundation.gamma', 'Peso del suelo', calc.foundation.gamma, { unit: 'kN/m³' })}
       </div>
-      <p class="text-muted" style="font-size:12px; margin:0;">Las bases se calculan con CIRSOC 201 (hormigón armado), con las reacciones de servicio de cada columna.</p></div>`;
-    if (out.error) return `<div class="grid grid-2" style="align-items:start;">${inputs}<div class="card"><div class="empty-state">${out.error}</div></div></div>`;
-    return `<div class="grid grid-2" style="align-items:start;">${inputs}<div>${floorResults(calc, out)}</div></div>`;
-  },
-  memoria(calc, out) { return floorMemoria(calc, out); },
-};
+      <p class="text-muted" style="font-size:12px; margin:0;">Las bases se calculan con CIRSOC 201 (hormigón armado), con las reacciones de servicio de cada columna.</p>`}</div>`;
+}
 
 const FLOOR_TABS = [['resumen', 'Resumen'], ['planta', 'Planta'], ['correa', 'Correas'], ['vigas', 'Vigas'], ['cols', 'Columnas y bases'], ['uniones', 'Uniones'], ['exist', 'Estructura existente']];
+export const floorTabsFor = (calc) => FLOOR_TABS.filter(([k]) => !(calc.floorPrefix && k === 'uniones'));      // las uniones del entrepiso incrustado no se calculan aparte
 
 function floorPlanData(res, input, pal) {
   const cum = (arr) => arr.reduce((a, v) => [...a, a[a.length - 1] + v], [0]);
@@ -793,9 +817,10 @@ function footingBars(f) {
   return f && f.ok ? `${f.layL.n} ø${f.db} y ${f.layB.n + f.outsideBars} ø${f.db}` : '—';
 }
 
-function floorResults(calc, out) {
+export function floorResults(calc, out) {
   const { res, input } = out;
-  const tabs = `<div class="tabs" style="margin-bottom:12px; flex-wrap:wrap;">${FLOOR_TABS.map(([k, l]) => `<button class="tab ${ftab === k ? 'active' : ''}" data-ftab="${k}">${l}</button>`).join('')}</div>`;
+  if (ftab === 'uniones' && calc.floorPrefix) ftab = 'resumen';
+  const tabs = `<div class="tabs" style="margin-bottom:12px; flex-wrap:wrap;">${floorTabsFor(calc).map(([k, l]) => `<button class="tab ${ftab === k ? 'active' : ''}" data-ftab="${k}">${l}</button>`).join('')}</div>`;
   let body = '';
   const q = res.quantities;
   if (ftab === 'resumen') {
@@ -843,7 +868,7 @@ function floorResults(calc, out) {
   return tabs + body;
 }
 
-function floorMemoria(calc, out) {
+export function floorMemoria(calc, out) {
   const { res, input } = out;
   if (!res || !res.corr || !res.corr.profile) return null;
   const q = res.quantities;
@@ -873,8 +898,8 @@ function floorMemoria(calc, out) {
       ${res.own.length ? `<table>${res.own.map((n) => memoRow(`Eje ${colName(n.i, n.j)}: N = ${fmt(n.N, 0)} kg`, `${escapeHtml(n.col.profile.n)} (λ = ${fmt(n.col.chk.lambda, 1)}, ω = ${n.col.chk.omega === null ? '—' : fmt(n.col.chk.omega, 2)}, σ = ${fmt(n.col.chk.sigma || 0, 0)} ≤ ${fmt(n.col.chk.sigmaAllow, 0)} kg/cm²) · base ${footingText(n.footing)}${n.footing && n.footing.ok ? `, ${footingBars(n.footing)}` : ''}`)).join('')}</table>
       ${columnFig(big.col, { H: input.H, support: input.support }, 'print')}` : '<p>No hay columnas propias: todos los apoyos descargan sobre la estructura existente.</p>'}
       ${res.existingLoads.length ? `<h2>6. Descarga sobre la estructura existente</h2><table>${res.existingLoads.filter((n) => n.N > 0).map((n) => memoRow(`Apoyo ${colName(n.i, n.j)}`, `D = ${fmt(n.RD, 0)} kg; L = ${fmt(n.RL, 0)} kg; total ${fmt(n.N, 0)} kg`)).join('')}</table>` : ''}
-      <h2>Uniones</h2>
-      ${jointsMemo(jointsFloor(res, calc))}
+      ${calc.floorPrefix ? '' : `<h2>Uniones</h2>
+      ${jointsMemo(jointsFloor(res, calc))}`}
       <h2>${res.existingLoads.length ? '7' : '6'}. Cómputo y resultado</h2>
       <table>${memoRow('Acero: correas · vigas · columnas', `${fmt(q.kgCorr, 0)} · ${fmt(q.kgBeams, 0)} · ${fmt(q.kgCols, 0)} kg`)}${memoRow('Total', `${fmt(q.kgTot, 0)} kg (${fmt(q.kgPerM2, 1)} kg/m²)`)}${memoRow('Resultado', res.ok ? 'verifica' : 'no verifica')}</table>`,
   };

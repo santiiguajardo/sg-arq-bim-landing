@@ -10,11 +10,14 @@ import { SOIL_UNIT_WEIGHTS } from '../structural/footing.js';
 import { buildingModule } from './structural-building.js';
 import { slab2Module } from './structural-slab2.js';
 import { beamFigure } from './structural-draw.js';
+import { armadoFigure, armadoMembersFigure, simpleCurves, distributionBars } from './structural-armado.js';
 import { trussModule } from './structural-truss.js';
 import { portalModule } from './structural-portal.js';
 import { latticeModule } from './structural-lattice.js';
 import { naveCabModule, naveArchModule } from './structural-nave2.js';
-import { wireAxisEditors } from './structural-spans.js';
+import { wireAxisEditors, axisEditor, axisSketch } from './structural-spans.js';
+import { applyForceUnits, unitToggleHtml, wireUnitToggle } from './structural-units.js';
+import { designContinuous, analyzeContinuous, minHeight } from '../structural/cbeam.js';
 import { tidySvgs } from './svg-tidy.js';
 import { tensModule, TENS_NOTE } from './structural-tens.js';
 import { compModule, COMP_NOTE } from './structural-comp.js';
@@ -42,7 +45,7 @@ const ELEMENTS = {
   beam: { label: 'Viga de hormigón armado' },
   column: { label: 'Columna de hormigón armado' },
   footing: { label: 'Base de hormigón armado' },
-  sfloor: { label: 'Edificio de acero: entrepiso independiente' },
+  sfloor: { label: 'Entrepiso de acero independiente' },
   sbeam: { label: 'Viga de acero' },
   spurlin: { label: 'Correa de acero (flexión oblicua)' },
   scolumn: { label: 'Columna de acero' },
@@ -76,6 +79,7 @@ const CHOICES = [
 ];
 const CHOICES_STEEL = [
   ['sbeam', 'Viga de acero (simple, continua o con voladizos)'],
+  ['sfloor', 'Entrepiso de acero independiente (correas, vigas, columnas y bases)'],
   ['spurlin', 'Correa en flexión oblicua (techo inclinado)'],
   ['scolumn:simple', 'Columna simple (perfil o caño)'],
   ['scolumn:battened', 'Columna compuesta con presillas'],
@@ -158,8 +162,68 @@ function flangeOf(calc, b) {
   return { bf, hf, pos, sw };
 }
 
+// ---------------- viga o losa continua: varios tramos, voladizos y apoyos simples o empotrados ----------------
+const isCont = (calc) => (calc.element === 'beam' || calc.element === 'slab') && calc.design.kind === 'continuous';
+const LETTER = (i) => String.fromCharCode(65 + i);
+
+function contGeom(calc) {
+  const d = calc.design;
+  const L0 = Number(d.L) > 0 ? Number(d.L) : 5;
+  const spans = (Array.isArray(d.spans) && d.spans.length ? d.spans : [L0, L0]).map(Number);
+  const fixed = Array.from({ length: spans.length + 1 }, (_, i) => Boolean(d.fix) && d.fix[i] === 'E');
+  return { spans, cantL: Number(d.cantL) || 0, cantR: Number(d.cantR) || 0, fixed };
+}
+
+function contInput(calc) {
+  const g = contGeom(calc);
+  const beam = calc.element === 'beam';
+  const m = calc.materials;
+  const { D0, Lv } = loadsOf(calc);
+  const input = { element: calc.element, ...g, D0, Lv, fc: Number(m.fc), placement: m.placement, exposure: m.exposure, h: Number(calc.section.h) * 10 };
+  if (beam) Object.assign(input, { b: Number(calc.section.b) * 10, fy: N.rebar[m.rebar].fy, fyt: N.rebar[m.stirrup].fy, dStirrup: Number(m.dStirrup), dagg: Number(m.dagg) });
+  return input;
+}
+
+function runCont(calc) {
+  const input = contInput(calc);
+  const beam = calc.element === 'beam';
+  if (!(input.spans.every((v) => Number.isFinite(v) && v > 0) && input.h > 0 && input.fc > 0 && (!beam || input.b > 0))) return { error: 'Completá las luces y las medidas con valores mayores que cero.' };
+  try { return { res: designContinuous(input), input, cont: true }; } catch (e) { return { error: 'No se pudo calcular con estos datos: revisá que la viga esté bien vinculada.' }; }
+}
+
+function contSummary(c) {
+  const g = contGeom(c);
+  return `continua: ${g.cantL > 0 ? `voladizo ${fmt(g.cantL, 1)} + ` : ''}${g.spans.map((l) => fmt(l, 1)).join(' + ')}${g.cantR > 0 ? ` + voladizo ${fmt(g.cantR, 1)}` : ''} m${g.fixed.some(Boolean) ? ', con empotramientos' : ''}`;
+}
+
+function predimCont(calc) {
+  const m = calc.materials;
+  const beam = calc.element === 'beam';
+  const g = contGeom(calc);
+  const fy = beam ? N.rebar[m.rebar].fy : 420;
+  const fc = Number(m.fc);
+  const { D0, Lv } = loadsOf(calc);
+  const b = beam ? Number(calc.section.b) * 10 : 1000;
+  if (!g.spans.every((v) => v > 0) || !(b > 0)) return null;
+  const mh = minHeight({ element: calc.element, ...g, fy });
+  const assumedDb = beam ? 16 : 10;
+  const dSt = beam ? Number(m.dStirrup) : 0;
+  const cover = rc.coverFor({ element: calc.element, placement: m.placement, exposure: m.exposure, dMain: assumedDb, dStirrup: dSt });
+  let h = mh.hMin;
+  let dMin = 0;
+  let M = 0;
+  for (let i = 0; i < 6; i++) {
+    const a = analyzeContinuous({ element: calc.element, ...g, D0, Lv, b, h });
+    M = Math.max(...a.an.spans.map((x) => x.posM), ...a.an.supports.map((x) => x.negM));
+    dMin = rc.dMinFlexure({ Mu: M * 1e6, b, fc, fy });
+    h = Math.max(mh.hMin, dMin + cover + dSt + assumedDb / 2);
+  }
+  return { hMin: mh.hMin, hMinBy: mh.by, hFlex: dMin + cover + dSt + assumedDb / 2, dMin, cover, assumedDb, wu: 0, M, recommended: rc.ceilTo(h, beam ? 50 : 10), b };
+}
+
 function runDesign(calc) {
   if (MODULES[calc.element]) return MODULES[calc.element].run(calc);
+  if (isCont(calc)) return runCont(calc);
   const input = engineInput(calc);
   const valid = [input.L, input.h, input.fc].every((v) => Number.isFinite(v) && v > 0) && (calc.element === 'slab' || input.b > 0);
   if (!valid) return { error: 'Completá la luz y las medidas con valores mayores que cero.' };
@@ -172,6 +236,7 @@ function runDesign(calc) {
 
 // Predimensionado: altura mínima por tabla (flechas) y altura mínima por flexión (sección controlada por tracción).
 function predim(calc) {
+  if (isCont(calc)) return predimCont(calc);
   const m = calc.materials;
   const fy = N.rebar[m.rebar].fy;
   const fc = Number(m.fc);
@@ -229,7 +294,7 @@ function renderList(root, state) {
         <h1>Cálculo estructural</h1>
         <p>Creá un cálculo y recorré tres etapas: diseño, predimensionado y dimensionado.</p>
       </div>
-      <button class="btn btn-primary" id="newCalcBtn">+ Nuevo cálculo</button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">${unitToggleHtml()}<button class="btn btn-primary" id="newCalcBtn">+ Nuevo cálculo</button></div>
     </div>
     ${disclaimer()}
     ${calcs.length ? `<div class="task-list">${calcs.map((c) => calcRow(c, state)).join('')}</div>`
@@ -241,6 +306,7 @@ function renderList(root, state) {
     </div>`;
 
   root.querySelector('#newCalcBtn').addEventListener('click', () => openNewModal(state));
+  wireUnitToggle(root, () => window.dispatchEvent(new HashChangeEvent('hashchange')));
   root.querySelectorAll('[data-open]').forEach((el) => el.addEventListener('click', () => { location.hash = `structural?id=${el.dataset.open}`; }));
   root.querySelectorAll('[data-dup]').forEach((el) => el.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -256,6 +322,7 @@ function renderList(root, state) {
 
 function canMemo(calc, out) {
   if (!out.res) return false;
+  if (out.cont) return Boolean(out.res.members);
   if (STEEL.has(calc.element) || GL.has(calc.element)) return Boolean(out.res.profile || out.res.corr || out.res.families || out.res.col || out.res.chordProfile || out.res.arch || (out.res.nave2 && out.res.truss) || out.res.net || out.res.Rmax !== undefined || out.res.cableM || out.res.tramos || out.res.checks);
   return MODULES[calc.element] ? Boolean(out.res.chosen || out.res.ok || out.res.G || out.res.strips) : Boolean(out.res.chosen);
 }
@@ -270,7 +337,7 @@ function summaryOf(c) {
   if (c.element === 'snavecab') return `cabriada sobre columnas, ${fmt(c.design.A, 1)} × ${fmt(c.design.B, 1)} m, f = ${fmt(c.design.f, 1)} m`;
   if (c.element === 'snavearch') return `arco parabólico, ${fmt(c.design.A, 1)} × ${fmt(c.design.B, 1)} m, f = ${fmt(c.design.f, 1)} m`;
   if (c.element === 'slat') return `${Number(c.design.kind) === 4 ? '4' : '2'} cordones, N = ${fmt(c.design.N, 0)} kg, H = ${fmt(c.design.H, 1)} m`;
-  if (c.element === 'snave') return `${c.design.type === 'triarticulado' ? 'triarticulado' : 'viga quebrada'}, ${fmt(c.design.A, 1)} × ${fmt(c.design.B, 1)} m, θ = ${fmt(c.design.theta, 0)}°`;
+  if (c.element === 'snave') return `${c.design.type === 'triarticulado' ? 'triarticulado' : 'viga quebrada'}, ${fmt(c.design.A, 1)} × ${fmt(c.design.B, 1)} m, θ = ${fmt(c.design.theta, 0)}°${c.design.mezzOn === 'yes' ? ' · con entrepiso' : ''}`;
   if (c.element === 'struss') return `${c.design.kind === 'gable' ? `cabriada, luz ${fmt(c.design.L, 1)} m, flecha ${fmt(c.design.f, 1)} m` : c.design.kind === 'custom' ? 'armada nudo por nudo' : `${c.design.kind}, luz ${fmt(c.design.L, 1)} m, h = ${fmt(c.design.h, 2)} m`}`;
   if (c.element === 'svier') return `${c.design.kind === 'steel' ? 'de acero' : 'de hormigón armado'}, luz ${fmt(c.design.L, 1)} m, altura ${fmt(c.design.H, 1)} m`;
   if (c.element === 'spost') return `luz ${fmt(c.design.L, 1)} m, flecha del cable ${fmt(c.design.f, 2)} m`;
@@ -287,6 +354,7 @@ function summaryOf(c) {
   if (c.element === 'footing' && c.design.footType === 'combined') return `Base unificada, ${fmt(c.design.PD1 + c.design.PL1 + c.design.PD2 + c.design.PL2, 0)} kN, ℓ = ${fmt(c.design.ell, 0)} cm, suelo ${fmt(c.design.sigma, 1)} kg/cm²`;
   if (c.element === 'footing') return `${FOOTING_NAMES[c.design.footType] || 'Base aislada'}, ${fmt(c.design.PD + c.design.PL, 0)} kN, suelo ${fmt(c.design.sigma, 1)} kg/cm²`;
   if (c.element === 'slab2') return `${fmt(c.design.lx, 2)} × ${fmt(c.design.ly, 2)} m`;
+  if (isCont(c)) return contSummary(c);
   if (c.element === 'beam') return `${c.design.beamType === 'inv' ? 'invertida' : 'convencional'}, luz ${fmt(c.design.L, 2)} m`;
   return `luz ${fmt(c.design.L, 2)} m`;
 }
@@ -367,7 +435,7 @@ function openNewModal(state) {
       backdrop.querySelector('[name=element]').style.display = steel || gl ? 'none' : '';
       if (steel || gl) { const first = backdrop.querySelector('[name=mode][value=building]'); if (first) first.checked = true; }
       backdrop.querySelector('[name=elementSteel]').style.display = steel ? '' : 'none';
-      backdrop.querySelector('[data-bdesc]').textContent = steel ? 'Un entrepiso independiente de acero (correas, vigas, columnas y bases) que puede descargar sobre el resto de la estructura.' : 'Losas, vigas, columnas y bases a partir de los niveles, las luces entre apoyos, los apeos y los voladizos.';
+      backdrop.querySelector('[data-bdesc]').textContent = steel ? 'Una nave industrial de acero: pórtico, correas, viento (CIRSOC 102) y bases. Dentro de la nave podés agregar un entrepiso, si lo necesitás.' : 'Losas, vigas, columnas y bases a partir de los niveles, las luces entre apoyos, los apeos y los voladizos.';
     };
     mat.addEventListener('change', syncMat);
     backdrop.querySelector('#newCalcForm').addEventListener('submit', (e) => {
@@ -376,7 +444,7 @@ function openNewModal(state) {
       const steel = f.material.value === 'ac';
       const gl = f.material.value === 'gl';
       const torre = f.material.value === 'torre';
-      const [element, variant] = torre ? ['tower', ''] : gl ? f.elementGL.value.split(':') : f.mode.value === 'building' ? [steel ? 'sfloor' : 'building', ''] : (steel ? f.elementSteel.value : f.element.value).split(':');
+      const [element, variant] = torre ? ['tower', ''] : gl ? f.elementGL.value.split(':') : f.mode.value === 'building' ? (steel ? ['snave', 'quebrada'] : ['building', '']) : (steel ? f.elementSteel.value : f.element.value).split(':');
       const id = addCalc(makeCalc({ name: f.name.value.trim(), element, variant, projectId: f.projectId.value }));
       closeModal();
       location.hash = `structural?id=${id}`;
@@ -397,7 +465,8 @@ function renderCalc(root, state, calc, step) {
         <h1 style="margin-top:4px;">${escapeHtml(calc.name)}</h1>
         <p>${ELEMENTS[calc.element].label}${proj ? ` · ${escapeHtml(proj.name)}` : ''}</p>
       </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        ${unitToggleHtml()}
         <button class="btn" id="renameBtn">Renombrar</button>
         <button class="btn" id="memoriaBtn" ${canMemo(calc, out) ? '' : 'disabled'}>Memoria de cálculo</button>
       </div>
@@ -416,7 +485,9 @@ function renderCalc(root, state, calc, step) {
   if (step === 1) body.innerHTML = mod ? mod.step1(calc) : stepDesign(calc);
   else if (step === 2) body.innerHTML = mod ? mod.step2(calc) : stepPredim(calc);
   else body.innerHTML = mod ? mod.step3(calc, out) : stepDim(calc, out);
+  applyForceUnits(body);
   tidySvgs(body);
+  wireUnitToggle(root, () => window.dispatchEvent(new HashChangeEvent('hashchange')));
 
   root.querySelectorAll('[data-step]').forEach((el) => el.addEventListener('click', () => {
     const n = Number(el.dataset.step);
@@ -429,6 +500,7 @@ function renderCalc(root, state, calc, step) {
     if (el.hasAttribute('data-num')) {
       v = Number(v);
       if (!Number.isFinite(v)) return;
+      if (el.dataset.fk && Number(el.dataset.fk) > 0) v /= Number(el.dataset.fk);        // el campo se muestra en otra unidad de fuerza: se guarda en la original
     }
     if (el.hasAttribute('data-list')) {
       v = String(v).split(/[\s;]+/).join(',').split(',').map((x) => Number(x.replace(',', '.'))).filter((x) => Number.isFinite(x) && x > 0);
@@ -442,6 +514,14 @@ function renderCalc(root, state, calc, step) {
       return;
     }
     if (/^(design|section|materials)\./.test(path)) setCalcField(calc.id, 'chosen', null);
+    if (path === 'design.kind' && v === 'continuous' && !(Array.isArray(calc.design.spans) && calc.design.spans.length)) {
+      const L0 = Number(calc.design.L) > 0 ? Number(calc.design.L) : 5;
+      setCalcField(calc.id, 'design.spans', [L0, L0]); setCalcField(calc.id, 'design.cantL', 0); setCalcField(calc.id, 'design.cantR', 0); setCalcField(calc.id, 'design.fix', ['S', 'S', 'S']);
+    }
+    if (path === 'design.mezzOn' && v === 'yes' && !calc.design.mezz) {
+      const fd = steelFloorModule.defaults();
+      setCalcField(calc.id, 'design.mezz', fd.design); setCalcField(calc.id, 'design.mezzSec', fd.section);
+    }
     if (path === 'design.soilId') {
       const soil = SOIL_UNIT_WEIGHTS.find((x) => x.id === v);
       setCalcField(calc.id, path, v);
@@ -482,18 +562,18 @@ function stepDesign(calc) {
   const d = calc.design;
   const beam = calc.element === 'beam';
   const loads = loadsOf(calc);
-  const supports = Object.entries(rc.SUPPORTS).map(([k, v]) => [k, v.label]);
+  const supports = [...Object.entries(rc.SUPPORTS).map(([k, v]) => [k, v.label]), ['continuous', 'Continua: varios tramos, voladizos y empotramientos']];
+  const cont = isCont(calc);
   const liveOpts = [...LIVE_LOADS.map((l) => [l.id, `${l.label} — ${fmt(l.value, 1)} kN/m²`]), ['custom', 'Otro valor (lo ingreso yo)']];
   return `
     <div class="grid grid-2" style="align-items:start;">
       <div class="card">
         <h3 style="margin-top:0;">Esquema estructural</h3>
         <div class="field-row" style="flex-wrap:wrap;">
-          ${numField('design.L', 'Luz de cálculo', d.L, { unit: 'm', hint: 'Luz libre + altura del elemento, sin superar la distancia entre ejes de apoyos (art. 8.7.1).' })}
-          ${selField('design.kind', 'Vinculación', d.kind, supports, 'Tramos continuos y empotramientos: próximamente.')}
+          ${cont ? '' : numField('design.L', 'Luz de cálculo', d.L, { unit: 'm', hint: 'Luz libre + altura del elemento, sin superar la distancia entre ejes de apoyos (art. 8.7.1).' })}
+          ${selField('design.kind', 'Vinculación', d.kind, supports, cont ? '' : 'Para varios tramos, voladizos o empotramientos elegí “Continua”.')}
         </div>
-        ${schemeSVG(d.kind)}
-        ${beam ? beamTypeBlock(calc) : ''}
+        ${cont ? contScheme(calc) : `${schemeSVG(d.kind)}${beam ? beamTypeBlock(calc) : ''}`}
       </div>
       <div class="card">
         <h3 style="margin-top:0;">Cargas (sin peso propio del elemento)</h3>
@@ -515,6 +595,21 @@ function stepDesign(calc) {
         </div>
       </div>
     </div>`;
+}
+
+// Esquema de la viga o franja continua: luces entre apoyos, voladizos en los extremos y tipo de cada apoyo (simple o empotrado)
+function contScheme(calc) {
+  const g = contGeom(calc);
+  const n = g.spans.length;
+  const beam = calc.element === 'beam';
+  return `${axisEditor({ path: 'design.spans', spans: g.spans, title: 'Luces entre apoyos', kind: 'letter', sketch: false,
+    hint: `${n} tramo${n === 1 ? '' : 's'} sobre ${n + 1} apoyos (A a ${LETTER(n)}). Cada casillero es la luz entre dos ejes de apoyo (art. 8.7.1).`,
+    cant: { left: { path: 'design.cantL', value: g.cantL, label: `Voladizo del apoyo A` }, right: { path: 'design.cantR', value: g.cantR, label: `Voladizo del apoyo ${LETTER(n)}` } } })}
+    <h4 style="margin:12px 0 6px; font-size:13px;">Cómo está vinculado cada apoyo</h4>
+    <div class="field-row" style="flex-wrap:wrap;">${g.fixed.map((f, i) => selField(`design.fix.${i}`, `Apoyo ${LETTER(i)}`, f ? 'E' : 'S', [['S', 'Apoyo simple'], ['E', 'Empotrado']])).join('')}</div>
+    <div class="axed-sketch">${axisSketch({ spans: g.spans, cantL: g.cantL, cantR: g.cantR, kind: 'letter', fix: g.fixed })}</div>
+    <p class="text-muted" style="font-size:12px; margin:6px 0 0;">Empotrado = el giro del apoyo está impedido (por ejemplo, la viga continúa con una columna rígida o un muro); el cuadrado oscuro del dibujo lo marca. Los apoyos de un voladizo son los de sus ejes extremos.
+      ${beam ? 'La viga se calcula como sección rectangular de ancho b (sin colaboración del ala de la losa).' : 'La losa se calcula por franjas de 1 m de ancho.'}</p>`;
 }
 
 // Tipo de viga respecto de la losa (art. 8.10): convencional (losa arriba, sección T o L) o invertida (losa abajo).
@@ -594,7 +689,7 @@ function stepPredim(calc) {
       <div class="card">
         <h3 style="margin-top:0;">Alturas mínimas</h3>
         <table class="data-table"><tbody>
-          <tr><td>Por deformaciones, Tabla 9.5.a)<br><span class="text-muted" style="font-size:11.5px;">${ARTICLES.hMin} · luz / ${N.minThicknessRatio[calc.element][calc.design.kind]}${calc.materials.rebar === 'AL220' && beam ? ' × (0,4 + fy/700)' : ''}</span></td><td style="text-align:right;"><b>${fmt(p.hMin / 10, 1)} cm</b></td></tr>
+          <tr><td>Por deformaciones, Tabla 9.5.a)<br><span class="text-muted" style="font-size:11.5px;">${ARTICLES.hMin} · ${p.hMinBy ? `rige el ${escapeHtml(p.hMinBy)}` : `luz / ${N.minThicknessRatio[calc.element][calc.design.kind]}`}${calc.materials.rebar === 'AL220' && beam ? ' × (0,4 + fy/700)' : ''}</span></td><td style="text-align:right;"><b>${fmt(p.hMin / 10, 1)} cm</b></td></tr>
           <tr><td>Por flexión (sección controlada por tracción, εt ≥ 0,005)<br><span class="text-muted" style="font-size:11.5px;">Mu estimado ${fmt(p.M, 1)} kN·m${beam ? '' : '/m'} · d mín ${fmt(p.dMin / 10, 1)} cm · supone barras ø${p.assumedDb} y recubrimiento ${p.cover} mm</span></td><td style="text-align:right;"><b>${fmt(p.hFlex / 10, 1)} cm</b></td></tr>
           <tr><td><b>Altura sugerida</b> (la mayor, redondeada a ${beam ? '5' : '1'} cm)</td><td style="text-align:right;"><b>${fmt(rec, 0)} cm</b></td></tr>
         </tbody></table>
@@ -632,16 +727,17 @@ function stepDim(calc, out) {
         ${selField('materials.placement', 'Ubicación', m.placement, Object.entries(N.placement).map(([k, x]) => [k, x.label]), ARTICLES.cover)}
         ${selField('materials.exposure', 'Clase de exposición', m.exposure, Object.entries(N.exposure).map(([k, x]) => [k, x.label]))}
       </div>
-      <div class="field-row" style="flex-wrap:wrap;">
+      ${isCont(calc) ? '<p class="text-muted" style="font-size:12px; margin:0;">Las flechas de una viga o losa continua se verifican con la altura mínima de la Tabla 9.5.a) (art. 9.5.2.1).</p>' : `<div class="field-row" style="flex-wrap:wrap;">
         ${selField('verification.limitKey', 'Límite de flecha (Tabla 9.5.b)', v.limitKey, Object.entries(N.deflectionLimits).map(([k, x]) => [k, `${x.label} — l/${x.ratio}`]))}
         ${selField('verification.xi', 'Duración de la carga permanente', v.xi, N.timeFactor.map((t) => [t.xi, `${t.label} (ξ = ${t.xi})`]), 'Art. 9.5.2.5.')}
-      </div>
+      </div>`}
     </div>`;
   if (out.error) return `<div class="grid grid-2" style="align-items:start;">${inputs}<div class="card"><div class="empty-state">${out.error}</div></div></div>`;
   return `<div class="grid grid-2" style="align-items:start;">${inputs}<div>${resultsHTML(calc, out)}</div></div>`;
 }
 
 function resultsHTML(calc, out) {
+  if (out.cont) return contResultsHTML(calc, out);
   const { res, input } = out;
   const beam = calc.element === 'beam';
   const u = beam ? 'kN/m' : 'kN/m²';
@@ -702,6 +798,8 @@ function resultsHTML(calc, out) {
     </div>`;
   }
 
+  h += `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Armado: dónde va el hierro</h3>${armadoOf(calc, out, 'screen')}</div>`;
+
   const dfl = res.deflection;
   const dc = res.deflectionCheck;
   h += `<div class="card" style="margin-bottom:16px;">
@@ -728,6 +826,116 @@ function figureOf(calc, out, pal) {
     kind: input.kind, L: input.L, wD: res.D, wL: input.Lv, wu: res.combos.wu, Mu: res.Mu, Vu: res.Vu,
     dMm: res.chosen ? res.chosen.d : 0, loadUnit: beam ? 'kN/m' : 'kN/m² (franja de 1 m)', mUnit: beam ? 'kN·m' : 'kN·m/m', vUnit: beam ? 'kN' : 'kN/m', pal,
     note: beam ? 'Mu define la armadura longitudinal (flexión); Vu, la verificación del corte y la separación de estribos.' : 'Mu define la armadura principal de la losa; Vu se compara con φVc (la losa no lleva estribos).',
+  });
+}
+
+// ---------------- viga o losa continua: resultados, figura y memoria ----------------
+const barsOf = (beam, c) => (!c ? null : beam ? { n: c.n, db: c.db, layers: c.layers, n1: c.n1, n2: c.n2 } : { txt: `ø${c.db} c/${fmt(c.s / 10, c.s % 10 ? 1 : 0)} cm`, db: c.db, s: c.s });
+
+function contFigure(calc, out, pal) {
+  const { res, input } = out;
+  const beam = calc.element === 'beam';
+  const off = input.cantL > 0 ? 1 : 0;
+  const members = res.members.map((m) => ({ type: m.type, L: m.L, wu: res.combos.wu, d: m.d, vA: m.vA, vB: m.vB, pos: m.type === 'span' ? barsOf(beam, m.pos) : null, shearAt: m.shearAt }));
+  const supports = res.supports.map((sp, q) => ({ at: off + q, fixed: sp.fixed, name: LETTER(q), top: barsOf(beam, sp.bars), Ru: sp.Ru }));
+  const anyBars = res.members.find((m) => m.pos) || null;
+  const nS = input.spans.length;
+  return armadoMembersFigure({
+    pal, slab: !beam, dSt: input.dStirrup, members, supports, curves: res.members.map((m) => ({ pts: m.pts })),
+    title: `${beam ? `Viga ${fmt(input.b / 10, 0)} × ${fmt(input.h / 10, 0)} cm` : `Losa de ${fmt(input.h / 10, 0)} cm (franja de 1 m)`} continua · ${nS} tramo${nS === 1 ? '' : 's'}${input.cantL > 0 || input.cantR > 0 ? ' con voladizo' : ''}`,
+    unit: beam ? { w: 'kN/m', m: 'kN·m', v: 'kN' } : { w: 'kN/m²', m: 'kN·m/m', v: 'kN/m' },
+    dist: !beam && anyBars && anyBars.pos ? distributionBars({ asMin: anyBars.pos.asMin, sMax: anyBars.pos.sMaxTemp }) : null,
+  });
+}
+
+function contTables(calc, out) {
+  const { res, input } = out;
+  const beam = calc.element === 'beam';
+  const u = beam ? { m: 'kN·m', v: 'kN' } : { m: 'kN·m/m', v: 'kN/m' };
+  const bt = (c) => (c ? (beam ? `${c.n} ø${c.db}${c.layers === 2 ? ' (2 capas)' : ''}` : `ø${c.db} c/${fmt(c.s / 10, c.s % 10 ? 1 : 0)} cm`) : '—');
+  const shearTxt = (m) => (beam ? (m.shear.stirrups ? `ø${input.dStirrup} c/${fmt(m.shear.s / 10, 0)} cm` : (m.shear.ok ? 'mínimos / ninguno' : '✗')) : (m.shear.ok ? `φVc = ${fmt(m.shear.phiVc, 1)} ≥ Vu` : '✗'));
+  const supName = (q) => `${LETTER(q)}${res.supports[q].fixed ? ' (empotrado)' : ''}`;
+  let spanNo = 0;
+  const memRows = res.members.map((m) => {
+    const lab = m.type === 'span' ? `Tramo ${++spanNo} (${LETTER(m.supL)}–${LETTER(m.supR)})` : (m.type === 'cantL' ? `Voladizo izquierdo (${LETTER(0)})` : `Voladizo derecho (${LETTER(input.spans.length)})`);
+    return `<tr><td>${lab}</td><td style="text-align:right;">${fmt(m.L, 2)} m</td><td style="text-align:right;">${m.type === 'span' ? fmt(m.posM, 1) : '—'}</td><td>${m.type === 'span' ? bt(m.pos) : '—'}</td><td style="text-align:right;">${fmt(Math.max(Math.abs(m.vA), Math.abs(m.vB)), 1)}</td><td>${shearTxt(m)}</td></tr>`;
+  }).join('');
+  const supRows = res.supports.map((sp, q) => `<tr><td>${supName(q)}</td><td style="text-align:right;">${fmt(sp.negM, 1)}</td><td>${sp.bars ? bt(sp.bars) : '<span class="text-muted">no hace falta (solo montaje)</span>'}</td><td style="text-align:right;">${fmt(sp.Ru, 1)}</td></tr>`).join('');
+  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Miembro</th><th style="text-align:right;">Luz</th><th style="text-align:right;">Mu⁺ (${u.m})</th><th>Armadura inferior</th><th style="text-align:right;">Vu (${u.v})</th><th>${beam ? 'Estribos' : 'Corte'}</th></tr></thead><tbody>${memRows}</tbody></table></div>
+    <div class="table-wrap" style="margin-top:10px;"><table class="data-table"><thead><tr><th>Apoyo</th><th style="text-align:right;">Mu⁻ (${u.m})</th><th>Armadura superior</th><th style="text-align:right;">Ru (${u.v})</th></tr></thead><tbody>${supRows}</tbody></table></div>`;
+}
+
+function contResultsHTML(calc, out) {
+  const { res, input } = out;
+  const beam = calc.element === 'beam';
+  const u = beam ? 'kN/m' : 'kN/m²';
+  let h = `<div class="card" style="margin-bottom:16px;">
+    <h3 style="margin-top:0;">Cargas y análisis</h3>
+    <table class="data-table"><tbody>
+      <tr><td>Peso propio</td><td style="text-align:right;">${fmt(res.self, 2)} ${u}</td></tr>
+      <tr><td>Carga permanente total D</td><td style="text-align:right;">${fmt(res.D, 2)} ${u}</td></tr>
+      <tr><td>Sobrecarga L</td><td style="text-align:right;">${fmt(input.Lv, 2)} ${u}</td></tr>
+      <tr><td>wu = ${res.combos.governing}</td><td style="text-align:right;"><b>${fmt(res.combos.wu, 2)} ${u}</b></td></tr>
+    </tbody></table>
+    <p class="text-muted" style="font-size:11.5px; margin:8px 0 0;">${ARTICLES.combos}. Análisis elástico de rigidez constante (art. 8.3.1) con la sobrecarga alternada tramo por tramo y por voladizo: los momentos y cortes son las envolventes. Las reacciones Ru son las cargas mayoradas que llegan a cada apoyo.</p>
+  </div>`;
+  h += `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Armado: dónde va el hierro</h3>${contFigure(calc, out, 'screen')}</div>`;
+  h += `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Armadura por tramo y por apoyo</h3>${contTables(calc, out)}
+    <p class="text-muted" style="font-size:11.5px; margin:8px 0 0;">Se adopta en cada sección la armadura de menor exceso que verifica la flexión, la armadura mínima y εt ≥ 0,004 (art. 10.5 y 10.3.4)${beam ? ' y entra en el ancho de la viga' : `; separación máxima 2,5 h, 25 db y 300 mm (art. 7.6.5)`}. ${beam ? 'Los estribos de cada tramo se adoptan con el corte mayor de sus apoyos; el dibujo los separa más en el centro.' : 'La losa no lleva estribos: Vu se compara con φVc.'}</p></div>`;
+  h += checksCard(res);
+  return h;
+}
+
+function openMemoriaCont(calc, out) {
+  const { res, input } = out;
+  const beam = calc.element === 'beam';
+  const u = beam ? 'kN/m' : 'kN/m²';
+  const row = (a, b2, art = '') => `<tr><td>${a}${art ? `<br><span class="mem-art">${art}</span>` : ''}</td><td style="text-align:right; white-space:nowrap;">${b2}</td></tr>`;
+  const g = { spans: input.spans, cantL: input.cantL, cantR: input.cantR };
+  const nS = input.spans.length;
+  const apoyos = res.supports.map((sp, q) => `${LETTER(q)}: ${sp.fixed ? 'empotrado' : 'apoyo simple'}`).join(' · ');
+  openMemoriaDoc({
+    title: calc.name,
+    sub: `${beam ? 'Viga' : 'Losa en una dirección'} continua de hormigón armado · ${nS} tramo${nS === 1 ? '' : 's'}${g.cantL > 0 || g.cantR > 0 ? ' con voladizo' : ''}`,
+    html: `
+      <h2>1. Datos</h2>
+      <table>${row('Hormigón', `H-${input.fc} (f'c = ${input.fc} MPa)`)}${row('Acero de barras', beam ? `${N.rebar[calc.materials.rebar].label}, fy = ${input.fy} MPa` : 'ADN 420, fy = 420 MPa')}
+        ${beam ? row('Sección', `${fmt(input.b / 10, 0)} × ${fmt(input.h / 10, 0)} cm (rectangular)`) : row('Espesor', `${fmt(input.h / 10, 0)} cm (franja de 1 m)`)}
+        ${row('Luces', `${g.cantL > 0 ? `voladizo ${fmt(g.cantL, 2)} m + ` : ''}${g.spans.map((l) => fmt(l, 2)).join(' m + ')} m${g.cantR > 0 ? ` + voladizo ${fmt(g.cantR, 2)} m` : ''}`, 'CIRSOC 201 art. 8.7.1')}
+        ${row('Apoyos', apoyos)}
+        ${row('Carga permanente sin peso propio', `${fmt(input.D0, 2)} ${u}`, ARTICLES.loads)}${row('Sobrecarga', `${fmt(input.Lv, 2)} ${u}`, 'CIRSOC 101, Tabla 4.1')}</table>
+      <h2>2. Cargas y análisis</h2>
+      <table>${row('Peso propio', `${fmt(res.self, 2)} ${u}`, `γ hormigón armado = ${N.gammaRC} kN/m³`)}${row('D total', fmt(res.D, 2))}${row(`wu = ${res.combos.governing}`, fmt(res.combos.wu, 2), ARTICLES.combos)}
+        ${row('Método', 'Análisis elástico de rigidez constante, sobrecarga alternada por tramos y voladizos (envolvente)', 'CIRSOC 201 art. 8.3.1 y 8.9.2')}</table>
+      <h2>3. Armado y esfuerzos</h2>
+      ${contTables(calc, out).replace(/class="table-wrap"/g, '')}
+      ${contFigure(calc, out, 'print')}
+      <h2>4. Verificaciones</h2>
+      <table>${res.checks.map((k) => row(`${k.ok ? '✓' : '✗'} ${k.label}`, escapeHtml(k.text))).join('')}</table>
+      <p class="mem-sub">Alcance: sección rectangular; armadura simple; no se calcula la flecha (se verifica la altura mínima de la Tabla 9.5.a)); las longitudes de anclaje y empalme se verifican en el despiece.</p>`,
+  });
+}
+
+// Armado en elevación (vigas y franja de losa en una dirección): barras, estribos, esquema de cálculo y diagramas.
+function armadoOf(calc, out, pal) {
+  const { res, input } = out;
+  const c = res.chosen;
+  if (!c) return '';
+  const beam = calc.element === 'beam';
+  const cant = input.kind === 'cantilever';
+  const wu = res.combos.wu;
+  const bars = beam ? { n: c.n, db: c.db, layers: c.layers, n1: c.n1, n2: c.n2 } : { txt: `ø${c.db} c/${fmt(c.s / 10, c.s % 10 ? 1 : 0)} cm`, db: c.db, s: c.s };
+  const span = { L: input.L, wu, d: c.d, vL: res.Vu, vR: cant ? 0 : res.Vu, pos: cant ? null : bars, negL: cant ? bars : null, negR: null };
+  if (beam) span.shearAt = (V) => rc.shearDesign({ Vu: V * 1000, b: input.b, d: c.d, h: input.h, fc: input.fc, fyt: input.fyt, dStirrup: input.dStirrup });
+  const sec = beam ? `${fmt(input.b / 10, 0)} × ${fmt(input.h / 10, 0)} cm` : `espesor ${fmt(input.h / 10, 0)} cm`;
+  return armadoFigure({
+    pal, kind: cant ? 'cantilever' : 'continuous', slab: !beam,
+    title: `${beam ? 'Viga' : 'Losa'} ${cant ? 'en voladizo' : 'simplemente apoyada'} · ${sec} · luz ${fmt(input.L, 2)} m`,
+    spans: [span], names: cant ? [] : ['A', 'B'], dSt: input.dStirrup,
+    curves: [simpleCurves({ L: input.L, wu, cantilever: cant })],
+    reactions: cant ? null : [res.Vu, res.Vu],
+    unit: beam ? { w: 'kN/m', m: 'kN·m', v: 'kN' } : { w: 'kN/m²', m: 'kN·m/m', v: 'kN/m' },
+    dist: beam ? null : distributionBars({ asMin: c.asMin, sMax: c.sMaxTemp }),
   });
 }
 
@@ -766,6 +974,7 @@ function sectionSVG({ b, h, cover, dSt, db, n, n1, n2, layers, top, flange = nul
 
 // ---------------- memoria de cálculo ----------------
 function openMemoria(calc, out) {
+  if (out.cont) { openMemoriaCont(calc, out); return; }
   const { res, input } = out;
   const beam = calc.element === 'beam';
   const c = res.chosen;
@@ -791,11 +1000,13 @@ function openMemoria(calc, out) {
       <h2>4. Corte</h2>
       <table>${row('φVc', `${fmt(res.shear.phiVc / 1000, 1)} kN${beam ? '' : '/m'}`, `Vc = (√f'c / 6) bw d — ${ARTICLES.shearVc}`)}${row('Vu', `${fmt(res.Vu, 1)} kN${beam ? '' : '/m'}`)}
         ${beam && res.shear.stirrups ? row('Estribos', `ø${input.dStirrup} c/${fmt(res.shear.s / 10, 0)} cm`, `${ARTICLES.shearVs}; ${ARTICLES.shearSpacing}; ${ARTICLES.shearMin}`) : row('Armadura de corte', beam ? 'no requerida por cálculo' : 'no requerida (losa sin estribos)')}</table>
-      <h2>5. Flechas</h2>
+      <h2>5. Armado</h2>
+      ${armadoOf(calc, out, 'print')}
+      <h2>6. Flechas</h2>
       <table>${row('Ec = 4700 √f\'c', `${fmt(N.Ec(input.fc), 0)} MPa`, 'CIRSOC 201 art. 8.5.1')}${row('Ie / Ig', fmt(res.deflection.Ie / res.deflection.Ig, 2), ARTICLES.deflection)}
         ${row('Flecha instantánea por L', `${fmt(res.deflection.instL, 1)} mm`)}${row('Flecha diferida por D (λ = ξ, ρ\' = 0)', `${fmt(res.deflection.longD, 1)} mm`, 'ec. (9-11)')}
         ${row(`Verificación: ${res.deflectionCheck.label}`, `${fmt(res.deflectionCheck.value, 1)} ≤ ${fmt(res.deflectionCheck.limit, 1)} mm (l/${res.deflectionCheck.ratio})`, 'Tabla 9.5.b)')}</table>
-      <h2>6. Verificaciones</h2>
+      <h2>7. Verificaciones</h2>
       <table>${res.checks.map((k) => row(`${k.ok ? '✓' : '✗'} ${k.label}`, escapeHtml(k.text))).join('')}</table>`,
   });
 }

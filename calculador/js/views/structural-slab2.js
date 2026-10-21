@@ -5,6 +5,7 @@ import { escapeHtml } from '../utils.js';
 import { setCalcField } from '../state.js';
 import { fmt, numField, selField, checksCard, failCard, memoRow } from './structural-ui.js';
 import { slab2Figures } from './structural-draw.js';
+import { slab2ArmadoFigure } from './structural-armado.js';
 
 const ART = {
   method: 'CIRSOC 201 art. 13.5.1 (cualquier método que cumpla equilibrio y compatibilidad)',
@@ -229,6 +230,10 @@ function resultsHTML(calc, out) {
       <p class="text-muted" style="font-size:11.5px; margin:6px 0 0;">Azul: tracción abajo (positivo). Naranja: tracción arriba (negativo, en bordes empotrados).</p>
     </div>
     <div class="card" style="margin-bottom:16px;">
+      <h3 style="margin-top:0;">Armado: dónde va el hierro</h3>
+      ${slab2ArmadoFigure(res, 'screen')}
+    </div>
+    <div class="card" style="margin-bottom:16px;">
       <h3 style="margin-top:0;">Armadura por franjas</h3>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Franja</th><th style="text-align:right;">Mu (kN·m/m)</th><th>Armadura</th><th style="text-align:right;">As (mm²/m)</th></tr></thead><tbody>${stripRows}</tbody></table></div>
       <p class="text-muted" style="font-size:11.5px; margin:8px 0 0;">${ART.strips}: la franja central es la mitad del ancho y cada franja lateral un cuarto; cada una se arma con el momento promedio de su ancho, con la armadura mínima (${ART.minSteel}) y separación máxima 2 h (${ART.spacing}). La armadura inferior de la luz corta va en la capa más baja.</p>
@@ -273,6 +278,7 @@ function memoria(calc, out) {
       ${figs.plan}${figs.moments}
       <h2>3. Armadura por franjas</h2>
       <table>${rows}</table>
+      ${slab2ArmadoFigure(res, 'print')}
       ${res.corners.length ? `<h2>4. Armadura de esquina</h2><table>${res.corners.map((c) => memoRow(escapeHtml(c.label), `${barTxt(c.chosen)} arriba y abajo, hasta ${fmt(c.length / 10, 0)} cm desde la esquina`, ART.corner)).join('')}</table>` : ''}
       <h2>${res.corners.length ? '5' : '4'}. Corte y flecha</h2>
       <table>${memoRow('Vu a d de la cara', `${fmt(res.shear.VuAtD, 1)} kN/m`, ART.shear)}${memoRow('φVc', `${fmt(res.shear.phiVc, 1)} kN/m`)}

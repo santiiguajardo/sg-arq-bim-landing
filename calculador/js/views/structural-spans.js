@@ -12,7 +12,7 @@ const sum = (a) => a.reduce((x, y) => x + y, 0);
 let pendingFocus = null;
 
 // ---------------------------------------------------------------- dibujo de una línea de apoyos con tramos y voladizos
-export function axisSketch({ spans, cantL = 0, cantR = 0, kind = 'num', unit = 'm' }) {
+export function axisSketch({ spans, cantL = 0, cantR = 0, kind = 'num', unit = 'm', fix = [] }) {
   const W = 560;
   const H = 96;
   const pad = 34;
@@ -38,7 +38,8 @@ export function axisSketch({ spans, cantL = 0, cantR = 0, kind = 'num', unit = '
   // apoyos
   xs.forEach((m, i) => {
     const x = X(m);
-    s += `<path d="M ${x} ${y0 + 3} l -9 15 h 18 z" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.6"/>`;
+    s += fix[i] ? `<rect x="${x - 5}" y="${y0 + 1}" width="10" height="19" fill="var(--line)" stroke="var(--ink)" stroke-width="1.6"/>`
+      : `<path d="M ${x} ${y0 + 3} l -9 15 h 18 z" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.6"/>`;
     s += `<circle cx="${x}" cy="${y0 + 32}" r="9" fill="var(--accent-soft)" stroke="var(--accent)"/><text x="${x}" y="${y0 + 36}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--accent-ink)">${axisName(kind, i)}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%; max-width:640px; height:auto; display:block;" role="img" aria-label="Esquema de los tramos">${s}</svg>`;

@@ -82,7 +82,7 @@ function containTexts(svg) {
   const sr = svg.getBoundingClientRect();
   if (!sr.width) return;
   svg.querySelectorAll('text').forEach((t) => {
-    if (!t.textContent.trim()) return;
+    if (!t.textContent.trim() || t.hasAttribute('data-fixed')) return;       // data-fixed: el número va dentro de su círculo, no se mueve
     let r = rectOf(t);
     if (r.r - r.l > sr.width - 4) {
       const fs = parseFloat(t.getAttribute('font-size') || getComputedStyle(t).fontSize) || 12;
@@ -119,6 +119,7 @@ function declutter(svg) {
     return c;
   };
   for (const item of rects) {
+    if (item.t.hasAttribute('data-fixed')) continue;
     const base = cost(item, item.r);
     if (base === 0) continue;
     let best = { c: base, dx: 0, dy: 0 };

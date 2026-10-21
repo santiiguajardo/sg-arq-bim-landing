@@ -7,18 +7,22 @@ export const PAL = {
   screen: { ink: 'var(--ink)', soft: 'var(--ink-soft)', line: 'var(--line)', accent: 'var(--accent)', warm: 'var(--warn, #c77700)', bad: 'var(--bad)', fill: 'var(--line-soft)' },
   print: { ink: '#111111', soft: '#555555', line: '#c4c8cf', accent: '#1d4ed8', warm: '#b45309', bad: '#b91c1c', fill: '#eceff3' },
 };
-const nf = (n, dec = 1) => Number(n).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-const f1 = (v) => Number(v).toFixed(1);
+// Unidad de fuerza que trae un título de diagrama, por ejemplo "Corte V (kN)": los números de ese diagrama se marcan con data-fu para que el selector
+// de unidades de fuerza (structural-units.js) los convierta junto con el título.
+export const fuOf = (title) => { const m = /\((kN(?:·m\/m|·m|\/m²|\/m)?|kg(?:·m|\/m²|\/m)?)[,)]/.exec(title || ''); return m ? m[1] : ''; };
+export const withFu = (t, unit) => (unit ? t.replace('<text ', `<text data-fu="${unit}" `) : t);
+export const nf = (n, dec = 1) => Number(n).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+export const f1 = (v) => Number(v).toFixed(1);
 
 export function svgWrap(w, h, inner, label, maxW = 600) {
   return `<svg viewBox="0 0 ${w} ${h}" ${FONT} style="width:100%; max-width:${maxW}px; display:block; margin:6px 0;" role="img" aria-label="${label}">${inner}</svg>`;
 }
 
-const text = (x, y, t, { size = 11.5, fill, anchor = 'start', weight = 400, rotate = null } = {}) =>
+export const text = (x, y, t, { size = 11.5, fill, anchor = 'start', weight = 400, rotate = null } = {}) =>
   `<text x="${f1(x)}" y="${f1(y)}" font-size="${size}" fill="${fill}" text-anchor="${anchor}" font-weight="${weight}"${rotate ? ` transform="rotate(${rotate} ${f1(x)} ${f1(y)})"` : ''}>${t}</text>`;
 
 // flecha de (x1,y1) a (x2,y2)
-function arrow(x1, y1, x2, y2, color, w = 1.6, head = 6) {
+export function arrow(x1, y1, x2, y2, color, w = 1.6, head = 6) {
   const a = Math.atan2(y2 - y1, x2 - x1);
   const hx1 = x2 - head * Math.cos(a - 0.45);
   const hy1 = y2 - head * Math.sin(a - 0.45);
@@ -28,7 +32,7 @@ function arrow(x1, y1, x2, y2, color, w = 1.6, head = 6) {
 }
 
 // línea de cota horizontal
-function dimH(x1, x2, y, label, p) {
+export function dimH(x1, x2, y, label, p) {
   return `<line x1="${f1(x1)}" y1="${f1(y)}" x2="${f1(x2)}" y2="${f1(y)}" stroke="${p.soft}" stroke-width="1"/>
     <line x1="${f1(x1)}" y1="${f1(y - 4)}" x2="${f1(x1)}" y2="${f1(y + 4)}" stroke="${p.soft}"/><line x1="${f1(x2)}" y1="${f1(y - 4)}" x2="${f1(x2)}" y2="${f1(y + 4)}" stroke="${p.soft}"/>
     ${text((x1 + x2) / 2, y - 4, label, { fill: p.soft, anchor: 'middle', size: 10.5 })}`;
@@ -36,7 +40,7 @@ function dimH(x1, x2, y, label, p) {
 
 // Diagrama sobre una línea base. pts: [[x (px), valor]]; sign +1 dibuja los positivos hacia abajo (lado traccionado), -1 hacia arriba.
 // maxAbs fija la escala (px por unidad = h / maxAbs). Devuelve el SVG y la función de ordenada.
-function diagram({ x0, x1, y, h, pts, maxAbs, down = true, color, p, title, labels = [], zeroLabel = null }) {
+export function diagram({ x0, x1, y, h, pts, maxAbs, down = true, color, p, title, labels = [], zeroLabel = null }) {
   const k = h / (maxAbs || 1);
   const sgn = down ? 1 : -1;
   const Y = (v) => y + sgn * v * k;
@@ -48,7 +52,7 @@ function diagram({ x0, x1, y, h, pts, maxAbs, down = true, color, p, title, labe
   labels.forEach((l) => {
     const yy = Y(l.v);
     const above = l.pos === 'up' || (l.pos !== 'down' && (down ? l.v < 0 : l.v > 0));
-    s += `<circle cx="${f1(l.x)}" cy="${f1(yy)}" r="2.8" fill="${color}"/>${text(l.x + (l.dx || 0), yy + (above ? -6 : 13), l.text, { fill: p.ink, anchor: l.anchor || 'middle', size: 10.5, weight: 600 })}`;
+    s += `<circle cx="${f1(l.x)}" cy="${f1(yy)}" r="2.8" fill="${color}"/>${withFu(text(l.x + (l.dx || 0), yy + (above ? -6 : 13), l.text, { fill: p.ink, anchor: l.anchor || 'middle', size: 10.5, weight: 600 }), /\d [a-zA-Z]/.test(String(l.text)) ? '' : fuOf(title))}`;
   });
   if (zeroLabel) s += text(x1 + 4, y + 3, zeroLabel, { fill: p.soft, size: 9.5 });
   return s;
@@ -412,7 +416,7 @@ export function lineFigure({ curves, design, supports, title, pal = 'screen' }) 
     let o = text(8, y - h - 22, title, { fill: p.ink, size: 11.5, weight: 600 });
     o += `<line x1="${f1(x0)}" y1="${f1(y)}" x2="${f1(x1)}" y2="${f1(y)}" stroke="${p.soft}"/>`;
     o += `<polygon points="${poly1} ${poly2}" fill="${color}" fill-opacity="0.16"/><polyline points="${poly1}" fill="none" stroke="${color}" stroke-width="2"/><polyline points="${b2.map(([x, v]) => `${f1(x)},${f1(y + sg * v * k2)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2"/>`;
-    labels.forEach((l) => { o += `<circle cx="${f1(l.x)}" cy="${f1(y + sg * l.v * k2)}" r="2.6" fill="${color}"/>` + text(l.x, y + sg * l.v * k2 + (l.up ? -6 : 13), l.text, { fill: p.ink, size: 10.5, anchor: 'middle', weight: 600 }); });
+    labels.forEach((l) => { o += `<circle cx="${f1(l.x)}" cy="${f1(y + sg * l.v * k2)}" r="2.6" fill="${color}"/>` + withFu(text(l.x, y + sg * l.v * k2 + (l.up ? -6 : 13), l.text, { fill: p.ink, size: 10.5, anchor: 'middle', weight: 600 }), fuOf(title)); });
     return o;
   };
   const vLabels = [];
@@ -801,7 +805,7 @@ export function portalDiagrams(d, pal = 'screen') {
       if (Math.abs(v) > 0.04 * maxAbs && (d.members.length <= 8 || memMax >= 0.999 * maxAbs)) {
         const [lx, ly] = poly[im];
         const side = (lx - (B.X(a.x) + B.X(b.x)) / 2) >= 0 ? 6 : -6;
-        s += `<circle cx="${f1(lx)}" cy="${f1(ly)}" r="2.4" fill="${color}"/>` + text(lx + side + (side > 0 ? 2 : -2), ly + 4, `${v < 0 ? '−' : ''}${nf(Math.abs(v), 0)}`, { fill: p.ink, size: 10, anchor: side > 0 ? 'start' : 'end', weight: 600 });
+        s += `<circle cx="${f1(lx)}" cy="${f1(ly)}" r="2.4" fill="${color}"/>` + withFu(text(lx + side + (side > 0 ? 2 : -2), ly + 4, `${v < 0 ? '−' : ''}${nf(Math.abs(v), 0)}`, { fill: p.ink, size: 10, anchor: side > 0 ? 'start' : 'end', weight: 600 }), fuOf(title));
       }
     });
       out += svgWrap(W, panelH + 20, s, title, 640);

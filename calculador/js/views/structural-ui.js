@@ -3,12 +3,13 @@ import { escapeHtml, showToast } from '../utils.js';
 import { logoUrl } from '../auth.js';
 import { downloadMemoriaPdf } from '../api.js';
 import { tidyHtml } from './svg-tidy.js';
+import { convertHtmlUnits } from './structural-units.js';
 
 export const fmt = (n, dec = 1) => Number(n).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 
 export function numField(path, label, value, { step = 'any', min = 0, hint = '', unit = '' } = {}) {
   return `<div class="field"><label>${label}${unit ? ` <span class="text-muted">(${unit})</span>` : ''}</label>
-    <input type="number" step="${step}" min="${min}" data-f="${path}" data-num value="${value ?? ''}" />${hint ? `<span class="text-muted" style="font-size:11.5px;">${hint}</span>` : ''}</div>`;
+    <input type="number" step="${step}" min="${min}" data-f="${path}" data-num ${unit ? `data-unit="${unit}"` : ''} value="${value ?? ''}" />${hint ? `<span class="text-muted" style="font-size:11.5px;">${hint}</span>` : ''}</div>`;
 }
 
 export function selField(path, label, value, options, hint = '') {
@@ -213,7 +214,7 @@ export async function openMemoriaDoc({ title, sub, html, disclaimer = MEM_DISCLA
   const tinted = String(html)
     .replace(/<td>✓ /g, '<td class="mem-ok">✓ ').replace(/<td>✗ /g, '<td class="mem-bad">✗ ')
     .replace(/(<td[^>]*)>verifica<\/td>/g, '$1 class="mem-ok">✓ verifica</td>').replace(/(<td[^>]*)>no verifica<\/td>/g, '$1 class="mem-bad">✗ no verifica</td>');
-  const content = `<h1>${escapeHtml(title)}</h1><p class="mem-sub">${escapeHtml(sub)} · ${date}</p>${tidyHtml(tinted)}`;
+  const content = `<h1>${escapeHtml(title)}</h1><p class="mem-sub">${escapeHtml(sub)} · ${date}</p>${tidyHtml(convertHtmlUnits(tinted))}`;
   const pages = paginate(content, makeSheet);
   pages.forEach((p, i) => { p.querySelector('.mem-pg').textContent = `Página ${i + 1} de ${pages.length}`; });
   // en pantallas angostas se achican las hojas para que entre el ancho completo

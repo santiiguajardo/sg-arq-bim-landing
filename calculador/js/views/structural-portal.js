@@ -9,6 +9,7 @@ import { escapeHtml } from '../utils.js';
 import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js';
 import { portalLoads, portalDiagrams } from './structural-draw.js';
 import { deflSelect, deflCardHtml, deflMemo, jointsPanel, jointsPortal, jointsMemo } from './structural-joints.js';
+import { steelFloorModule, floorVirtual, floorResults, floorMemoria } from './structural-steel.js';
 
 const ART = {
   method: 'Método elástico: σ ≤ σadm = fluencia / 1,6 (apunte "Teoría acero")',
@@ -93,7 +94,8 @@ export const portalModule = {
   },
   input(calc) { return paramsOf(calc); },
   run(calc) { return compute(calc); },
-  wire(root) {
+  wire(root, calc) {
+    if (mezzOf(calc)) steelFloorModule.wire(root, mezzOf(calc));
     root.querySelectorAll('[data-ptab]').forEach((b) => b.addEventListener('click', () => { ptab = b.dataset.ptab; rerender(); }));
     root.querySelector('#pState')?.addEventListener('change', (e) => { pstate = Number(e.target.value); rerender(); });
   },
@@ -153,7 +155,7 @@ export const portalModule = {
           ${numField('design.xFrame', 'Distancia del pórtico al frente (viento sobre el frente)', d.xFrame, { unit: 'm', hint: '0 = pórtico del extremo (el más cargado).' })}
         </div>
         ${selField('design.windMix', 'Estados de viento lateral', d.windMix === 'no' ? 'no' : 'yes', [['yes', 'Los de CIRSOC 102 (GCpi + y −) y además el estado del apunte (valor más desfavorable de cada superficie)'], ['no', 'Solo los de CIRSOC 102']])}
-      </div>`;
+      </div>${mezzStep1(calc)}`;
   },
   step2(calc) {
     const out = compute(calc);
@@ -201,7 +203,7 @@ export const portalModule = {
           </tbody></table>
           <p class="text-muted" style="font-size:12px; margin:8px 0 0;">El análisis se hace con la rigidez de los perfiles adoptados (se repite hasta que los perfiles no cambian), no con las fórmulas aproximadas de hiperestáticos del apunte. En el paso 3 se elige el perfil más liviano que verifica.</p>` : `<div class="empty-state">${out.error || 'Completá el paso 1.'}</div>`}
         </div>
-      </div>`;
+      </div>${mezzStep2(calc)}`;
   },
   step3(calc, out) {
     const s = calc.section;
@@ -221,13 +223,68 @@ export const portalModule = {
         ${numField('foundation.Df', 'Profundidad de fundación', calc.foundation.Df, { unit: 'm' })}${numField('foundation.gamma', 'Peso del suelo', calc.foundation.gamma, { unit: 'kN/m³' })}
       </div>
     </div>`;
-    if (out.error) return `<div class="grid grid-2" style="align-items:start;">${inputs}<div class="card"><div class="empty-state">${out.error}</div></div></div>`;
-    return `<div class="grid grid-2" style="align-items:start;">${inputs}<div>${results(calc, out)}</div></div>`;
+    const left = `<div>${inputs}${mezzInputs(calc)}</div>`;
+    if (out.error) return `<div class="grid grid-2" style="align-items:start;">${left}<div class="card"><div class="empty-state">${out.error}</div></div></div>`;
+    return `<div class="grid grid-2" style="align-items:start;">${left}<div>${results(calc, out)}</div></div>`;
   },
   memoria(calc, out) { return memoria(calc, out); },
 };
 
 const TABS = [['resumen', 'Resumen'], ['viento', 'Viento'], ['diag', 'Cargas y diagramas'], ['dim', 'Pórtico'], ['correas', 'Correas'], ['bases', 'Bases'], ['uniones', 'Uniones']];
+
+// ---------------------------------------------------------------- entrepiso dentro de la nave (opcional)
+function mezzOf(calc) {
+  return calc && calc.design && calc.design.mezzOn === 'yes' && calc.design.mezz ? floorVirtual(calc) : null;
+}
+
+function mezzStep1(calc) {
+  const on = Boolean(mezzOf(calc));
+  return `<div class="card" style="margin-top:16px;">
+      <h3 style="margin-top:0;">Entrepiso dentro de la nave <span class="text-muted" style="font-weight:400; font-size:12.5px;">(opcional)</span></h3>
+      <p class="text-muted" style="font-size:12.5px; margin:-6px 0 10px;">Un entrepiso (altillo) de acero adentro de la nave, con sus propias correas, vigas, columnas y bases. Es independiente del pórtico de la nave. Si la nave no lleva entrepiso, dejalo en “No”.</p>
+      ${selField('design.mezzOn', '¿La nave lleva un entrepiso?', on ? 'yes' : 'no', [['no', 'No: solo la nave'], ['yes', 'Sí: agregar un entrepiso']])}
+    </div>${on ? `<div style="margin-top:16px;">${steelFloorModule.step1(mezzOf(calc))}</div>` : ''}`;
+}
+
+function mezzStep2(calc) {
+  const mz = mezzOf(calc);
+  return mz ? `<div style="margin-top:16px;"><h3 style="margin:0 0 10px;">Entrepiso: perfiles</h3>${steelFloorModule.step2(mz)}</div>` : '';
+}
+
+function mezzInputs(calc) {
+  const mz = mezzOf(calc);
+  if (!mz) return '';
+  const html = steelFloorModule.step3(mz, { error: 'x' });
+  const m = /^<div class="grid grid-2" style="align-items:start;">(<div class="card">[\s\S]*?<\/div>)<div class="card"><div class="empty-state">x<\/div><\/div><\/div>$/.exec(html);
+  return m ? `<div style="margin-top:16px;">${m[1]}</div>` : '';
+}
+
+function mezzBody(calc) {
+  const mz = mezzOf(calc);
+  if (!mz) return '<div class="card"><div class="empty-state">La nave no lleva entrepiso: activalo en el paso 1.</div></div>';
+  const out = steelFloorModule.run(mz);
+  if (out.error) return `<div class="card"><div class="empty-state">${escapeHtml(out.error)}</div></div>`;
+  return floorResults(mz, out);
+}
+
+function mezzSummary(calc) {
+  const mz = mezzOf(calc);
+  if (!mz) return '';
+  const out = steelFloorModule.run(mz);
+  if (!out.res) return '';
+  const q = out.res.quantities;
+  return `<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Entrepiso ${pill(out.res.ok)}</h3>
+    <table class="data-table"><tbody>
+      <tr><td>Superficie</td><td style="text-align:right;">${fmt(out.res.Xtot, 2)} × ${fmt(out.res.Ytot, 2)} m</td></tr>
+      <tr><td>Correas · vigas · columnas</td><td style="text-align:right;"><b>${escapeHtml(out.res.corr.profile.n)}</b> · ${[...new Set(out.res.lines.map((l) => `${l.profile.n}${l.mult === 2 ? ' × 2' : ''}`))].map(escapeHtml).join(' / ')} · ${out.res.own.length ? [...new Set(out.res.own.map((n) => n.col.profile.n))].map(escapeHtml).join(' / ') : '—'}</td></tr>
+      <tr><td>Acero estructural del entrepiso</td><td style="text-align:right;"><b>${fmt(q.kgTot, 0)} kg (${fmt(q.kgPerM2, 1)} kg/m²)</b></td></tr>
+    </tbody></table>
+    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">El detalle está en la pestaña “Entrepiso”.</p></div>`;
+}
+
+function tabsOf(calc) {
+  return mezzOf(calc) ? [...TABS.slice(0, 6), ['entrepiso', 'Entrepiso'], TABS[6]] : TABS;
+}
 
 function memberLine(res, c, label) {
   const k = c.c;
@@ -263,9 +320,10 @@ function beamChecks(res) {
 
 function results(calc, out) {
   const { res } = out;
+  if (ptab === 'entrepiso' && !mezzOf(calc)) ptab = 'resumen';
   res.baseKind = calc.design.base;
   res.type = calc.design.type;
-  const tabs = `<div class="tabs" style="margin-bottom:12px; flex-wrap:wrap;">${TABS.map(([k, l]) => `<button class="tab ${ptab === k ? 'active' : ''}" data-ptab="${k}">${l}</button>`).join('')}</div>`;
+  const tabs = `<div class="tabs" style="margin-bottom:12px; flex-wrap:wrap;">${tabsOf(calc).map(([k, l]) => `<button class="tab ${ptab === k ? 'active' : ''}" data-ptab="${k}">${l}</button>`).join('')}</div>`;
   const w = res.weights;
   let body = '';
   if (ptab === 'resumen') {
@@ -322,6 +380,8 @@ function results(calc, out) {
         ${pu.conc ? `<tr><td>Carga concentrada de 100 kg</td><td style="text-align:right;">σ ${kg(pu.conc.sigma)} / ${kg(pu.conc.sigmaAllow)} kg/cm²</td></tr>` : ''}
       </tbody></table>
       <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Flexión oblicua con la succión máxima normal a la cubierta de los estados de viento (${fmt(res.suction, 0)} kg/m²) y la sobrecarga de ${fmt(res.base.p, 0)} kg/m²; método del apunte "Correas a flexión oblicua" (σ = 900 kg/cm² en chapa plegada).</p></div>`;
+  } else if (ptab === 'entrepiso') {
+    body = mezzBody(calc);
   } else if (ptab === 'uniones') {
     body = jointsPanel(calc, jointsPortal(res, calc));
   } else {
@@ -329,11 +389,24 @@ function results(calc, out) {
       ${res.bases.map((b) => `<tr><td>${b.idx === 0 ? 'Izquierda' : 'Derecha'}</td><td style="text-align:right;">${kg(b.Nmax)}</td><td style="text-align:right;">${kg(b.uplift)}</td><td style="text-align:right;">${kg(b.H)}</td><td>${b.footing.ok ? `${fmt(b.footing.B / 10, 0)} × ${fmt(b.footing.L / 10, 0)} × ${fmt(b.footing.h / 10, 0)} cm` : escapeHtml(b.footing.reason || '—')}</td><td>${b.uplift <= 0 ? '—' : b.upliftOk ? 'verifica' : `no verifica: peso ${kg(b.weight)} < 1,5 T = ${kg(b.upliftWeight)} kg${b.upliftSide ? `; hace falta una base de ${fmt(b.upliftSide * 100, 0)} × ${fmt(b.upliftSide * 100, 0)} cm o un bloque de anclaje` : ''}`}</td></tr>`).join('')}</tbody></table></div>
       <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Base centrada para la carga vertical máxima (CIRSOC 201, con la parte permanente y la sobrecarga de cubierta). Levantamiento: el peso de la base más el suelo sobre ella debe ser al menos 1,5 T (criterio del apunte para anclajes). La fuerza horizontal de las bases (rozamiento o tensor) y el anclaje de la columna (placa y bulones) se verifican en la pestaña Uniones.</p></div>`;
   }
+  if (ptab === 'resumen') body += mezzSummary(calc);
   return tabs + body;
 }
 
 // ---------------------------------------------------------------- memoria
+// La memoria de la nave más, si lleva entrepiso, la memoria del entrepiso a continuación
 function memoria(calc, out) {
+  const doc = memoriaNave(calc, out);
+  const mz = mezzOf(calc);
+  if (!doc || !mz) return doc;
+  const fo = steelFloorModule.run(mz);
+  const fd = fo.res ? floorMemoria(mz, fo) : null;
+  if (!fd) return doc;
+  const inner = fd.html.replace(/<h2>(\d+\. )?/g, '<h2>Entrepiso: ');
+  return { ...doc, sub: `${doc.sub} · con entrepiso de ${fmt(fo.res.Xtot, 2)} × ${fmt(fo.res.Ytot, 2)} m`, html: `${doc.html}<h2>ENTREPISO DENTRO DE LA NAVE</h2>${inner}` };
+}
+
+function memoriaNave(calc, out) {
   const { res, input } = out;
   if (!res || !res.col) return null;
   res.baseKind = calc.design.base;

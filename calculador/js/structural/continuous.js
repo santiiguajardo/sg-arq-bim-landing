@@ -8,7 +8,8 @@ const A = 1;
 const I = 1e-3;   // EI constante: en una franja de rigidez uniforme no cambia ni momentos ni reacciones
 
 // spans: [{L, wD, wL}]; cantLeft / cantRight: {L, wD, wL} | null. Cargas en kN/m (por metro de ancho de franja).
-export function analyzeStrip({ spans, cantLeft = null, cantRight = null }) {
+// fixed: [bool] por apoyo (0 = primero): true = empotrado (giro impedido) en lugar de apoyo simple.
+export function analyzeStrip({ spans, cantLeft = null, cantRight = null, fixed = [] }) {
   const nodes = [];
   const members = [];
   const supports = [];
@@ -32,7 +33,7 @@ export function analyzeStrip({ spans, cantLeft = null, cantRight = null }) {
   if (cl !== null) { memberOf.left = addMember(0, supportNode[0], 'cl'); srcs.push({ type: 'cantL' }); }
   spans.forEach((sp, k) => { memberOf.spans.push(addMember(supportNode[k], supportNode[k + 1], `s${k}`)); srcs.push({ type: 'span', k }); });
   if (cr !== null) { memberOf.right = addMember(supportNode[spans.length], cr, 'cr'); srcs.push({ type: 'cantR' }); }
-  supportNode.forEach((nid, q) => supports.push({ node: nid, ux: q === 0, uy: true }));
+  supportNode.forEach((nid, q) => supports.push({ node: nid, ux: q === 0, uy: true, rz: Boolean(fixed[q]) }));
 
   const loadOf = (tag, kind) => {
     if (tag === 'cl') return cantLeft[kind];
@@ -97,7 +98,11 @@ export function analyzeStrip({ spans, cantLeft = null, cantRight = null }) {
     if (q === spans.length && memberOf.right !== null) vals.push(-Math.min(0, env[memberOf.right][0].mMin));
     const RD = caseD.reactions[q].fy;
     const RL = caseL.reduce((s, c) => s + c.reactions[q].fy, 0);
-    return { negM: Math.max(0, ...vals), RD, RL };
+    // reacción mayorada: 1,2 D + 1,6 L con la sobrecarga solo donde suma (cada fuente de L es independiente)
+    const Ru = Math.max(1.4 * RD, 1.2 * RD + 1.6 * caseL.reduce((sum, c) => sum + Math.max(0, c.reactions[q].fy), 0));
+    return { negM: Math.max(0, ...vals), RD, RL, Ru };
   });
-  return { spans: spanResults, supports: supportResults };
+  // curvas de la envolvente de cada barra (tramos y voladizos, de izquierda a derecha): x local (m), M (positivo = tracción abajo, kN·m), V (kN)
+  const curves = members.map((m, mi) => ({ tag: m.tag, L: env[mi][NS].x, pts: env[mi].map((q) => ({ x: q.x, mMax: q.mMax, mMin: q.mMin, vMax: q.vMax, vMin: q.vMin })) }));
+  return { spans: spanResults, supports: supportResults, curves };
 }
