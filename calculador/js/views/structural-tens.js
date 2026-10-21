@@ -247,7 +247,7 @@ function coefCard(calc, withBeta1 = true) {
       ${withBeta1 ? numField('design.beta1', 'β1: tensión previa sobre la mínima', d.beta1, { hint: 'De 1,5 a 2 (guías).' }) : ''}
       ${numField('design.beta2', 'β2: carga de rotura sobre la máxima', d.beta2, { hint: 'Las guías usan 2.' })}
     </div>
-    ${withBeta1 ? numField('design.TpAdopt', 'Tensión previa adoptada Tp (kg)', d.TpAdopt, { hint: 'Vacío o 0 = la calculada (mínima × β1). Las guías redondean (p. ej. 1650 kg).' }) : ''}
+    ${withBeta1 ? numField('design.TpAdopt', 'Tensión previa adoptada Tp', d.TpAdopt, { unit: 'kg', hint: 'Vacío o 0 = la calculada (mínima × β1). Las guías redondean (p. ej. 1650 kg).' }) : ''}
     ${selField('design.catalog', 'Tabla de cables', d.catalog || 'guide', CATALOGS, 'Los valores de las guías vienen de una tabla que no se adjuntó; las Tablas 1 y 2 del anexo son las del catálogo HIERROMAT.')}
     ${heavy ? numField('design.nCables', 'Cantidad de cables por faja', d.nCables, { step: 1, hint: 'La guía usa 2 cables de 19 mm en lugar de uno de 26 mm para apoyar las losetas.' }) : ''}
   </div>`;

@@ -502,7 +502,7 @@ function renderCalc(root, state, calc, step) {
     if (el.hasAttribute('data-num')) {
       v = Number(v);
       if (!Number.isFinite(v)) return;
-      if (el.dataset.fk && Number(el.dataset.fk) > 0) v /= Number(el.dataset.fk);        // el campo se muestra en otra unidad de fuerza: se guarda en la original
+      if (el.dataset.fk && Number(el.dataset.fk) > 0) v = Number((v / Number(el.dataset.fk)).toPrecision(10));        // el campo se muestra en otra unidad de fuerza: se guarda en la original
     }
     if (el.hasAttribute('data-list')) {
       v = String(v).split(/[\s;]+/).join(',').split(',').map((x) => Number(x.replace(',', '.'))).filter((x) => Number.isFinite(x) && x > 0);
