@@ -196,15 +196,15 @@ export function designTower(p) {
   // ---- verificaciones
   const f1 = (v, n = 0) => Number(v).toFixed(n).replace('.', ',');
   res.checks.push({ ok: volc >= 1.5 - 1e-9, label: 'Volcamiento', text: `M equil / M volc = G L1 / 2 / M = ${f1(G0)} t × ${f1(L1 / 2, 1)} m / ${f1(Mbase)} tm = ${f1(volc, 2)} ≥ 1,5 (G sin sobrecarga)` });
-  res.checks.push({ ok: e0 <= L1 / 6 + 1e-9, label: 'Resultante en el núcleo central de la base', text: `e = M / N = ${f1(Mbase)} / ${f1(G0)} = ${f1(e0, 2)} m ≤ L1 / 6 = ${f1(L1 / 6, 2)} m` });
-  res.checks.push({ ok: sMax / 10 <= sigmaT + 1e-9, label: 'Tensión del terreno (platea de fundación)', text: `σ = −G / F ± M / W = −${f1(G1 / F, 2)} ± ${f1(Mbase / Wf, 2)} t/m² → ${f1(-sMax, 2)} / ${f1(-sMin, 2)} t/m² (σmáx = ${f1(sMax / 10, 2)} kg/cm²) ≤ ${f1(sigmaT, 2)} kg/cm²` });
+  res.checks.push({ ok: e0 <= L1 / 6 + 1e-9, label: 'Resultante en el núcleo central de la base', text: `e = M / N = ${f1(Mbase)} tm / ${f1(G0)} t = ${f1(e0, 2)} m ≤ L1 / 6 = ${f1(L1 / 6, 2)} m` });
+  res.checks.push({ ok: sMax / 10 <= sigmaT + 1e-9, label: 'Tensión del terreno (platea de fundación)', text: `σ = −G / F ± M / W = −${f1(G1 / F, 2)} t/m² ± ${f1(Mbase / Wf, 2)} t/m² → ${f1(-sMax, 2)} t/m² / ${f1(-sMin, 2)} t/m² (σmáx = ${f1(sMax / 10, 2)} kg/cm²) ≤ ${f1(sigmaT, 2)} kg/cm²` });
   res.checks.push({ ok: f <= fAdm + 1e-9, label: 'Flecha en cabeza', text: `f = qv h⁴ / (8 E J) = ${f1(qv, 2)} t/m × ${f1(h, 0)}⁴ / (8 × ${f1(E, 0)} t/m² × ${f1(sumJ, 2)} m⁴) = ${f1(f, 3)} m ≤ h / ${Number(p.flechaRatio) || 500} = ${f1(fAdm, 3)} m (la guía usa h = 70 m: 0,077 m)` });
   walls.forEach((w) => {
     const fxs = w.kind === 'rect' ? [w.fx] : [w.fxWeb];
     fxs.forEach((fx) => {
       res.checks.push({ ok: fx.sBcomp <= sBadm + 1e-9, label: `Tabique ${fx.name}: compresión`, text: `σ = −N / F ± M / W = ${f1(fx.sigComp, 0)} t/m² = ${f1(fx.sBcomp, 1)} kg/cm² ≤ ${f1(sBadm, 0)} kg/cm²${fx.sigTen > 0 ? `; tracción máx. ${f1(fx.sigTen / 10, 2)} kg/cm² (sin sobrecarga): As calc. = ${f1(fx.AsT, 2)} cm² < mínima` : ''}` });
     });
-    if (w.kind === 'U') res.checks.push({ ok: w.flange.sigma / 10 <= sBadm + 1e-9 && w.flange.sigma > 0, label: `Tabique ${w.name}: ala comprimida`, text: `N = par + losas + peso = ${f1(w.flange.par, 0)} + ${f1(q1 * w.flange.a * nOver, 0)} + ${f1(w.flange.Pp, 0)} = ${f1(w.flange.N, 0)} t; σ = ${f1(w.flange.sigma, 1)} ≤ ${f1(sBadm, 0)} kg/cm²` });
+    if (w.kind === 'U') res.checks.push({ ok: w.flange.sigma / 10 <= sBadm + 1e-9 && w.flange.sigma > 0, label: `Tabique ${w.name}: ala comprimida`, text: `N = par + losas + peso = ${f1(w.flange.par, 0)} t + ${f1(q1 * w.flange.a * nOver, 0)} t + ${f1(w.flange.Pp, 0)} t = ${f1(w.flange.N, 0)} t; σ = ${f1(w.flange.sigma, 1)} ≤ ${f1(sBadm, 0)} kg/cm²` });
     if (w.dintel) res.checks.push({ ok: w.dintel.tau <= tauAdm + 1e-9, label: `Tabique ${w.name}: dintel al corte`, text: `τ = T / (hd e) = ${f1(w.dintel.T, 2)} t / (${f1(w.dintel.hd * 100, 0)} × ${f1(w.e * 100, 0)} cm) = ${f1(w.dintel.tau, 2)} ≤ ${tauAdm} kg/cm² (Qj = ${f1(w.dintel.Qj, 1)} t, ti = Q S / J = ${f1(w.dintel.ti, 2)} t/m)` });
   });
   // esbeltez λ = h / lado menor (resumen de la cátedra): torre si λ > 3; con λ < 5 puede omitirse el viento; entre 5 y 10 hay que considerar la estructura contraviento; con λ > 10 hacen falta estudios especiales

@@ -183,7 +183,7 @@ function printMemoria(title, sheetsHtml) {
 }
 
 // Memoria de cálculo a pantalla completa, en hojas A4, imprimible.
-export async function openMemoriaDoc({ title, sub, html, disclaimer = MEM_DISCLAIMER }) {
+export async function openMemoriaDoc({ title, sub, html, disclaimer = MEM_DISCLAIMER, towerUnits = false }) {
   ensureMemStyles();
   const overlay = document.createElement('div');
   overlay.className = 'memoria-overlay';
@@ -214,7 +214,7 @@ export async function openMemoriaDoc({ title, sub, html, disclaimer = MEM_DISCLA
   const tinted = String(html)
     .replace(/<td>✓ /g, '<td class="mem-ok">✓ ').replace(/<td>✗ /g, '<td class="mem-bad">✗ ')
     .replace(/(<td[^>]*)>verifica<\/td>/g, '$1 class="mem-ok">✓ verifica</td>').replace(/(<td[^>]*)>no verifica<\/td>/g, '$1 class="mem-bad">✗ no verifica</td>');
-  const content = `<h1>${escapeHtml(title)}</h1><p class="mem-sub">${escapeHtml(sub)} · ${date}</p>${tidyHtml(convertHtmlUnits(tinted))}`;
+  const content = `<h1>${escapeHtml(title)}</h1><p class="mem-sub">${escapeHtml(sub)} · ${date}</p>${tidyHtml(convertHtmlUnits(tinted, { tower: towerUnits }))}`;
   const pages = paginate(content, makeSheet);
   pages.forEach((p, i) => { p.querySelector('.mem-pg').textContent = `Página ${i + 1} de ${pages.length}`; });
   // en pantallas angostas se achican las hojas para que entre el ancho completo

@@ -3,6 +3,7 @@
 // lo que está guardado: los textos "número + unidad" (esquemas, tablas, verificaciones), las tablas que traen la unidad en el encabezado
 // ("Mu (kN·m)") y los campos numéricos de carga (se muestran convertidos y se guardan en la unidad original).
 // Las tensiones (kg/cm², MPa) y las cantidades de material (kg de acero o de hierro) no se convierten.
+// La torre calcula en toneladas (t, tm, t/m, t/m²): con `{ tower: true }` esas unidades también se convierten.
 
 const KEY = 'sgForceUnit';
 const G = 9.80665;                                  // 1 kgf = 9.80665 N
@@ -18,11 +19,14 @@ export function setForceUnit(u) {
 
 const SUF = '(?:·m/m|·m|/m²|/m)?';
 const NUM = '[−-]?(?:\\d{1,3}(?:\\.\\d{3})+(?:,\\d+)?|\\d+(?:,\\d+)?)';
-const TEXT_RE = new RegExp(`(${NUM})(\\s*)(kN${SUF}|kg${SUF})(?![\\w²³·/])`, 'g');
+let TOWER = false;                                  // la torre trae sus números en toneladas: se activa mientras se convierte su pantalla
+const T_UNITS = 'tm|t/m²|t/m|t';
+const unitAlt = () => `kN${SUF}|kg${SUF}${TOWER ? `|${T_UNITS}` : ''}`;
+const textRe = () => new RegExp(`(${NUM})(\\s*)(${unitAlt()})(?![\\w²³·/áéíóúñÁÉÍÓÚÑ])`, 'g');
 const MASS_RE = /hierro|acero|\bFe\b|cómputo|computo|kg\/m² construid|bulon|bulón|tornill/i;       // cantidades de material: no son fuerzas
 
-const famOf = (unit) => (unit.startsWith('kN') ? 'kN' : 'kg');
-const sufOf = (unit) => unit.replace(/^(kN|kg)/, '');
+const famOf = (unit) => (unit.startsWith('kN') ? 'kN' : unit.startsWith('kg') ? 'kg' : 't');
+const sufOf = (unit) => (/^(kN|kg)/.test(unit) ? unit.replace(/^(kN|kg)/, '') : unit.slice(1).replace(/^m$/, '·m'));
 const fmtNum = (v, dec) => Number(v).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 
 function parseEs(str) { return Number(str.replace('−', '-').replace(/\./g, '').replace(',', '.')); }
@@ -42,7 +46,7 @@ function convertText(numStr, fam, target) {
 const convertUnit = (unit, target) => `${target}${sufOf(unit)}`;
 
 function convertString(text, target, skipMass) {
-  return text.replace(TEXT_RE, (m, num, sp, unit) => {
+  return text.replace(textRe(), (m, num, sp, unit) => {
     const fam = famOf(unit);
     if (fam === target) return m;
     if (fam === 'kg' && skipMass) return m;
@@ -57,7 +61,7 @@ const isMassBlock = (node) => {
 };
 
 // ---------------------------------------------------------------- tablas con la unidad en el encabezado
-const HEAD_RE = /\((kN(?:·m\/m|·m|\/m²|\/m)?|kg(?:·m|\/m²|\/m)?)\)/;
+const headRe = () => new RegExp(`\\((kN(?:·m/m|·m|/m²|/m)?|kg(?:·m|/m²|/m)?${TOWER ? '|tm|t/m²|t/m|t' : ''})\\)`);
 const ONLY_NUM = /^[\s\d.,·/−\-–+]*\d[\s\d.,·/−\-–+]*$/;
 
 function convertTables(root, target) {
@@ -81,7 +85,7 @@ function convertTables(root, target) {
     const cols = {};
     grid[headRow].forEach((cell, ci) => {
       if (!cell || cell.ghost) return;
-      const m = HEAD_RE.exec(cell.textContent);
+      const m = headRe().exec(cell.textContent);
       if (!m || MASS_RE.test(cell.textContent)) return;
       const fam = famOf(m[1]);
       if (fam === target) return;
@@ -91,7 +95,7 @@ function convertTables(root, target) {
       const head = grid[headRow][ci];
       const walker = document.createTreeWalker(head, NodeFilter.SHOW_TEXT);
       let n;
-      while ((n = walker.nextNode())) n.nodeValue = n.nodeValue.replace(HEAD_RE, `(${convertUnit(unit, target)})`);
+      while ((n = walker.nextNode())) n.nodeValue = n.nodeValue.replace(headRe(), `(${convertUnit(unit, target)})`);
       for (let r = headRow + 1; r < rows.length; r++) {
         const cell = grid[r][ci];
         if (!cell || cell.ghost || !cell.textContent.trim() || cell.tagName === 'TH') continue;
@@ -105,12 +109,12 @@ function convertTables(root, target) {
 }
 
 // ---------------------------------------------------------------- campos numéricos con unidad
-const INPUT_UNIT = /^(kN|kg)(\/m²|\/m|·m)?$/;
+const inputUnit = () => (TOWER ? /^(kN|kg|t)(\/m²|\/m|·m)?$/ : /^(kN|kg)(\/m²|\/m|·m)?$/);
 
 function convertInputs(root, target) {
   root.querySelectorAll('input[data-unit]').forEach((el) => {
     const unit = el.dataset.unit;
-    const m = INPUT_UNIT.exec(unit);
+    const m = inputUnit().exec(unit);
     if (!m || famOf(unit) === target) return;
     const k = TO_KN[famOf(unit)] / TO_KN[target];                  // valor mostrado = valor guardado × k
     const v = Number(el.value);
@@ -143,9 +147,9 @@ function convertTexts(root, target) {
   while ((n = walker.nextNode())) nodes.push(n);
   nodes.forEach((t) => {
     const v = t.nodeValue;
-    if (!/k[Ng]/.test(v)) return;
+    if (!(TOWER ? /k[Ng]|t/ : /k[Ng]/).test(v)) return;
     // número en un elemento y unidad en el texto que sigue: <b>12,5</b> kN/m
-    const lead = /^(\s*)(kN(?:·m\/m|·m|\/m²|\/m)?|kg(?:·m|\/m²|\/m)?)(?![\w²³·/])/.exec(v);
+    const lead = new RegExp(`^(\\s*)(kN(?:·m/m|·m|/m²|/m)?|kg(?:·m|/m²|/m)?${TOWER ? '|tm|t/m²|t/m|t' : ''})(?![\\w²³·/áéíóúñÁÉÍÓÚÑ])`).exec(v);
     const prev = t.previousSibling;
     if (lead && prev && prev.nodeType === 1 && /^[\s]*[−-]?[\d.,]+[\s]*$/.test(prev.textContent)) {
       const fam = famOf(lead[2]);
@@ -156,24 +160,27 @@ function convertTexts(root, target) {
     }
     let out = convertString(v, target, isMassBlock(t));
     // unidad sola entre paréntesis, p. ej. el título de un diagrama: "Corte (kN)"
-    out = out.replace(/\((kN(?:·m\/m|·m|\/m²|\/m)?|kg(?:·m|\/m²|\/m)?)(?=[,)])/g, (m, u) => (famOf(u) === target || (famOf(u) === 'kg' && isMassBlock(t)) ? m : `(${convertUnit(u, target)}`));
+    out = out.replace(new RegExp(`\\((kN(?:·m/m|·m|/m²|/m)?|kg(?:·m|/m²|/m)?${TOWER ? '|tm|t/m²|t/m|t' : ''})(?=[,)])`, 'g'), (m, u) => (famOf(u) === target || (famOf(u) === 'kg' && isMassBlock(t)) ? m : `(${convertUnit(u, target)}`));
     if (out !== v) t.nodeValue = out;
   });
 }
 
-export function applyForceUnits(root) {
+export function applyForceUnits(root, { tower = false } = {}) {
   const target = getForceUnit();
-  convertTables(root, target);
-  convertMarked(root, target);
-  convertTexts(root, target);
-  convertInputs(root, target);
+  TOWER = tower;
+  try {
+    convertTables(root, target);
+    convertMarked(root, target);
+    convertTexts(root, target);
+    convertInputs(root, target);
+  } finally { TOWER = false; }
 }
 
 // para la memoria de cálculo, que se arma como texto HTML
-export function convertHtmlUnits(html) {
+export function convertHtmlUnits(html, opts) {
   const host = document.createElement('div');
   host.innerHTML = html;
-  applyForceUnits(host);
+  applyForceUnits(host, opts);
   return host.innerHTML;
 }
 

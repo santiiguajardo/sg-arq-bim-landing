@@ -487,7 +487,7 @@ function renderCalc(root, state, calc, step) {
   else if (step === 2) body.innerHTML = mod ? mod.step2(calc) : stepPredim(calc);
   else body.innerHTML = mod ? mod.step3(calc, out) : stepDim(calc, out);
   if (step === 3 && GL.has(calc.element)) body.insertAdjacentHTML('beforeend', designRanges(calc));
-  applyForceUnits(body);
+  applyForceUnits(body, { tower: calc.element === 'tower' });
   tidySvgs(body);
   wireUnitToggle(root, () => window.dispatchEvent(new HashChangeEvent('hashchange')));
 

@@ -150,7 +150,7 @@ function step1(calc) {
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.Kd', 'Direccionalidad Kd', d.Kd, { hint: 'Edificios: 0,85.' })}${numField('design.I', 'Importancia I', d.I, { hint: 'Categoría II: 1,00.' })}${numField('design.Kzt', 'Topografía Kzt', d.Kzt, { hint: 'Planicie: 1.' })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.G', 'Factor de ráfaga G', d.G, { hint: 'Edificio rígido: 0,85.' })}${numField('design.gcpi', 'GCpi (edificio cerrado)', d.gcpi, { hint: '±0,18; en la acción conjunta se compensa.' })}</div></div>
     <div class="card"><h3 style="margin-top:0;">Cargas verticales</h3>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.qpp0', 'Peso de cada losa, sin sobrecarga', d.qpp0, { unit: 't/m²', hint: 'Guía: 0,7.' })}${numField('design.qpp1', 'Peso de cada losa, con sobrecarga', d.qpp1, { unit: 't/m²', hint: 'Guía: 0,9.' })}</div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.qpp0', 'Peso de cada losa, sin sobrecarga', d.qpp0, { unit: 't/m²', hint: 'Guía: 0,7 t/m².' })}${numField('design.qpp1', 'Peso de cada losa, con sobrecarga', d.qpp1, { unit: 't/m²', hint: 'Guía: 0,9 t/m².' })}</div>
       <p class="text-muted" style="font-size:12px; margin:0;">Incluye losas, contrapisos, tabiquería, columnas, vigas y sobrecarga de uso (en la guía, por piso). Se aplica a las ${num(d.nTipo) + 2} losas (azotea, plantas y planta baja) y a los subsuelos.</p></div></div>
     <div class="note" style="margin-top:16px;">${TOWER_NOTE}</div>`;
 }
@@ -178,7 +178,7 @@ function behaviorCard(r) {
     <table class="data-table"><tbody>
       <tr><td>Movimiento del edificio</td><td style="text-align:right;"><b>${escapeHtml(b.mode)}</b></td></tr>
       <tr><td>Tabiques paralelos al viento · perpendiculares</td><td style="text-align:right;">${b.nPar} · ${b.nPer}</td></tr>
-      <tr><td>Σ de los momentos de los tabiques · momento del viento Mw</td><td style="text-align:right;">${fmt(b.sumMj, 0)} · ${fmt(b.M0, 0)} tm</td></tr></tbody></table>
+      <tr><td>Σ de los momentos de los tabiques · momento del viento Mw</td><td style="text-align:right;">${fmt(b.sumMj, 0)} tm · ${fmt(b.M0, 0)} tm</td></tr></tbody></table>
     <p style="font-size:12.5px; margin:8px 0 0;">${escapeHtml(b.modeText)}</p>
     <p class="text-muted" style="font-size:12px; margin:6px 0 0;">${escapeHtml(b.text)} La suma de los momentos de los tabiques debe ser igual al momento del viento.</p></div>`;
 }
@@ -202,7 +202,7 @@ function step2(calc) {
       <tr><td>Cp barlovento · Cp sotavento (L / B = ${fmt(r.LB, 2)})</td><td style="text-align:right;">${fmt(r.CpW, 1)} · ${fmt(r.CpL, 1)}</td></tr>
       <tr><td>Período T = 0,08 h / √L · √(h / (L + h)) · frecuencia</td><td style="text-align:right;">${fmt(r.T, 2)} s · ${fmt(r.freq, 2)} Hz</td></tr>
       <tr><td>Esbeltez h / lado menor (torre si &gt; 3)</td><td style="text-align:right;">${fmt(r.slender, 2)}</td></tr></tbody></table>
-      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">p = qz G Cp − qh GCpi a barlovento y qh G Cp − qh GCpi a sotavento; la acción conjunta suma presión y succión (la presión interna se anula). 1 kg = 10 N, como en los apuntes.</p></div>
+      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">p = qz G Cp − qh GCpi a barlovento y qh G Cp − qh GCpi a sotavento; la acción conjunta suma presión y succión (la presión interna se anula). 1 kgf = 10 N, como en los apuntes.</p></div>
     <div class="card"><h3 style="margin-top:0;">Esfuerzos en la base</h3><table class="data-table"><tbody>
       <tr><td>Corte en el nivel 0,00 · momento en el nivel 0,00</td><td style="text-align:right;"><b>${fmt(r.Q0, 1)} t · ${fmt(r.M0, 0)} tm</b></td></tr>
       <tr><td>Momento al pie de la platea (${r.nSub} subsuelo${r.nSub === 1 ? '' : 's'} de ${fmt(r.hSub, 1)} m)</td><td style="text-align:right;"><b>${fmt(r.Mbase, 0)} tm</b></td></tr>
@@ -224,7 +224,7 @@ function step3(calc, out) {
   const notes = r.notes.map((n) => `<div class="note" style="margin-top:12px;">${escapeHtml(n)}</div>`).join('') + systemsCard(r);
   const soil = `<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Verificación gráfica al volcamiento</h3>${resultantFigure(r)}<table class="data-table"><tbody>
     <tr><td>Resultante e = M / N (núcleo central L1 / 6)</td><td style="text-align:right;">${fmt(r.e0, 2)} m (${fmt(r.L1 / 6, 2)} m)</td></tr>
-    <tr><td>Tensión del terreno σ máx · σ mín</td><td style="text-align:right;">${fmt(r.sMax, 2)} · ${fmt(r.sMin, 2)} t/m²</td></tr>
+    <tr><td>Tensión del terreno σ máx · σ mín</td><td style="text-align:right;">${fmt(r.sMax, 2)} t/m² · ${fmt(r.sMin, 2)} t/m²</td></tr>
     <tr><td>Flecha en cabeza f · admisible</td><td style="text-align:right;">${fmt(r.defl.f * 100, 1)} · ${fmt(r.defl.fAdm * 100, 1)} cm</td></tr></tbody></table></div>`;
   return `<div class="grid grid-2" style="align-items:start;"><div>${data}${notes}</div><div>${checksCard({ ok: r.ok, checks: r.checks })}${soil}${behaviorCard(r)}</div>
     <div class="card" style="grid-column:1 / -1;"><h3 style="margin-top:0;">Flexocompresión de los tabiques en el nivel 0,00</h3>${wallTable(r)}
@@ -235,10 +235,10 @@ function memoria(calc, out) {
   if (!out || out.error || !out.res) return null;
   const r = out.res; const d = calc.design;
   const top = r.wind.length - 1;
-  const lvlRows = r.wind.map((l, i) => memoRow(`${l.name} (z = ${fmt(l.z, 0)} m)`, `Kz = ${fmt(l.Kz, 3)} · qz = ${fmt(l.qz, 1)} N/m² · p = ${fmt(l.pTm2, 4)} t/m² · W = ${fmt(l.W, 2)} t · Q = ${fmt(l.Q, 1)} t · M = ${fmt(l.M, 0)} tm · N = ${fmt(num(d.qpp0) * r.B * r.L * (top - i + 1), 0)} / ${fmt(num(d.qpp1) * r.B * r.L * (top - i + 1), 0)} t`)).join('');
+  const lvlRows = r.wind.map((l, i) => memoRow(`${l.name} (z = ${fmt(l.z, 0)} m)`, `Kz = ${fmt(l.Kz, 3)} · qz = ${fmt(l.qz, 1)} N/m² · p = ${fmt(l.pTm2, 4)} t/m² · W = ${fmt(l.W, 2)} t · Q = ${fmt(l.Q, 1)} t · M = ${fmt(l.M, 0)} tm · N = ${fmt(num(d.qpp0) * r.B * r.L * (top - i + 1), 0)} t / ${fmt(num(d.qpp1) * r.B * r.L * (top - i + 1), 0)} t`)).join('');
   const wallRows = r.walls.map((w) => {
-    const a = wallPieces(w).map(({ fx, name }) => memoRow(`${escapeHtml(name)} (nivel 0,00)`, `M = ${tn(fx.M, 1)} tm, W = ${tn(fx.W, 3)} m³ · N = ${tn(fx.N0, 0)} / ${tn(fx.N1, 0)} t · σ sin sobrec. ${tn(fx.sd[0], 0)} / ${tn(fx.sd[1], 0)} t/m², con sobrec. ${tn(fx.sc[0], 0)} / ${tn(fx.sc[1], 0)} t/m² · armadura ${tn(fx.As, 1)} cm²: Ø${r.barD} c/${tn(fx.vert.s, 1)} (${fx.vert.n} por capa), Ø${r.barDh} c/${tn(fx.hor.s, 1)}${fx.AsT > 0 ? ` · tracción x = ${tn(fx.x, 2)} m, T = ${tn(fx.T, 1)} t, As = ${tn(fx.AsT, 2)} cm²` : ''}`)).join('');
-    const f = w.kind === 'U' ? memoRow(`${escapeHtml(w.name)} ala comprimida`, `par = ${tn(w.flange.M, 0)} / ${tn(w.flange.z, 2)} = ${tn(w.flange.par, 0)} t · N = ${tn(w.flange.N, 0)} t · σ = ${tn(w.flange.sigma, 1)} kg/cm² · armadura ${tn(w.flange.As, 1)} cm²: Ø${r.barD} c/${tn(w.flange.vert.s, 1)} (${w.flange.vert.n} por capa)`) : '';
+    const a = wallPieces(w).map(({ fx, name }) => memoRow(`${escapeHtml(name)} (nivel 0,00)`, `M = ${tn(fx.M, 1)} tm, W = ${tn(fx.W, 3)} m³ · N = ${tn(fx.N0, 0)} t / ${tn(fx.N1, 0)} t · σ sin sobrec. ${tn(fx.sd[0], 0)} t/m² / ${tn(fx.sd[1], 0)} t/m², con sobrec. ${tn(fx.sc[0], 0)} t/m² / ${tn(fx.sc[1], 0)} t/m² · armadura ${tn(fx.As, 1)} cm²: Ø${r.barD} c/${tn(fx.vert.s, 1)} (${fx.vert.n} por capa), Ø${r.barDh} c/${tn(fx.hor.s, 1)}${fx.AsT > 0 ? ` · tracción x = ${tn(fx.x, 2)} m, T = ${tn(fx.T, 1)} t, As = ${tn(fx.AsT, 2)} cm²` : ''}`)).join('');
+    const f = w.kind === 'U' ? memoRow(`${escapeHtml(w.name)} ala comprimida`, `par = ${tn(w.flange.M, 0)} tm / ${tn(w.flange.z, 2)} m = ${tn(w.flange.par, 0)} t · N = ${tn(w.flange.N, 0)} t · σ = ${tn(w.flange.sigma, 1)} kg/cm² · armadura ${tn(w.flange.As, 1)} cm²: Ø${r.barD} c/${tn(w.flange.vert.s, 1)} (${w.flange.vert.n} por capa)`) : '';
     return a + f;
   }).join('');
   const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Edificio en torre de hormigón armado con tabiques contraviento', 'Guía de predimensionado E4 · 7')}
@@ -247,12 +247,12 @@ function memoria(calc, out) {
     ${elevationFigure(d, r)}${planFigure(d, r)}
     <h2>2. Viento (CIRSOC 102-2005)</h2><table>${memoRow('Parámetros', `V = ${fmt(d.V, 0)} m/s · exposición ${escapeHtml(d.exposure)} · Kd = ${d.Kd} · I = ${d.I} · Kzt = ${d.Kzt} · G = ${d.G} · Cp = ${fmt(r.CpW, 1)} / ${fmt(r.CpL, 1)} · GCpi = ±${fmt(r.gcpi, 2)}`)}${memoRow('qh (altura total)', `${fmt(r.qh, 1)} N/m²`)}${memoRow('Período · frecuencia · esbeltez', `T = ${fmt(r.T, 2)} s · ${fmt(r.freq, 2)} Hz · h / lado menor = ${fmt(r.slender, 2)}`)}</table>
     <h2>3. Planilla de características por nivel</h2><table>${lvlRows}</table>
-    <h2>4. Estabilidad y fundación</h2>${resultantFigure(r)}<table>${memoRow('Resultante del viento · momento al pie de la platea', `Q = ${fmt(r.Q0, 1)} t · M = ${fmt(r.Mbase, 0)} tm`)}${memoRow('Peso sin · con sobrecarga', `${fmt(r.G0, 0)} t · ${fmt(r.G1, 0)} t`)}${memoRow('Tensión del terreno', `${fmt(r.sMax, 2)} / ${fmt(r.sMin, 2)} t/m² (σ máx = ${fmt(r.sMax / 10, 2)} kg/cm²)`)}${memoRow('Flecha en cabeza', `${fmt(r.defl.f * 100, 1)} cm (admisible ${fmt(r.defl.fAdm * 100, 1)} cm)`)}</table>
+    <h2>4. Estabilidad y fundación</h2>${resultantFigure(r)}<table>${memoRow('Resultante del viento · momento al pie de la platea', `Q = ${fmt(r.Q0, 1)} t · M = ${fmt(r.Mbase, 0)} tm`)}${memoRow('Peso sin · con sobrecarga', `${fmt(r.G0, 0)} t · ${fmt(r.G1, 0)} t`)}${memoRow('Tensión del terreno', `${fmt(r.sMax, 2)} t/m² / ${fmt(r.sMin, 2)} t/m² (σ máx = ${fmt(r.sMax / 10, 2)} kg/cm²)`)}${memoRow('Flecha en cabeza', `${fmt(r.defl.f * 100, 1)} cm (admisible ${fmt(r.defl.fAdm * 100, 1)} cm)`)}</table>
     <h2>5. Tabiques contraviento</h2><table>${memoRow('Inercias', `ΣJ = ${fmt(r.sumJ, 2)} m⁴ · centro de rigidez x = ${fmt(r.xr, 2)} m (e = ${fmt(r.eRot, 2)} m)`)}${memoRow('Comportamiento en planta', `${r.behavior.mode}: ${escapeHtml(r.behavior.text)} Σ Mj = ${fmt(r.behavior.sumMj, 0)} tm = Mw = ${fmt(r.behavior.M0, 0)} tm.`)}${wallRows}</table>
     <h2>6. Verificaciones</h2><table>${r.checks.map((c) => memoRow(`${c.ok ? '✓' : '✗'} ${escapeHtml(c.label)}`, escapeHtml(c.text))).join('')}</table>
     ${r.notes.map((n) => `<p class="mem-foot">${escapeHtml(n)}</p>`).join('')}
     <h2>7. Resultado</h2><table>${memoRow('Torre', r.ok ? 'verifica' : 'no verifica')}</table><p class="mem-foot">${escapeHtml(TOWER_NOTE)}</p>`;
-  return { title: calc.name, sub: `Torre con tabiques · h = ${fmt(r.h, 0)} m`, html };
+  return { title: calc.name, sub: `Torre con tabiques · h = ${fmt(r.h, 0)} m`, html, towerUnits: true };
 }
 
 export const towerModule = {
