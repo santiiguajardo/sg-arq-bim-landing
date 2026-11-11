@@ -91,7 +91,7 @@ function phCompute(calc) {
 function phStep1(calc) {
   const d = calc.design; const out = phCompute(calc); const r = out.res;
   return `<div class="grid grid-2" style="align-items:start;">
-    <div class="card"><h3 style="margin-top:0;">Cáscara de paraboloide hiperbólico (módulo de cuatro sectores)</h3>${phPlan(d)}
+    <div class="card"><h3 style="margin-top:0;">Cáscara de paraboloide hiperbólico (módulo de cuatro sectores)</h3>${previewSketch('ph', d)}${phPlan(d)}
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.a', 'Semilado menor del módulo a', d.a, { unit: 'm', hint: 'Usual: módulo de 15 × 10 m (a = 5, b = 7,5).' })}${numField('design.b', 'Semilado mayor b', d.b, { unit: 'm' })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.h', 'Desnivel entre la columna y los bordes', d.h, { unit: 'm', hint: 'Usual: 2,25 m.' })}${numField('design.e', 'Espesor de la cáscara', d.e, { unit: 'cm', hint: 'Usual: 6 cm.' })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.nx', 'Módulos en un sentido', d.nx, { step: 1 })}${numField('design.ny', 'Módulos en el otro', d.ny, { step: 1 })}</div>

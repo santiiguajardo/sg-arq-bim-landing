@@ -121,6 +121,19 @@ function ensureMemStyles() {
   document.head.appendChild(st);
 }
 
+// El logo viaja en cada hoja: se reduce a 360 px como mucho para que el PDF no pese de más.
+async function shrinkLogo(dataUrl, max = 360) {
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl; });
+    const k = Math.min(1, max / Math.max(img.width, img.height));
+    if (k >= 1) return dataUrl;
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/png');
+  } catch (e) { return dataUrl; }
+}
+
 // Logo negro de la cuenta como data URL (para que viaje dentro de la hoja impresa). Sin logo cargado devuelve null.
 async function loadLogoData(color = 'negro') {
   try {
@@ -130,7 +143,7 @@ async function loadLogoData(color = 'negro') {
     if (!blob.size) return null;
     return await new Promise((resolve) => {
       const r = new FileReader();
-      r.onload = () => resolve(r.result);
+      r.onload = () => resolve(shrinkLogo(r.result));
       r.onerror = () => resolve(null);
       r.readAsDataURL(blob);
     });

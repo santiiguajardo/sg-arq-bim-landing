@@ -4,7 +4,7 @@ import * as P from '../structural/spaceframe.js';
 import * as W from '../structural/wind.js';
 import { escapeHtml } from '../utils.js';
 import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js';
-import { axisEditor, gridSketch } from './structural-spans.js';
+import { axisEditor, gridSketch, previewSketch } from './structural-spans.js';
 
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
@@ -76,7 +76,7 @@ function step1(calc) {
       ${axisEditor({ path: 'design.xSpans', spans: d.xSpans, title: 'Luces entre columnas en X', kind: 'num', sketch: false, hint: `${nx} tramo${nx === 1 ? '' : 's'} (usual: coeficientes para 1 a 4 tramos continuos).`, cant: { left: { path: 'design.xCantL', value: d.xCantL, label: 'Voladizo eje 1' }, right: { path: 'design.xCantR', value: d.xCantR, label: `Voladizo eje ${nx + 1}` } } })}
       ${axisEditor({ path: 'design.ySpans', spans: d.ySpans, title: 'Luces entre columnas en Y', kind: 'letter', sketch: false, hint: `${ny} tramo${ny === 1 ? '' : 's'}: ejes A a ${String.fromCharCode(65 + ny)}.`, cant: { left: { path: 'design.yCantL', value: d.yCantL, label: 'Voladizo eje A' }, right: { path: 'design.yCantR', value: d.yCantR, label: `Voladizo eje ${String.fromCharCode(65 + ny)}` } } })}
       <div class="axed-sketch" style="border:0; padding:0 0 10px;">${planFigure(d)}</div></div>
-    <div class="card"><h3 style="margin-top:0;">Módulo estructural (ajuste modular)</h3>${moduleFigure(r, d)}${modular}
+    <div class="card"><h3 style="margin-top:0;">Módulo estructural (ajuste modular)</h3>${previewSketch('sframe', d)}${moduleFigure(r, d)}${modular}
       <div class="field-row" style="flex-wrap:wrap; margin-top:8px;">${numField('design.Lm', 'Longitud del módulo Lm', d.Lm, { unit: 'm', hint: 'Usual: 2,5 m (redondeando 1,97).' })}${numField('design.H', 'Altura H (0 = Lm / √2)', d.H, { unit: 'm' })}</div>
       ${r ? `<p class="text-muted" style="font-size:12px; margin:0;">${r.advice.map(escapeHtml).join(' ') || 'El módulo cumple las relaciones recomendadas.'}</p>` : ''}</div>
     <div class="card"><h3 style="margin-top:0;">Cargas</h3>

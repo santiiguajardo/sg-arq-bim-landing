@@ -198,6 +198,11 @@ const clampN = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const nodeLines = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
 const DRAG = {
+  'folded.flange': (d, m) => ({ 'design.b': clampN(rnd(snap(m.xm, 0.05)), 0.1, Math.max(0.15, num(d.B, 3) / 2 - 0.1)), 'design.H': Math.max(0.3, rnd(snap(m.ym, 0.05))) }),
+  'folded.module': (d, m) => ({ 'design.B': Math.max(rnd(num(d.b, 0.6) * 2 + 0.2), rnd(snap(m.xm, 0.05))) }),
+  'ph.corner': (d, m) => ({ 'design.b': Math.max(1, rnd(snap(m.xm, 0.25))), 'design.a': Math.max(1, rnd(snap(m.ym, 0.25))) }),
+  'ph.rise': (d, m) => ({ 'design.h': Math.max(0.25, rnd(snap(m.ym, 0.05))) }),
+  'sframe.node': (d, m) => ({ 'design.Lm': Math.max(0.5, rnd(snap(m.xm, 0.05))), 'design.H': Math.max(0.3, rnd(snap(m.ym, 0.05))) }),
   'jawerth.sag': (d, m) => ({ 'design.f': Math.max(0.2, rnd(snap(-m.ym, 0.05))) }),
   'jawerth.supportR': (d, m) => ({ 'design.L': Math.max(4, rnd(snap(m.xm, 0.5))) }),
   'arcgl.ridge': (d, m) => ({ 'design.f': Math.max(0.5, rnd(snap(m.ym, 0.1))) }),
@@ -400,6 +405,49 @@ export function previewSketch(kind, d, extra = null) {
     body += `<polyline points="${pts.join(' ')}" fill="none" stroke="${INK}" stroke-width="3"/>` + bar(X(0), Y(0), X(L), Y(0), 1.6);
     body += tri(X(0), Y(0)) + tri(X(L), Y(0)) + dimH(X(0), X(L), oy + 22, `Diámetro = ${fmt(L, 2)} m`) + dimV(X(L / 2) + 14, Y(0), Y(f), `f = ${fmt(f, 2)} m`, 1);
     body += HINT + HANDLE('baseR', kind, X(L), Y(0), { k, ox, oy }) + HANDLE('crown', kind, X(L / 2), Y(f), { k, ox, oy });
+  } else if (kind === 'folded') {
+    const B = num(d.B, 3); const b = num(d.b, 0.6); const h = num(d.H, 1.5);
+    const nm = 3;
+    const lk = lockOf(kind);
+    const k = lk ? lk.k : Math.min(500 / (nm * B), 110 / h);
+    const ox = 30; const oy = 150;
+    const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
+    const bp = Math.max((B - 2 * b) / 2, 0.01);
+    const pts = [];
+    for (let i = 0; i < nm; i++) { const x0 = i * B; pts.push([x0, h], [x0 + b, h], [x0 + b + bp, 0], [x0 + b + bp + b, 0]); }
+    pts.push([nm * B, h]);
+    body += `<polyline points="${pts.map((p) => `${X(p[0])},${Y(p[1])}`).join(' ')}" fill="none" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+    body += dimH(X(0), X(B), oy + 24, `Ancho del módulo B = ${fmt(B, 2)} m`) + dimV(X(0) - 12, Y(0), Y(h), `H = ${fmt(h, 2)} m`);
+    body += `<text x="${X(b / 2)}" y="${Y(h) - 10}" text-anchor="middle" font-size="12" font-weight="600" fill="${ACCI}">b = ${fmt(b, 2)} m</text>`;
+    body += `<text x="${W - 8}" y="16" text-anchor="end" font-size="11" fill="var(--ink-soft)">Sección transversal (${nm} módulos)</text>`;
+    body += HINT + HANDLE('flange', kind, X(b), Y(h), { k, ox, oy }) + HANDLE('module', kind, X(B), Y(h), { k, ox, oy });
+  } else if (kind === 'ph') {
+    const a = num(d.a, 5); const b = num(d.b, 7.5); const h = num(d.h, 2);
+    const lk = lockOf(kind);
+    const k = lk ? lk.k : Math.min(120 / b, 85 / a, 90 / h);
+    const ox1 = 150; const oy1 = 120; const ox2 = 440; const oy2 = 170;
+    const X1 = (m) => ox1 + m * k; const Y1 = (m) => oy1 - m * k;
+    const X2 = (m) => ox2 + m * k; const Y2 = (m) => oy2 - m * k;
+    body += `<rect x="${X1(-b)}" y="${Y1(a)}" width="${2 * b * k}" height="${2 * a * k}" fill="none" stroke="${INK}" stroke-width="2.4"/>`;
+    body += `<line x1="${X1(-b)}" y1="${Y1(-a)}" x2="${X1(b)}" y2="${Y1(a)}" stroke="${INK}" stroke-width="1" stroke-dasharray="4 3"/><line x1="${X1(-b)}" y1="${Y1(a)}" x2="${X1(b)}" y2="${Y1(-a)}" stroke="${INK}" stroke-width="1" stroke-dasharray="4 3"/>`;
+    body += `<rect x="${X1(0) - 5}" y="${Y1(0) - 5}" width="10" height="10" fill="var(--panel)" stroke="${INK}" stroke-width="1.6"/>`;
+    body += dimH(X1(-b), X1(b), oy1 + a * k + 18, `2b = ${fmt(2 * b, 2)} m`) + dimV(X1(-b) - 12, Y1(-a), Y1(a), `2a = ${fmt(2 * a, 2)} m`);
+    body += bar(X2(-b), Y2(0), X2(0), Y2(h), 3) + bar(X2(0), Y2(h), X2(b), Y2(0), 3) + bar(X2(-b), Y2(0), X2(b), Y2(0), 1.2);
+    body += dimV(X2(b) + 14, Y2(0), Y2(h), `h = ${fmt(h, 2)} m`, 1);
+    body += `<text x="${X1(0)}" y="14" text-anchor="middle" font-size="11" fill="var(--ink-soft)">Planta del módulo</text><text x="${X2(0)}" y="14" text-anchor="middle" font-size="11" fill="var(--ink-soft)">Corte: desnivel columna - borde</text>`;
+    body += HINT.replace('y="16"', 'y="34"') + HANDLE('corner', kind, X1(b), Y1(a), { k, ox: ox1, oy: oy1 }) + HANDLE('rise', kind, X2(0), Y2(h), { k, ox: ox2, oy: oy2 });
+  } else if (kind === 'sframe') {
+    const Lm = num(d.Lm, 2.5); const H = Number(d.H) > 0 ? Number(d.H) : Lm / Math.SQRT2;
+    const n = 5;
+    const lk = lockOf(kind);
+    const k = lk ? lk.k : Math.min(430 / (n * Lm), 100 / H);
+    const ox = 50; const oy = 150;
+    const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
+    body += bar(X(0), Y(H), X(n * Lm), Y(H), 2.8) + bar(X(Lm / 2), Y(0), X((n - 0.5) * Lm), Y(0), 2.8);
+    for (let j = 0; j < n; j++) { body += bar(X((j + 0.5) * Lm), Y(0), X(j * Lm), Y(H), 1.2) + bar(X((j + 0.5) * Lm), Y(0), X((j + 1) * Lm), Y(H), 1.2); }
+    body += dimH(X(0), X(Lm), oy + 24, `Módulo Lm = ${fmt(Lm, 2)} m`) + dimV(X(0) - 12, Y(0), Y(H), `H = ${fmt(H, 2)} m`);
+    body += `<text x="${W - 8}" y="16" text-anchor="end" font-size="11" fill="var(--ink-soft)">Corte de la placa: capa superior, capa inferior y diagonales</text>`;
+    body += HINT.replace('y="16"', 'y="34"') + HANDLE('node', kind, X(Lm), Y(H), { k, ox, oy });
   } else if (kind === 'tie') {
     const T = Number(d.T) || 0;
     const L = num(d.L, 2);

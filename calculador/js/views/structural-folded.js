@@ -1,5 +1,6 @@
 // Grandes luces: losa plegada de hormigón armado. Motor en js/structural/folded.js.
 // Predimensionado aproximado: 4 "Plegados".
+import { previewSketch } from './structural-spans.js';
 import * as F from '../structural/folded.js';
 import { REBAR_DIAMETERS } from '../structural/big-beams.js';
 import { escapeHtml } from '../utils.js';
@@ -71,7 +72,7 @@ function compute(calc) {
 function step1(calc) {
   const d = calc.design;
   return `<div class="grid grid-2" style="align-items:start;">
-    <div class="card"><h3 style="margin-top:0;">Losa plegada de hormigón armado</h3>${elevationFigure(d)}
+    <div class="card"><h3 style="margin-top:0;">Losa plegada de hormigón armado</h3>${previewSketch('folded', d)}${elevationFigure(d)}
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.L', 'Luz libre entre tímpanos L', d.L, { unit: 'm' })}${numField('design.nMod', 'Cantidad de módulos', d.nMod, { step: 1, hint: 'Un número entero de módulos cubre el ancho de la planta.' })}</div>
       <h4 style="margin:10px 0 4px; font-size:13px;">Módulo de onda</h4>${waveFigure(d)}
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.B', 'Ancho del módulo B', d.B, { unit: 'm', hint: 'B = 2 b + 2 b′' })}${numField('design.H', 'Altura de la onda H', d.H, { unit: 'm', hint: `Punto de partida: 10 % de la luz = ${fmt(num(d.L) / 10, 2)} m.` })}</div>

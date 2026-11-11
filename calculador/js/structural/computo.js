@@ -266,7 +266,105 @@ function domeComputo(calc, res) {
   return { title: `Cúpula de ${f1(d.L)} m de diámetro y ${f1(d.f)} m de altura.`, rows: [], concrete: [{ desc: `Casquete esférico (${f1(area)} m², espesor ${f0(d.e)} cm), malla Ø${f0(db)} c/${f0(sp * 100)} cm en dos direcciones`, n: 1, vol: area * num(d.e) / 100, kgSteel: area * (2 / sp) * kgm }], area: { cubierta: area }, notes: ['Vigas de apoyo, columnas y refuerzos de borde no están incluidos.'] };
 }
 
-const BUILDERS = { snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo };
+// ---- armaduras: kg por metro de una barra lisa/nervurada de d mm
+const kgBar = (d) => 0.00617 * d * d;
+
+// Viga Vierendeel (acero: cordones de dos perfiles U y montantes de la misma sección; hormigón: cordones y montantes rectangulares)
+function vierComputo(calc, res) {
+  const L = num(res.L), H = num(res.H), a = num(res.a, 1);
+  if (!(L > 0 && H > 0)) return null;
+  const nMont = Math.max(1, Math.round(L / a)) + 1;
+  if (res.mat === 'steel' && res.profile) {
+    const u = res.profile;
+    return {
+      title: `Viga Vierendeel de ${f2(L)} m con ${nMont} montantes.`,
+      rows: [steel('Cordones', 'Cordones superior e inferior (cada uno con dos perfiles U)', u.n, 4, L, num(u.G)), steel('Montantes', 'Montantes (dos perfiles U cada uno, con la sección del cordón)', u.n, 2 * nMont, Math.max(0.1, H - num(u.h) / 1000), num(u.G))],
+      notes: ['Chapas de nudo, apoyos y uniones no están incluidos.'],
+    };
+  }
+  const m1 = num(res.m1) / 100, m2 = num(res.m2) / 100, hc = num(res.hc, res.m2) / 100;
+  if (!(m1 > 0 && m2 > 0)) return null;
+  const volCh = 2 * m1 * hc * L;
+  const volMont = nMont * m1 * m2 * Math.max(0.1, H - hc);
+  return {
+    title: `Viga Vierendeel de hormigón armado de ${f2(L)} m con ${nMont} montantes.`,
+    rows: [],
+    concrete: [
+      { desc: `Cordones superior e inferior (${f0(res.m1)} × ${f0(res.hc || res.m2)} cm)`, n: 1, vol: volCh, kgSteel: num(res.nBars) * kgBar(num(res.barD)) * L },
+      { desc: `Montantes (${f0(res.m1)} × ${f0(res.m2)} cm)`, n: 1, vol: volMont, kgSteel: 0 },
+    ],
+    notes: [`La armadura incluida es la del cordón inferior (${f0(res.nBars)} Ø${f0(res.barD)}); estribos y armadura de montantes y del cordón superior no están incluidos.`],
+  };
+}
+
+// Losa plegada: módulos, vigas tímpano y armadura del valle
+function foldedComputo(calc, res) {
+  const L = num(res.L), nMod = Math.max(1, num(res.nMod, 1));
+  if (!(L > 0) || !(res.wave > 0)) return null;
+  const valleys = Math.max(1, nMod - 1);
+  const kgValle = valleys * num(res.nBars) * kgBar(num(res.barD)) * L;
+  const concrete = [{ desc: `Módulos de plegado (onda desarrollada ${f2(res.wave)} m, espesor ${f0(res.d * 100)} cm, luz ${f2(L)} m)`, n: nMod, vol: res.wave * res.d * L, kgSteel: kgValle / nMod }];
+  const t = res.timp;
+  if (t) concrete.push({ desc: `Vigas tímpano (${f2(t.b)} × ${f2(t.h)} × ${f2(t.l)} m)`, n: 2, vol: t.b * t.h * t.l, kgSteel: num(t.nBars) * kgBar(16) * t.l });
+  return { title: `Plegado de ${nMod} módulos de ${f2(L)} m.`, rows: [], concrete, notes: [`Armadura del valle: ${f0(res.nBars)} Ø${f0(res.barD)} en cada encuentro entre módulos. Columnas, estribos y armadura de repartición no están incluidos.`] };
+}
+
+// Estereoestructura plana: barras de las dos capas, diagonales y columnas (cantidades por módulos de la retícula)
+function spaceComputo(calc, res) {
+  if (!res.chord || !res.chord.tube || !res.diag || !res.diag.tube || !(res.Lm > 0)) return null;
+  const sum = (a) => a.reduce((s, v) => s + num(v), 0);
+  const Xt = num(res.xcL) + sum(res.xs || []) + num(res.xcR);
+  const Yt = num(res.ycL) + sum(res.ys || []) + num(res.ycR);
+  const nx = Math.max(1, Math.round(Xt / res.Lm)), ny = Math.max(1, Math.round(Yt / res.Lm));
+  const name = (t) => `ø ${t.de} × ${t.s} mm`;
+  const top = nx * (ny + 1) + ny * (nx + 1);
+  const bot = Math.max(0, ny * (nx - 1) + nx * (ny - 1));
+  const rows = [
+    steel('Capa superior', 'Barras de la capa superior', name(res.chord.tube), top, res.Lm, num(res.chord.tube.G)),
+    steel('Capa inferior', 'Barras de la capa inferior (retícula desplazada medio módulo)', name(res.chord.tube), bot, res.Lm, num(res.chord.tube.G)),
+    steel('Diagonales', 'Diagonales (cuatro por módulo)', name(res.diag.tube), 4 * nx * ny, res.Ld, num(res.diag.tube.G)),
+  ];
+  if (res.col && res.col.tube) rows.push(steel('Columnas', 'Columnas bajo la placa', name(res.col.tube), (num(res.xs.length) + 1) * (num(res.ys.length) + 1), num(calc.design.colH, 3), num(res.col.tube.G)));
+  return {
+    title: `Placa de ${f1(Xt)} × ${f1(Yt)} m con módulo de ${f2(res.Lm)} m y altura ${f2(res.H)} m (${nx} × ${ny} módulos).`,
+    rows, area: { planta: Xt * Yt },
+    notes: ['Cantidades estimadas por módulos de la retícula (retícula cuadrada sobre cuadrada). Nudos, bulones, vigas de apoyo, placas base y cubierta no están incluidos.'],
+  };
+}
+
+// Cáscara de paraboloide hiperbólico: hormigón sobre la proyección en planta y malla de armadura
+function phComputo(calc, res) {
+  const area = num(res.plan && res.plan.total);
+  const e = num(res.e || calc.design.e) / 100;
+  if (!(area > 0 && e > 0)) return null;
+  const db = num(res.barD || calc.design.barD, 6), sp = num(res.spacing, 15) / 100;
+  return {
+    title: `${f0(res.plan.modules)} módulos de cáscara (${f0(area)} m² en planta).`,
+    rows: [],
+    concrete: [{ desc: `Cáscaras de espesor ${f0(e * 100)} cm, malla Ø${f0(db)} c/${f0(sp * 100)} cm en dos direcciones`, n: 1, vol: area * e, kgSteel: area * (2 / sp) * kgBar(db) }],
+    area: { planta: area },
+    notes: ['El volumen se calcula sobre la proyección en planta: la superficie alabeada real es algo mayor. Bordes, columnas centrales y refuerzos no están incluidos.'],
+  };
+}
+
+// Columna de hormigón armado: hormigón, barras longitudinales y estribos
+function rcColumnComputo(calc, res) {
+  const ch = res.chosen; const b = num(calc.section && calc.section.b), h = num(calc.section && calc.section.h), lu = num(calc.design.lu);
+  if (!ch || !(b > 0 && h > 0 && lu > 0)) return null;
+  const cover = num(ch.cover) / 10;
+  const nEst = Math.ceil(lu * 1000 / Math.max(num(ch.tieSpacing, 150), 50)) + 1;
+  const lEst = (2 * ((b - 2 * cover) + (h - 2 * cover)) + 20) / 100;
+  const kg = num(ch.n) * kgBar(num(ch.db)) * lu + nEst * lEst * kgBar(num(ch.dbe, 6));
+  return { title: `Una columna de ${f0(b)} × ${f0(h)} cm y ${f2(lu)} m.`, rows: [], concrete: [{ desc: `Columna (${f0(b)} × ${f0(h)} cm), ${f0(ch.n)} Ø${f0(ch.db)} y estribos Ø${f0(ch.dbe)} cada ${f0(num(ch.tieSpacing))} mm`, n: 1, vol: b * h / 10000 * lu, kgSteel: kg }], notes: ['Empalmes, anclajes y esperas no están incluidos.'] };
+}
+
+// Base de hormigón armado (el motor ya calcula hormigón y acero)
+function footingComputo(calc, res) {
+  if (res.concrete == null) return null;
+  return { title: `Una base de ${f2(num(res.L) / 1000)} × ${f2(num(res.B) / 1000)} × ${f2(num(res.h) / 1000)} m.`, rows: [], concrete: [{ desc: 'Base (hormigón y armadura de flexión)', n: 1, vol: num(res.concrete), kgSteel: num(res.steelKg) }], notes: ['Armadura de columna (esperas) y vigas de equilibrio no están incluidas.'] };
+}
+
+const BUILDERS = { snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
 
 // Devuelve el HTML del cómputo para la memoria, o '' si el elemento todavía no tiene armador o el cálculo no tiene solución.
 export function computoSection(calc, out) {
