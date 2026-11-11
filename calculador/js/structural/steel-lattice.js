@@ -1,7 +1,7 @@
 // Columnas reticuladas de acero: dos cordones unidos por diagonales (en zigzag) en un plano, o cuatro cordones con diagonales en las cuatro caras.
-// NOTA SOBRE EL MÉTODO: el material de la cátedra (TP 5, apunte "Compresión con pandeo") desarrolla la columna compuesta con PRESILLAS (esbeltez
+// NOTA SOBRE EL MÉTODO: el método habitual desarrolla la columna compuesta con PRESILLAS (esbeltez
 // ideal λi = √(λy² + (m/2) λ1²), λ1 = s/i1 ≤ 50, corte ideal Q = ω N / 80). Para la columna con CELOSÍA se usa la misma estructura de verificación,
-// pero la influencia de la deformación por corte de las diagonales NO está en los apuntes: se deduce con el criterio de Engesser (pandeo con
+// pero la influencia de la deformación por corte de las diagonales no figura en el reglamento: se deduce con el criterio de Engesser (pandeo con
 // flexibilidad al corte): 1/Pcr = 1/PE + 1/S, de modo que λi² = λy² + π² E A / S, con la rigidez al corte de las diagonales
 // S = n E Ad sen²α cos α (α = ángulo de la diagonal con el eje de la columna, n = planos de diagonales que toman el corte).
 // No se transcribió de un reglamento: conviene contrastarlo con el CIRSOC 301 antes de usarlo en obra.
@@ -65,7 +65,7 @@ export function designLatticeColumn(p) {
       const om = Math.max(omX, omY);
       const sigma = om * Nt / A;
       const sig1 = om1 * Nt / A;
-      const Q = om * Nt / 80;                                                // corte ideal (TP 5)
+      const Q = om * Nt / 80;                                                // corte ideal 
       const D = Q / (nPl * sa);                                              // esfuerzo en la diagonal
       const ldMax = eMax / sa;
       const lamDg = (ldMax * lpD) / (pd.imin ?? Math.min(pd.ix, pd.iy));

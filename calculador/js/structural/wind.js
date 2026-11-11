@@ -1,6 +1,6 @@
-// Acción del viento sobre naves y galpones según el Reglamento CIRSOC 102 (2005), con la simplificación que usa el apunte de la cátedra
-// (Estructuras III, "Viento nave industrial"): una sola presión dinámica qh para todas las superficies, p = q (G Cp − GCpi), en kg/m²
-// (1 kg = 10 N, como en los apuntes). Las tablas se transcribieron de las Figuras y Tablas del reglamento (Tabla 5, Tabla 7, Figura 3).
+// Acción del viento sobre naves y galpones según el Reglamento CIRSOC 102 (2005), con una simplificación habitual:
+// una sola presión dinámica qh para todas las superficies, p = q (G Cp − GCpi), en kg/m²
+// (1 kg = 10 N). Las tablas se transcribieron de las Figuras y Tablas del reglamento (Tabla 5, Tabla 7, Figura 3).
 // Signo de p: positivo = presión hacia la superficie, negativo = succión (se aleja de ella).
 
 // Tabla 5: coeficientes de exposición para la presión dinámica, Kz. Altura z en m (la primera fila vale de 0 a 5 m).

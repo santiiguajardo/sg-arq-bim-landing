@@ -1,7 +1,7 @@
 // Base unificada (combinada) de dos columnas, CIRSOC 201-2005 Cap. 15: se usa cuando dos zapatas aisladas quedan demasiado cerca (distancia libre
 // menor que 60 cm) y se unifican en una sola base rectangular. Unidades internas: N, mm, MPa (como footing.js).
 //
-// Método (apuntes "Base unificada" de la cátedra, resueltos con CIRSOC 201 en lugar de la tensión admisible del hormigón):
+// Método (resueltos con CIRSOC 201 en lugar de la tensión admisible del hormigón):
 //  1. La resultante de las cargas de servicio debe coincidir con el baricentro de la base (presión uniforme): xR = P2 ℓ / (P1 + P2) desde el eje
 //     de la columna 1. Con la columna 1 en el límite de la propiedad la longitud queda fijada: a = 2 (xR + u), u = distancia del borde al eje.
 //  2. Área con las cargas sin mayorar: A = (P1 + P2 + peso) / σ; ancho b = A / a.
@@ -15,7 +15,7 @@ import { FOOTING_COVER, designFooting } from './footing.js';
 import { punchingStress } from './footing-ecc.js';
 
 const nf = (x, dec = 1) => Number(x).toLocaleString('es-AR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-export const MIN_CLEAR_BETWEEN_FOOTINGS = 600;      // mm: distancia libre mínima entre zapatas aisladas (criterio de la cátedra)
+export const MIN_CLEAR_BETWEEN_FOOTINGS = 600;      // mm: distancia libre mínima entre zapatas aisladas (criterio de proyecto)
 
 // Control de la distancia libre entre las dos zapatas aisladas que se unificarían.
 export function isolatedSeparation(inp) {

@@ -1,7 +1,7 @@
-// Pórticos de naves industriales de acero (viga quebrada o triarticulado, dintel de alma llena o reticulado) con el método elástico de la cátedra
-// (Estructuras III: "Nave industrial, resolución de pórtico de viga quebrada", "Pórtico triarticulado" y "Vigas reticuladas").
+// Pórticos de naves industriales de acero (viga quebrada o triarticulado, dintel de alma llena o reticulado) con método elástico
+//.
 // El análisis es el de un pórtico plano por rigidez (frame.js) con las rigideces de las secciones adoptadas, en lugar de las fórmulas aproximadas
-// de hiperestáticos con promedio de momentos de los apuntes. Unidades: kg, m (esfuerzos en kg y kg·m), secciones en cm y kg/cm².
+// de hiperestáticos con promedio de momentos habitual. Unidades: kg, m (esfuerzos en kg y kg·m), secciones en cm y kg/cm².
 import * as S from './steel.js';
 import { solveFrame } from './frame.js';
 import { naveWind } from './wind.js';
@@ -59,15 +59,15 @@ export function portalStates(g, o) {
       states.push({ id: `V${states.length}`, label: `Viento lateral (desde la derecha), GCpi ${gi}${ro}`, dist: add(gg, right), nodal, wind: true });
     });
     if (o.windMix && w.lateral.length > 1) {
-      // estado del apunte: en cada superficie se toma el valor más desfavorable de los casos de GCpi (conservador: no ocurren a la vez)
+      // estado conservador de cada superficie: en cada superficie se toma el valor más desfavorable de los casos de GCpi (conservador: no ocurren a la vez)
       const mx = (key, sign) => Math.max(...w.lateral.map((c) => sign * c[key].p)) * sign;
       const c = { wallWindward: { p: mx('wallWindward', 1) }, roofWindward: { p: mx('roofWindward', -1) }, roofLeeward: { p: mx('roofLeeward', -1) }, wallLeeward: { p: mx('wallLeeward', -1) } };
       const left = [press(c.wallWindward.p, Sp, dirs[0].out), press(c.roofWindward.p, Sp, dirs[1].out), press(c.roofLeeward.p, Sp, dirs[2].out), press(c.wallLeeward.p, Sp, dirs[3].out)];
       const right = [press(c.wallLeeward.p, Sp, dirs[0].out), press(c.roofLeeward.p, Sp, dirs[1].out), press(c.roofWindward.p, Sp, dirs[2].out), press(c.wallWindward.p, Sp, dirs[3].out)];
       const gg = gravity();
       const add2 = (x, y) => x.map((v, k) => ({ fx: v.fx + y[k].fx, fy: v.fy + y[k].fy }));
-      states.push({ id: `V${states.length}`, label: 'Viento lateral (izquierda), más desfavorable por superficie (apunte)', dist: add2(gg, left), nodal, wind: true });
-      states.push({ id: `V${states.length}`, label: 'Viento lateral (derecha), más desfavorable por superficie (apunte)', dist: add2(gg, right), nodal, wind: true });
+      states.push({ id: `V${states.length}`, label: 'Viento lateral (izquierda), más desfavorable por superficie', dist: add2(gg, left), nodal, wind: true });
+      states.push({ id: `V${states.length}`, label: 'Viento lateral (derecha), más desfavorable por superficie', dist: add2(gg, right), nodal, wind: true });
     }
     w.frontal.forEach((c) => {
       const f = [press(c.side.p, Sp, dirs[0].out), press(c.roof.p, Sp, dirs[1].out), press(c.roof.p, Sp, dirs[2].out), press(c.side.p, Sp, dirs[3].out)];
@@ -79,7 +79,7 @@ export function portalStates(g, o) {
   return states;
 }
 
-// ---------------------------------------------------------------- dintel reticulado (apunte "Vigas reticuladas" y pórtico triarticulado)
+// ---------------------------------------------------------------- dintel reticulado ( y pórtico triarticulado)
 // chord: perfil de cada cordón (2 cordones separados h); diag: ángulo simple; alpha: ángulo de las diagonales con el cordón
 export function trussRafter({ chord, diag, h, alphaDeg = 60, planes = 2 }) {
   const a = rad(alphaDeg);
@@ -117,7 +117,7 @@ export function solidCheck(profile, grade, { M, N, V }, { Lpx, Lpy, omegaTable }
   return { ok: ok && sigma <= sA + 1e-9 && tau <= tA + 1e-9, sigma, sigmaAllow: sA, tau, tauAllow: tA, omega, lambda, util, N, M, V };
 }
 
-// Dintel reticulado: σ = M y / J + N / A (como en el apunte), pandeo del cordón comprimido y diagonal con el corte máximo
+// Dintel reticulado: σ = M y / J + N / A, pandeo del cordón comprimido y diagonal con el corte máximo
 export function trussCheck(r, grade, { M, N, V }, { omegaTable, lpDiag }) {
   const sA = sigmaOf(r.chord, grade);
   const d = r.h / 2 * 100;

@@ -1,5 +1,6 @@
 // Grandes luces de compresión dominante: cubierta cilíndrica de onda parabólica (cerámica armada u otro material). Motor en js/structural/compression.js.
-// FUENTE: guía de predimensionado 2.1 "Compresión dominante" del Taller de Estructuras E4 (curso 2024).
+// Predimensionado aproximado: 2.1 "Compresión dominante".
+import { previewSketch } from './structural-spans.js';
 import * as K from '../structural/compression.js';
 import * as C from '../structural/cables.js';
 import { escapeHtml } from '../utils.js';
@@ -7,7 +8,7 @@ import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js
 
 const kg = (v) => fmt(v, 0);
 const pill = (ok) => (ok ? '<span class="tag tag-freelance">Verifica</span>' : '<span class="tag tag-alta">No verifica</span>');
-export const COMP_NOTE = 'Predimensionado según la guía 2.1 de Compresión dominante del Taller de Estructuras E4 (2024): arco de tres articulaciones (apoyos A y B y clave C), línea de presiones del peso propio y del viento comparada con el eje de la onda, núcleo central (e ≤ h/6), compresión, pandeo y flexocompresión. La guía lo resuelve con el método gráfico de cambio de polo; acá se resuelve el mismo arco por equilibrio y los números difieren unos pocos por ciento. El viento se simplifica con cargas verticales y el material (cerámica armada: 1800 kg/m³, 10 kg/cm², E = 100000 kg/cm²) son datos de la guía. Herramienta de apoyo para el predimensionado.';
+export const COMP_NOTE = 'Predimensionado aproximado: arco de tres articulaciones (apoyos A y B y clave C), línea de presiones del peso propio y del viento comparada con el eje de la onda, núcleo central (e ≤ h/6), compresión, pandeo y flexocompresión. El arco se resuelve por equilibrio. El viento se simplifica con cargas verticales y el material (cerámica armada: 1800 kg/m³, 10 kg/cm², E = 100000 kg/cm²) son datos de el método. Herramienta de apoyo para el predimensionado.';
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
 
 function defaultsFor() {
@@ -24,7 +25,7 @@ function defaultsFor() {
 
 function windSuggestion(d) {
   const qh = 0.613 * num(d.windV) ** 2 * num(d.windKd) * num(d.windKzt) * num(d.windI) * num(d.windKz);        // N/m²
-  const p = qh * (num(d.windG) * Math.abs(num(d.windCp)) + Math.abs(num(d.windGCpi)));                         // guía: mismo valor a barlovento (presión) y a sotavento (succión)
+  const p = qh * (num(d.windG) * Math.abs(num(d.windCp)) + Math.abs(num(d.windGCpi)));                         // mismo valor a barlovento (presión) y a sotavento (succión)
   return { qh, pN: p, pKg: p / 10 };
 }
 
@@ -40,7 +41,7 @@ function compute(calc) {
   const o = p.onda;
   if (![p.L, p.f, p.gamma, o.b, o.bp, o.H, o.d].every((v) => v > 0)) return { error: 'Completá la luz, la flecha, el peso específico y las medidas de la onda con valores mayores que cero.' };
   const fl = p.f / p.L;
-  if (fl < 0.1 || fl > 0.5) return { error: 'La flecha tiene que estar entre el 10 % y el 50 % de la luz (la guía recomienda entre el 25 % y el 35 %).' };
+  if (fl < 0.1 || fl > 0.5) return { error: 'La flecha tiene que estar entre el 10 % y el 50 % de la luz (recomendado: entre el 25 % y el 35 %).' };
   if (o.d >= o.H) return { error: 'El espesor de la onda tiene que ser menor que su altura.' };
   if (p.reforzada && ![p.reforzada.b, p.reforzada.bp, p.reforzada.H, p.reforzada.d].every((v) => v > 0)) return { error: 'Completá las medidas de la onda reforzada o desactivala.' };
   const res = K.designCylinderShell(p);
@@ -111,10 +112,10 @@ function eccentricityChart(res) {
 function windCard(d) {
   const w = windSuggestion(d);
   return `<div class="card"><h3 style="margin-top:0;">Viento (ayuda de cálculo)</h3>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.windV', 'Velocidad básica V', d.windV, { unit: 'm/s', hint: 'CIRSOC 102-2005.' })}${numField('design.windKz', 'Kz', d.windKz, { hint: 'Guía: 0,39 (exposición A).' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.windV', 'Velocidad básica V', d.windV, { unit: 'm/s', hint: 'CIRSOC 102-2005.' })}${numField('design.windKz', 'Kz', d.windKz, { hint: 'Usual: 0,39 (exposición A).' })}</div>
     <div class="field-row" style="flex-wrap:wrap;">${numField('design.windKd', 'Kd', d.windKd)}${numField('design.windKzt', 'Kzt', d.windKzt)}${numField('design.windI', 'I', d.windI)}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.windG', 'G', d.windG)}${numField('design.windCp', 'Cp (valor medio)', d.windCp, { hint: 'Guía: ± 0,36 en barlovento y sotavento.' })}${numField('design.windGCpi', 'GCpi', d.windGCpi, { hint: 'Guía: ± 0,18.' })}</div>
-    <p class="text-muted" style="font-size:12.5px; margin:0;">qh = 0,613 V² Kd Kzt I Kz = <b>${fmt(w.qh, 0)} N/m²</b>; p = qh (G Cp ± GCpi) = <b>${fmt(w.pN, 0)} N/m² ≈ ${fmt(w.pKg, 1)} kg/m²</b> (1 kg = 10 N): presión a barlovento y succión de igual valor a sotavento (la guía adopta 20 kg/m²).</p></div>`;
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.windG', 'G', d.windG)}${numField('design.windCp', 'Cp (valor medio)', d.windCp, { hint: 'Usual: ± 0,36 en barlovento y sotavento.' })}${numField('design.windGCpi', 'GCpi', d.windGCpi, { hint: 'Usual: ± 0,18.' })}</div>
+    <p class="text-muted" style="font-size:12.5px; margin:0;">qh = 0,613 V² Kd Kzt I Kz = <b>${fmt(w.qh, 0)} N/m²</b>; p = qh (G Cp ± GCpi) = <b>${fmt(w.pN, 0)} N/m² ≈ ${fmt(w.pKg, 1)} kg/m²</b> (1 kg = 10 N): presión a barlovento y succión de igual valor a sotavento (usual: 20 kg/m²).</p></div>`;
 }
 
 function onda(res) { return res.on; }
@@ -125,9 +126,9 @@ function step1(calc) {
   const on = out.res ? onda(out.res) : null;
   const fig = out.res ? elevationFigure(out.res) : '';
   return `<div class="grid grid-2" style="align-items:start;">
-    <div class="card"><h3 style="margin-top:0;">Cubierta cilíndrica de onda parabólica</h3>${fig}
+    <div class="card"><h3 style="margin-top:0;">Cubierta cilíndrica de onda parabólica</h3>${previewSketch('arcgl', d)}${fig}
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.L', 'Luz libre L', d.L, { unit: 'm' })}${numField('design.f', 'Flecha f', d.f, { unit: 'm', hint: `f / L = ${fmt(num(d.f) / num(d.L, 1), 2)}. Recomendado: 25 a 35 % (limita las componentes horizontales).` })}</div>
-      ${numField('design.dxT', 'Ancho en planta de cada tramo de carga', d.dxT, { unit: 'm', hint: 'La guía divide la curva en tramos de 3 m.' })}
+      ${numField('design.dxT', 'Ancho en planta de cada tramo de carga', d.dxT, { unit: 'm', hint: 'Usual: tramos de 3 m.' })}
       <p class="text-muted" style="font-size:12.5px; margin:0;">Parámetro de la parábola p = (L/2)² / 2f = <b>${fmt(num(d.L) ** 2 / 4 / (2 * num(d.f, 1)), 2)}</b>; y = x² / 2p medido desde la clave. Se supone un sistema biarticulado (cambio de tecnología en el apoyo) y una articulación en la clave por la deformación del viento.</p></div>
     <div class="card"><h3 style="margin-top:0;">Onda y material</h3>
       ${on ? ondaFigure(on) : ''}
@@ -138,12 +139,12 @@ function step1(calc) {
         <tr><td>Plano inclinado c = √(b′² + (H − d)²)</td><td style="text-align:right;">${fmt(on.c, 3)} m</td></tr>
         <tr><td>Desarrollo de la onda 2b + 2c · volumen por metro (× d)</td><td style="text-align:right;">${fmt(on.desarrollo, 2)} m · ${fmt(on.F, 3)} m³</td></tr>
         <tr><td>Peso por metro de onda (γ × volumen)</td><td style="text-align:right;"><b>${fmt(on.pesoM, 0)} kg/m</b></td></tr>
-        <tr><td>Inercia J: alas ${fmt(on.Jalas, 4)} + alma ${fmt(on.Jalma, 4)} (la guía da 0,0234 + 0,0101)</td><td style="text-align:right;">${fmt(on.Jcalc, 4)} m⁴</td></tr></tbody></table>` : ''}
-      <div class="field-row" style="flex-wrap:wrap; margin-top:10px;">${numField('design.gamma', 'Peso específico del material', d.gamma, { unit: 'kg/m³', hint: 'Mampostería: 1800 (guía).' })}${numField('design.Jover', 'Inercia propia J (opcional)', d.Jover, { unit: 'm⁴', hint: '0 = la calculada con la geometría.' })}</div>
+        <tr><td>Inercia J: alas ${fmt(on.Jalas, 4)} + alma ${fmt(on.Jalma, 4)} (usual: 0,0234 + 0,0101)</td><td style="text-align:right;">${fmt(on.Jcalc, 4)} m⁴</td></tr></tbody></table>` : ''}
+      <div class="field-row" style="flex-wrap:wrap; margin-top:10px;">${numField('design.gamma', 'Peso específico del material', d.gamma, { unit: 'kg/m³', hint: 'Mampostería: 1800.' })}${numField('design.Jover', 'Inercia propia J (opcional)', d.Jover, { unit: 'm⁴', hint: '0 = la calculada con la geometría.' })}</div>
     </div></div>
     <div class="grid grid-2" style="align-items:start; margin-top:16px;">
       <div class="card"><h3 style="margin-top:0;">Viento sobre la cubierta</h3>
-        ${numField('design.pw', 'Presión a barlovento (y succión a sotavento)', d.pw, { unit: 'kg/m²', hint: 'Guía: 20 kg/m². Se multiplica por el desarrollo de la onda (≈ 3 m): 60 kg por metro de curva.' })}
+        ${numField('design.pw', 'Presión a barlovento (y succión a sotavento)', d.pw, { unit: 'kg/m²', hint: 'Usual: 20 kg/m². Se multiplica por el desarrollo de la onda (≈ 3 m): 60 kg por metro de curva.' })}
         ${selField('design.windSide', 'Barlovento', d.windSide === 'right' ? 'right' : 'left', [['left', 'Del lado del apoyo A (izquierda)'], ['right', 'Del lado del apoyo B (derecha)']])}</div>
       ${windCard(d)}</div>
     <div class="note" style="margin-top:16px;">${COMP_NOTE}</div>`;
@@ -157,7 +158,7 @@ function step2(calc) {
   return `<div class="grid grid-2" style="align-items:start;">
     <div class="card"><h3 style="margin-top:0;">Cargas por tramo</h3>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Tramo</th><th style="text-align:right;">x (m)</th><th style="text-align:right;">Largo (m)</th><th style="text-align:right;">Pp (kg)</th><th style="text-align:right;">Viento (kg)</th><th style="text-align:right;">Pp + V (kg)</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Peso propio = largo del tramo × ${fmt(r.on.pesoM, 0)} kg/m; viento = presión × desarrollo (${fmt(r.on.desarrollo, 2)} m) × largo, hacia abajo a barlovento y hacia arriba a sotavento (simplificación de la guía).</p></div>
+      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Peso propio = largo del tramo × ${fmt(r.on.pesoM, 0)} kg/m; viento = presión × desarrollo (${fmt(r.on.desarrollo, 2)} m) × largo, hacia abajo a barlovento y hacia arriba a sotavento (simplificación habitual).</p></div>
     <div class="card"><h3 style="margin-top:0;">Reacciones y predimensionado</h3><table class="data-table"><tbody>
       <tr><td>Peso propio: V = ${kg(r.sPp.VA)} kg, H = ${kg(r.sPp.H)} kg</td><td style="text-align:right;">Ra = Rb = <b>${kg(r.sPp.RA)} kg</b></td></tr>
       <tr><td>Peso propio y viento: V<sub>A</sub> = ${kg(r.sPW.VA)}, V<sub>B</sub> = ${kg(r.sPW.VB)}, H = ${kg(r.sPW.H)} kg</td><td style="text-align:right;">Ra = <b>${kg(r.sPW.RA)}</b>, Rb = ${kg(r.sPW.RB)} kg</td></tr>
@@ -166,18 +167,18 @@ function step2(calc) {
       <tr><td>Excentricidad máxima con el peso propio · núcleo central h/6</td><td style="text-align:right;">${fmt(Math.abs(r.sPp.emax.e) * 100, 1)} cm · ${fmt(r.kern * 100, 1)} cm</td></tr>
       <tr><td>Excentricidad máxima con viento (en x = ${fmt(r.sPW.emax.u, 1)} m)</td><td style="text-align:right;"><b>${fmt(Math.abs(r.sPW.emax.e) * 100, 1)} cm</b></td></tr>
       <tr><td>Altura de onda para que e ≤ h/6 (h ≥ 6 e)</td><td style="text-align:right;">${fmt(r.Hnec * 100, 0)} cm</td></tr></tbody></table>
-      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Si la excentricidad con el viento sale del núcleo central, la guía refuerza la onda solo cerca de la zona de máxima excentricidad (o rediseña toda la sección): se verifica en el paso 3.</p></div></div>`;
+      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Si la excentricidad con el viento sale del núcleo central, se refuerza la onda solo cerca de la zona de máxima excentricidad (o rediseña toda la sección): se verifica en el paso 3.</p></div></div>`;
 }
 
 function dataCard(calc) {
   const d = calc.design;
   const yes = d.ref === 'yes';
   return `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaAdm', 'Tensión admisible del material', d.sigmaAdm, { unit: 'kg/cm²', hint: 'Cerámica armada: 10 (guía).' })}${numField('design.E', 'Módulo de elasticidad E', d.E, { unit: 'kg/cm²', hint: 'Guía: 100000.' })}</div>
-    ${numField('design.betaPandeo', 'Coeficiente de seguridad al pandeo', d.betaPandeo, { hint: 'Pk = coeficiente × Ra (guía: 2).' })}
-    ${selField('design.ref', 'Onda reforzada en la zona de mayor excentricidad', yes ? 'yes' : 'no', [['yes', 'Sí: otra altura y espesor en esa zona'], ['no', 'No: se verifica con la onda inicial']], 'La guía aumenta la altura y reduce el espesor del ladrillo: peso similar con más inercia.')}
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaAdm', 'Tensión admisible del material', d.sigmaAdm, { unit: 'kg/cm²', hint: 'Cerámica armada: 10.' })}${numField('design.E', 'Módulo de elasticidad E', d.E, { unit: 'kg/cm²', hint: 'Usual: 100000.' })}</div>
+    ${numField('design.betaPandeo', 'Coeficiente de seguridad al pandeo', d.betaPandeo, { hint: 'Pk = coeficiente × Ra (usual: 2).' })}
+    ${selField('design.ref', 'Onda reforzada en la zona de mayor excentricidad', yes ? 'yes' : 'no', [['yes', 'Sí: otra altura y espesor en esa zona'], ['no', 'No: se verifica con la onda inicial']], 'Se aumenta la altura y se reduce el espesor del ladrillo: peso similar con más inercia.')}
     ${yes ? `<div class="field-row" style="flex-wrap:wrap;">${numField('design.rb', 'b', d.rb, { unit: 'm' })}${numField('design.rbp', "b′", d.rbp, { unit: 'm' })}${numField('design.rH', 'H', d.rH, { unit: 'm' })}${numField('design.rd', 'd', d.rd, { unit: 'm' })}</div>
-      ${numField('design.rJover', 'Inercia propia J de la onda reforzada (opcional)', d.rJover, { unit: 'm⁴', hint: '0 = calculada. La guía da J = 0,0721 m⁴.' })}` : ''}
+      ${numField('design.rJover', 'Inercia propia J de la onda reforzada (opcional)', d.rJover, { unit: 'm⁴', hint: '0 = calculada. ' })}` : ''}
     ${selField('design.tensor', 'Tensor para la componente horizontal', d.tensor === 'no' ? 'no' : 'yes', [['yes', 'Sí: cable'], ['no', 'No (la absorbe un contrafuerte)']])}
     ${d.tensor === 'no' ? '' : selField('design.catalog', 'Tabla de cables', d.catalog || 'guide', C.CABLE_CATALOGS)}</div>`;
 }
@@ -199,11 +200,11 @@ function resultsHtml(calc, out) {
       ${dataCard(calc)}
       <div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Reacciones</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>Estado</th><th style="text-align:right;">V<sub>A</sub></th><th style="text-align:right;">V<sub>B</sub></th><th style="text-align:right;">H</th><th style="text-align:right;">Ra</th><th style="text-align:right;">Rb</th></tr></thead><tbody>${stateRows}</tbody></table></div>
         <table class="data-table" style="margin-top:8px;"><tbody><tr><td>Apoyo ${sup.side} (el más cargado): componente vertical · horizontal</td><td style="text-align:right;">${kg(sup.V)} · ${kg(sup.H)} kg</td></tr>${tens}</tbody></table>
-        <p class="text-muted" style="font-size:12px; margin:8px 0 0;">El contrafuerte de hormigón sobre pilotes o bases centradas y el tensor tomando la horizontal (guía, apoyos): se dimensionan aparte.</p></div></div>
+        <p class="text-muted" style="font-size:12px; margin:8px 0 0;">El contrafuerte de hormigón sobre pilotes o bases centradas y el tensor tomando la horizontal: se dimensionan aparte.</p></div></div>
     <div>${checksCard({ ok: allOk, checks: checksAll })}
       <div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Excentricidad de la línea de presiones</h3>${eccentricityChart(r)}
         <div class="table-wrap" style="margin-top:8px;"><table class="data-table"><thead><tr><th style="text-align:right;">x (m)</th><th style="text-align:right;">y (m)</th><th style="text-align:right;">e Pp (cm)</th><th style="text-align:right;">R Pp (kg)</th><th style="text-align:right;">e Pp+V (cm)</th><th style="text-align:right;">R Pp+V (kg)</th></tr></thead><tbody>${sec}</tbody></table></div>
-        <p class="text-muted" style="font-size:12px; margin:8px 0 0;">x desde el apoyo A; y = profundidad del eje bajo la clave. La guía mide a escala la excentricidad de 24 cm a 9 m del apoyo; acá se calcula con las cargas repartidas en cada tramo.</p></div>
+        <p class="text-muted" style="font-size:12px; margin:8px 0 0;">x desde el apoyo A; y = profundidad del eje bajo la clave. La excentricidad se calcula con las cargas repartidas en cada tramo.</p></div>
       ${ondaFigureCard(r)}</div></div>`;
 }
 
@@ -233,12 +234,12 @@ function memoria(calc, out) {
   const checks = [...r.checks];
   if (out.tensor) checks.push({ ok: out.tensor.ok, label: 'Tensor de apoyo', text: `H = ${kg(r.support.H)} kg × 2 → ${out.tensor.cable ? `cable ø ${fmt(out.tensor.cable.d, out.tensor.cable.d % 1 ? 1 : 0)} mm (rotura ${kg(out.tensor.cable.F)} kg)` : 'ninguno de la tabla alcanza'}` });
   const ok = checks.every((c) => c.ok);
-  const ART = 'Guía de predimensionado E4 · Compresión dominante';
+  const ART = 'Predimensionado · Compresión dominante';
   const tr = r.tramos.map((t) => memoRow(`Tramo ${t.i}: x = ${fmt(t.u1, 1)} a ${fmt(t.u2, 1)} m, largo ${fmt(t.len, 2)} m`, `Pp = ${kg(t.Pp)} · V = ${t.W > 0 ? '+' : ''}${kg(t.W)} · Pp + V = ${kg(t.PpW)} kg`)).join('');
   const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Cubierta cilíndrica de onda parabólica, arco de tres articulaciones', ART)}${memoRow('Luz · flecha', `L = ${fmt(d.L, 2)} m · f = ${fmt(d.f, 2)} m (f/L = ${fmt(d.f / d.L, 2)}); p = ${fmt(r.p, 2)}`)}
       ${memoRow('Onda', `b = ${fmt(d.b, 2)}, b′ = ${fmt(d.bp, 2)}, H = ${fmt(d.H, 2)}, d = ${fmt(d.d, 2)} m; B = ${fmt(r.on.B, 2)} m, desarrollo ${fmt(r.on.desarrollo, 2)} m, volumen ${fmt(r.on.F, 3)} m³/m`)}
       ${memoRow('Peso propio por metro de onda', `${fmt(r.gamma, 0)} kg/m³ × ${fmt(r.on.F, 3)} m³ = ${fmt(r.on.pesoM, 0)} kg/m`)}${memoRow('Inercia de la onda', `J = ${fmt(r.on.J, 4)} m⁴ (alas ${fmt(r.on.Jalas, 4)} + alma ${fmt(r.on.Jalma, 4)})`)}
-      ${memoRow('Viento (CIRSOC 102-2005)', `qh = ${fmt(w.qh, 0)} N/m²; p = ${fmt(d.pw, 1)} kg/m² a barlovento y sotavento (guía 20 kg/m²; con los datos cargados ≈ ${fmt(w.pKg, 1)} kg/m²)`)}</table>
+      ${memoRow('Viento (CIRSOC 102-2005)', `qh = ${fmt(w.qh, 0)} N/m²; p = ${fmt(d.pw, 1)} kg/m² a barlovento y sotavento (con los datos cargados ≈ ${fmt(w.pKg, 1)} kg/m²)`)}</table>
     ${elevationFigure(r)}
     <h2>2. Cargas por tramo</h2><table>${tr}</table>
     <h2>3. Reacciones y línea de presiones</h2><table>${memoRow('Peso propio', `V = ${kg(r.sPp.VA)}, H = ${kg(r.sPp.H)}, Ra = Rb = ${kg(r.sPp.RA)} kg`, 'H = (V L/2 − Σ P (L/2 − x)) / f')}${memoRow('Peso propio + viento', `V<sub>A</sub> = ${kg(r.sPW.VA)}, V<sub>B</sub> = ${kg(r.sPW.VB)}, H = ${kg(r.sPW.H)}; Ra = ${kg(r.sPW.RA)}, Rb = ${kg(r.sPW.RB)} kg`)}

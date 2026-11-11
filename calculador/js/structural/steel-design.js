@@ -1,4 +1,4 @@
-// Diseño de elementos de acero (viga, correa, columna simple y compuesta, tensor) con el método elástico de la cátedra.
+// Diseño de elementos de acero (viga, correa, columna simple y compuesta, tensor) con método elástico.
 // Cada función recibe datos en kg, m y cm (ver steel.js), elige el perfil más liviano de la tabla que verifica y devuelve los resultados.
 import * as S from './steel.js';
 import { designFooting } from './footing.js';
@@ -98,7 +98,7 @@ export function designBeam(inp) {
     if (!chosen && cands.length) chosen = evalProfile(cands[cands.length - 1]);
   }
   if (!chosen) return { ...res, ok: false, reason: 'No hay perfiles del tipo elegido en la tabla.' };
-  // predimensionado: módulo resistente necesario con la carga sin el peso propio del perfil + una estimación de 20 kg/m (apunte)
+  // predimensionado: módulo resistente necesario con la carga sin el peso propio del perfil + una estimación de 20 kg/m
   const base = S.analyzeBeam({ spans: inp.spans, cantL: inp.cantL, cantR: inp.cantR, q: inp.spans.map(() => qD0 + 20 + qL0), qCantL: qD0 + 20 + qL0, qCantR: qD0 + 20 + qL0, points });
   const sAllow = grade.sadm;
   const WnecTotal = Math.max(Math.abs(base.Mmax), Math.abs(base.Mmin)) * 100 / sAllow;
@@ -135,7 +135,7 @@ export function designPurlin(inp) {
       const chk = checkPurlinForces({ profile, grade, Mx: Math.abs(M), My: Math.abs(Mt), Q, qn: Math.abs(st.qn), qt: st.qt, L, fRatio: Number(inp.fRatio) || 200 });
       return { ...st, M, Mt, Q, chk };
     });
-    // carga concentrada (apunte: 100 kg en el centro de la luz) con las cargas permanentes
+    // carga concentrada (100 kg en el centro de la luz) con las cargas permanentes
     let conc = null;
     if (Pc > 0) {
       const gv = gH + profile.G;
@@ -155,7 +155,7 @@ export function designPurlin(inp) {
     if (!chosen && cands.length) chosen = evalProfile(cands[cands.length - 1]);
   }
   if (!chosen) return { ...res, ok: false, reason: 'No hay perfiles del tipo elegido en la tabla.' };
-  // predimensionado: Wx necesario con la relación K = Wx / Wy supuesta (apunte: K = 3, 4 o 5): Wx = (Mx + K My) / σ
+  // predimensionado: Wx necesario con la relación K = Wx / Wy supuesta (K = 3, 4 o 5): Wx = (Mx + K My) / σ
   const st1 = states(8)[0];
   const Mxn = st1.qn * L * L / 8;            // kg·m
   const Myn = st1.qt * L * L / 8;
@@ -200,7 +200,7 @@ export function designColumn(inp) {
     if (!chosen && cands.length) chosen = evalProfile(cands[cands.length - 1]);
   }
   if (!chosen) return { ...res, ok: false, reason: 'No hay perfiles del tipo elegido en la tabla.' };
-  // método del apunte, por tanteos: se adopta σ = σadm / 2 y ω = 1 para estimar el área
+  // por tanteos: se adopta σ = σadm / 2 y ω = 1 para estimar el área
   const A0 = N / (grade.sadm / 2);
   return { ...res, ...chosen, ok: chosen.chk.ok, A0, candidates: cands };
 }
@@ -242,7 +242,7 @@ export function designBattened(inp) {
 }
 
 // ---------------------------------------------------------------- tensor
-export const BAR_DIAMETERS = [6, 8, 10, 12, 16, 20, 25];     // Tabla 10 del apunte (barras de acero)
+export const BAR_DIAMETERS = [6, 8, 10, 12, 16, 20, 25];     // Tabla de barras de acero
 export function designTie(inp) {
   const grade = gradeOf(inp.grade);
   const T = Number(inp.T);
@@ -256,7 +256,7 @@ export function designTie(inp) {
   if (inp.name) chosen = cands.find((c) => c.n === inp.name) || null;
   if (!chosen) chosen = cands.find((c) => c.A >= res.Anec - 1e-9) || cands[cands.length - 1];
   const chk = S.checkTie({ profile: chosen, grade, T, L });
-  // anclaje (apunte): el peso del macizo de hormigón debe ser al menos 1,5 T; para una base de 1 m × 1 m y 2200 kg/m3
+  // anclaje: el peso del macizo de hormigón debe ser al menos 1,5 T; para una base de 1 m × 1 m y 2200 kg/m3
   const Pbase = 1.5 * T;
   const hBase = Pbase / (2200 * 1 * 1);
   return { ...res, profile: chosen, chk, ok: chk.ok, Pbase, hBase, candidates: cands };

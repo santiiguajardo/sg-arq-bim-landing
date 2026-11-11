@@ -1,5 +1,6 @@
 // Grandes luces: vigas de gran inercia (Vierendeel de hormigón armado o de acero, y viga postesada de hormigón). Motor en js/structural/big-beams.js.
-// FUENTE: guías 6.1 y 6.2 del Taller de Estructuras E4 (curso 2024).
+// Predimensionado aproximado: 6.1 y 6.2.
+import { previewSketch } from './structural-spans.js';
 import * as B from '../structural/big-beams.js';
 import * as C from '../structural/cables.js';
 import * as S from '../structural/steel.js';
@@ -8,7 +9,7 @@ import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js
 
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
-export const BIG_NOTE = 'Predimensionado según las guías 6.1 (Vierendeel) y 6.2 (postesadas) del Taller de Estructuras E4 (2024): viga simplemente apoyada, cordones con C = T = M / (0,9 H), montantes al corte, pandeo del cordón comprimido, armadura o perfil del cordón traccionado y flecha con la inercia de los cordones (L/500). No se verifican los momentos locales de los cordones y los montantes entre nudos (flexión Vierendeel), los nudos, la fisuración ni las pérdidas de postesado. Herramienta de apoyo para el predimensionado.';
+export const BIG_NOTE = 'Predimensionado aproximado: viga simplemente apoyada, cordones con C = T = M / (0,9 H), montantes al corte, pandeo del cordón comprimido, armadura o perfil del cordón traccionado y flecha con la inercia de los cordones (L/500). No se verifican los momentos locales de los cordones y los montantes entre nudos (flexión Vierendeel), los nudos, la fisuración ni las pérdidas de postesado. Herramienta de apoyo para el predimensionado.';
 
 const LOAD_FIELDS = (d, selfHint) => `<div class="field-row" style="flex-wrap:wrap;">${numField('design.floorD', 'Entrepiso: permanentes', d.floorD, { unit: 'kg/m' })}${numField('design.floorL', 'Entrepiso: accidentales', d.floorL, { unit: 'kg/m' })}</div>
   <div class="field-row" style="flex-wrap:wrap;">${numField('design.roofD', 'Cubierta: permanentes', d.roofD, { unit: 'kg/m' })}${numField('design.roofL', 'Cubierta: accidentales', d.roofL, { unit: 'kg/m' })}</div>
@@ -90,10 +91,10 @@ function vierStep1(calc) {
   const d = calc.design;
   const steel = d.kind === 'steel';
   return `<div class="grid grid-2" style="align-items:start;">
-    <div class="card"><h3 style="margin-top:0;">Viga Vierendeel de ${steel ? 'acero' : 'hormigón armado'}</h3>${vierFigure(d)}
+    <div class="card"><h3 style="margin-top:0;">Viga Vierendeel de ${steel ? 'acero' : 'hormigón armado'}</h3>${previewSketch('vier', d)}${vierFigure(d)}
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.L', 'Luz libre L', d.L, { unit: 'm' })}${numField('design.H', 'Altura de la viga H', d.H, { unit: 'm', hint: 'Entre bordes exteriores de los cordones. Brazo de palanca Z = 0,9 H.' })}</div>
       ${numField('design.a', 'Distancia entre nudos (entre montantes) a', d.a, { unit: 'm', hint: 'Longitud de pandeo del cordón superior = 0,7 a.' })}</div>
-    <div class="card"><h3 style="margin-top:0;">Cargas</h3>${LOAD_FIELDS(d, steel ? 'Guía: 150 kg/m para la viga de acero.' : 'Guía: 750 kg/m para la viga de hormigón.')}</div></div>
+    <div class="card"><h3 style="margin-top:0;">Cargas</h3>${LOAD_FIELDS(d, steel ? 'Usual: 150 kg/m para la viga de acero.' : 'Usual: 750 kg/m para la viga de hormigón.')}</div></div>
     <div class="note" style="margin-top:16px;">${BIG_NOTE}</div>`;
 }
 
@@ -122,14 +123,14 @@ function vierData(calc) {
   if (d.kind === 'steel') return `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
     ${selField('design.upn', 'Perfil de los cordones (dos U por cordón)', d.upn || 'auto', UPN_OPTS)}
     ${selField('design.grade', 'Tabla ω del acero', d.grade || 'F-22', [['F-22', 'F-22'], ['F-24', 'F-24']])}
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigma', 'Tensión admisible', d.sigma, { unit: 'kg/cm²', hint: 'Guía: 1400.' })}${numField('design.tau', 'Tensión de corte admisible', d.tau, { unit: 'kg/cm²', hint: 'Guía: 1100.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigma', 'Tensión admisible', d.sigma, { unit: 'kg/cm²', hint: 'Usual: 1400.' })}${numField('design.tau', 'Tensión de corte admisible', d.tau, { unit: 'kg/cm²', hint: 'Usual: 1100.' })}</div>
     <div class="field-row" style="flex-wrap:wrap;">${numField('design.E', 'Módulo de elasticidad E', d.E, { unit: 'kg/cm²' })}${numField('design.flechaRatio', 'Flecha admisible L /', d.flechaRatio, { step: 1 })}</div></div>`;
   return `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.m1', 'm1 (montantes y cordón)', d.m1, { unit: 'cm' })}${numField('design.m2', 'm2 (0 = el mínimo, de a 5 cm)', d.m2, { unit: 'cm', hint: 'La guía adopta 90 cm.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.m1', 'm1 (montantes y cordón)', d.m1, { unit: 'cm' })}${numField('design.m2', 'm2 (0 = el mínimo, de a 5 cm)', d.m2, { unit: 'cm', hint: 'Usual: 90 cm.' })}</div>
     ${numField('design.hc', 'Altura del cordón en el plano de la viga (para la inercia)', d.hc, { unit: 'cm', hint: '0 = m2.' })}
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Tensión de compresión admisible', d.sigmaC, { unit: 'kg/cm²', hint: 'Guía: 150.' })}${numField('design.tau', 'Tensión de corte admisible (montantes)', d.tau, { unit: 'kg/cm²', hint: 'Guía: 20 (H-47).' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaS', 'Tensión del acero de las barras', d.sigmaS, { unit: 'kg/cm²', hint: 'Guía: 2400.' })}${selField('design.barD', 'Diámetro de las barras', d.barD, B.REBAR_DIAMETERS.map((x) => [x, `Ø${x} mm`]))}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.E', 'Módulo de elasticidad del hormigón', d.E, { unit: 'kg/cm²', hint: 'Guía: 390000 (H-47).' })}${numField('design.omega', 'Coeficiente de pandeo ω', d.omega, { hint: 'Tabla de hormigón armado de la guía (λ = 8 → 1): no se adjuntó, se ingresa.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Tensión de compresión admisible', d.sigmaC, { unit: 'kg/cm²', hint: 'Usual: 150.' })}${numField('design.tau', 'Tensión de corte admisible (montantes)', d.tau, { unit: 'kg/cm²', hint: 'Usual: 20 (H-47).' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaS', 'Tensión del acero de las barras', d.sigmaS, { unit: 'kg/cm²', hint: 'Usual: 2400.' })}${selField('design.barD', 'Diámetro de las barras', d.barD, B.REBAR_DIAMETERS.map((x) => [x, `Ø${x} mm`]))}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.E', 'Módulo de elasticidad del hormigón', d.E, { unit: 'kg/cm²', hint: 'Usual: 390000 (H-47).' })}${numField('design.omega', 'Coeficiente de pandeo ω', d.omega, { hint: 'Tabla de hormigón armado (λ = 8 → 1): no se adjuntó, se ingresa.' })}</div>
     ${numField('design.flechaRatio', 'Flecha admisible L /', d.flechaRatio, { step: 1 })}</div>`;
 }
 
@@ -139,15 +140,15 @@ function vierStep3(calc, out) {
   const checks = r.checks.map((c) => ({ ...c }));
   const ok = r.ok;
   const note = r.mat === 'steel'
-    ? `Con J = 2 [2 J<sub>U</sub> + 2 A z1²] (dos cordones de dos perfiles) la flecha da ${fmt(r.f, 2)} cm. La guía deja la inercia en la mitad (2 997 302 cm⁴: no incluye el factor 2 de su propia fórmula) y obtiene 5,61 cm.`
-    : `La guía obtiene J = 1,637·10⁸ cm⁴ con un z1 que no detalla; acá z1 = (H − altura del cordón) / 2 = ${fmt(r.z1, 0)} cm, J = ${r.J.toExponential(3)} cm⁴.`;
+    ? `Con J = 2 [2 J<sub>U</sub> + 2 A z1²] (dos cordones de dos perfiles) la flecha da ${fmt(r.f, 2)} cm.`
+    : `Con z1 = (H − altura del cordón) / 2 = ${fmt(r.z1, 0)} cm, J = ${r.J.toExponential(3)} cm⁴.`;
   return `<div class="grid grid-2" style="align-items:start;"><div>${vierData(calc)}</div><div>${checksCard({ ok, checks })}<p class="text-muted" style="font-size:12px; margin:8px 0 0;">${note}</p></div></div>`;
 }
 
 function vierMemoria(calc, out) {
   if (!out || out.error || !out.res) return null;
   const r = out.res; const d = calc.design; const steel = r.mat === 'steel';
-  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', `Viga Vierendeel de ${steel ? 'acero' : 'hormigón armado'}`, 'Guía de predimensionado E4 · 6.1')}${memoRow('Luz · altura · nudos', `L = ${fmt(d.L, 2)} m · H = ${fmt(d.H, 2)} m · a = ${fmt(d.a, 2)} m`)}
+  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', `Viga Vierendeel de ${steel ? 'acero' : 'hormigón armado'}`, 'Predimensionado')}${memoRow('Luz · altura · nudos', `L = ${fmt(d.L, 2)} m · H = ${fmt(d.H, 2)} m · a = ${fmt(d.a, 2)} m`)}
       ${memoRow('Cargas por metro', `entrepiso ${kg(d.floorD)} + ${kg(d.floorL)}; cubierta ${kg(d.roofD)} + ${kg(d.roofL)}; peso propio ${kg(d.self)}`)}${memoRow('Carga total q', `${kg(r.q)} kg/m`)}</table>
     ${vierFigure(d)}<h2>2. Esfuerzos principales</h2><table>${memoRow('Mmax = q L² / 8', `${kg(r.M)} kg·m`)}${memoRow('Qmax = q L / 2', `${kg(r.Q)} kg`)}${memoRow('C = T = M / (0,9 H)', `${kg(r.C)} kg`)}</table>
     <h2>3. Verificaciones</h2><table>${r.checks.map((c) => memoRow(`${c.ok ? '✓' : '✗'} ${escapeHtml(c.label)}`, escapeHtml(c.text))).join('')}</table>
@@ -182,10 +183,10 @@ function postCompute(calc) {
 function postStep1(calc) {
   const d = calc.design;
   return `<div class="grid grid-2" style="align-items:start;">
-    <div class="card"><h3 style="margin-top:0;">Viga postesada de hormigón</h3>${postFigure(d)}
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.L', 'Luz libre L', d.L, { unit: 'm' })}${numField('design.f', 'Flecha del cable f', d.f, { unit: 'm', hint: 'Ph = q L² / 8 f (la guía usa 0,85 m).' })}</div>
+    <div class="card"><h3 style="margin-top:0;">Viga postesada de hormigón</h3>${previewSketch('post', d)}${postFigure(d)}
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.L', 'Luz libre L', d.L, { unit: 'm' })}${numField('design.f', 'Flecha del cable f', d.f, { unit: 'm', hint: 'Ph = q L² / 8 f (usual: 0,85 m).' })}</div>
       ${numField('design.h', 'Altura de la viga h', d.h, { unit: 'cm' })}</div>
-    <div class="card"><h3 style="margin-top:0;">Cargas</h3>${LOAD_FIELDS(d, 'Guía: 3000 kg/m para la viga postesada.')}</div></div>
+    <div class="card"><h3 style="margin-top:0;">Cargas</h3>${LOAD_FIELDS(d, 'Usual: 3000 kg/m para la viga postesada.')}</div></div>
     <div class="note" style="margin-top:16px;">${BIG_NOTE}</div>`;
 }
 
@@ -208,11 +209,11 @@ function postStep3(calc, out) {
   if (out.error) return `<div class="card"><div class="empty-state">${out.error}</div></div>`;
   const r = out.res; const d = calc.design;
   const data = `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Tensión de compresión admisible', d.sigmaC, { unit: 'kg/cm²', hint: 'Guía: 150.' })}${numField('design.E', 'Módulo de elasticidad', d.E, { unit: 'kg/cm²', hint: 'Guía: 390000 (H-47).' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Tensión de compresión admisible', d.sigmaC, { unit: 'kg/cm²', hint: 'Usual: 150.' })}${numField('design.E', 'Módulo de elasticidad', d.E, { unit: 'kg/cm²', hint: 'Usual: 390000 (H-47).' })}</div>
     <h4 style="margin:6px 0; font-size:13px;">Sección hueca</h4>${hollowFigure(r.sect)}
     <div class="field-row" style="flex-wrap:wrap;">${numField('design.b1', 'Ancho total b1', d.b1, { unit: 'cm' })}${numField('design.h1', 'Altura total h1', d.h1, { unit: 'cm' })}</div>
     <div class="field-row" style="flex-wrap:wrap;">${numField('design.b2', 'Ancho del hueco b2', d.b2, { unit: 'cm' })}${numField('design.h2', 'Altura del hueco h2', d.h2, { unit: 'cm' })}</div>
-    ${selField('design.catalog', 'Tabla de cables', d.catalog || 't1:190', C.CABLE_CATALOGS, 'La guía usa 97 980 kg para el ø 36 mm: es el valor de la Tabla 1 del anexo a 190 kg/mm² (la guía dice 180).')}
+    ${selField('design.catalog', 'Tabla de cables', d.catalog || 't1:190', C.CABLE_CATALOGS, 'Usual: 97 980 kg para el ø 36 mm: es el valor de la Tabla 1 del anexo a 190 kg/mm² (el método dice 180).')}
     ${numField('design.cableD', 'Diámetro de los cables', d.cableD, { unit: 'mm' })}
     ${numField('design.flechaRatio', 'Flecha admisible L /', d.flechaRatio, { step: 1 })}</div>`;
   return `<div class="grid grid-2" style="align-items:start;"><div>${data}</div><div>${checksCard({ ok: r.ok, checks: r.checks })}
@@ -223,7 +224,7 @@ function postStep3(calc, out) {
 function postMemoria(calc, out) {
   if (!out || out.error || !out.res) return null;
   const r = out.res; const d = calc.design;
-  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Viga postesada de hormigón con sección hueca', 'Guía de predimensionado E4 · 6.2')}${memoRow('Luz · flecha del cable · altura', `L = ${fmt(d.L, 2)} m · f = ${fmt(d.f, 2)} m · h = ${fmt(d.h, 0)} cm`)}
+  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Viga postesada de hormigón con sección hueca', 'Predimensionado')}${memoRow('Luz · flecha del cable · altura', `L = ${fmt(d.L, 2)} m · f = ${fmt(d.f, 2)} m · h = ${fmt(d.h, 0)} cm`)}
       ${memoRow('Cargas por metro', `entrepiso ${kg(d.floorD)} + ${kg(d.floorL)}; cubierta ${kg(d.roofD)} + ${kg(d.roofL)}; peso propio ${kg(d.self)}`)}${memoRow('Carga total q', `${kg(r.q)} kg/m`)}</table>
     ${postFigure(d)}<h2>2. Esfuerzos principales</h2><table>${memoRow('Ph = q L² / 8 f', `${kg(r.Ph)} kg`)}${memoRow('Ancho necesario b = Ph / (σadm h)', `${fmt(r.bNec, 2)} cm`)}${memoRow('Pk = 2 Ph · Jnec = Pk Lp² / (π² E)', `${kg(r.Pk)} kg · ${kg(r.Jnec)} cm⁴`)}</table>
     <h2>3. Sección hueca</h2>${hollowFigure(r.sect)}<table>${memoRow('A · Jy-y · Jx-x', `${kg(r.A)} cm² · ${kg(r.Jyy)} · ${kg(r.Jxx)} cm⁴`)}</table>

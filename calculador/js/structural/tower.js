@@ -1,6 +1,6 @@
 // Edificio en torre de hormigón armado con tabiques contraviento.
-// FUENTE: guía de predimensionado 7 "Edificio en torre" del Taller de Estructuras E4 (curso 2024; carpeta e4), con el viento del reglamento CIRSOC 102 (2005, procedimiento analítico).
-// Método de la cátedra: el edificio trabaja como una ménsula empotrada en el suelo. Viento sobre la cara mayor B (SPRFV): qz = 0,613 Kzt Kd V² I Kz, presión a barlovento + succión a sotavento (la presión
+// Predimensionado aproximado: 7 "Edificio en torre", con el viento del reglamento CIRSOC 102 (2005, procedimiento analítico).
+// Método: el edificio trabaja como una ménsula empotrada en el suelo. Viento sobre la cara mayor B (SPRFV): qz = 0,613 Kzt Kd V² I Kz, presión a barlovento + succión a sotavento (la presión
 // interna se compensa), p = qz G Cp − qh G Cp' con Cp = 0,8 y Cp' = Cp de sotavento (L / B); fuerza por piso Wi = p B (altura tributaria). Esfuerzos Q y M de la ménsula por piso y volcamiento M equil / M volc ≥ 1,5,
 // tensión del terreno σ = −G / F ± M / W, flecha en cabeza f = qv h⁴ / (8 E J) con qv = (qmáx + qmín) / 2 y f ≤ h / 500. Los tabiques paralelos al viento toman el momento en proporción a su inercia
 // (traslación pura si el centro de rigidez coincide con la recta de acción del viento; con excentricidad se suma la rotación: Wji = Wi Jj / ΣJ ± Wi e Jj aj / Σ Jj aj²).
@@ -12,12 +12,12 @@ import { barArea } from './big-beams.js';
 // Parámetros de la Tabla 4 del CIRSOC 102 (exposición A, B, C, D): α y zg. Con ellos Kz = 2,01 (z / zg)^(2/α), constante por debajo de 5 m (caso 2: sistema principal resistente al viento).
 // Se contrastaron con la Tabla 5 transcripta en wind.js (por ejemplo B a 10 m: 0,72; C: 1,00; D: 1,18).
 export const EXPOSURE_PARAMS = { A: { alpha: 5, zg: 457 }, B: { alpha: 7, zg: 366 }, C: { alpha: 9.5, zg: 274 }, D: { alpha: 11.5, zg: 213 } };
-export const EXPOSURES = { A: 'A: centro de grandes ciudades (el de la guía)', B: 'B: áreas urbanas y suburbanas', C: 'C: terreno abierto', D: 'D: costa plana sin obstrucciones' };
+export const EXPOSURES = { A: 'A: centro de grandes ciudades', B: 'B: áreas urbanas y suburbanas', C: 'C: terreno abierto', D: 'D: costa plana sin obstrucciones' };
 export function kzOf(z, exposure = 'A') {
   const { alpha, zg } = EXPOSURE_PARAMS[exposure] || EXPOSURE_PARAMS.A;
   return 2.01 * (Math.max(z, 5) / zg) ** (2 / alpha);
 }
-const KG_T = 1 / 10000;                                                  // N/m² → t/m² con 1 kg = 10 N, como en los apuntes (736 N/m² = 0,0736 t/m²)
+const KG_T = 1 / 10000;                                                  // N/m² → t/m² con 1 kg = 10 N (736 N/m² = 0,0736 t/m²)
 
 // Cantidad de pisos y cotas: P. Baja a 0,00 (sin viento: es el nivel del terreno), pisos a hPB + k hTipo y azotea en la cota total
 export function levelsOf({ nTipo, hTipo, hPB }) {
@@ -47,7 +47,7 @@ export function wallProps(w, hTot, gammaC = 2.4) {
   return { kind: 'rect', e, lw, J, area: e * lw, F: e * lw, W: J / (lw / 2), Pp: e * lw * hTot * gammaC };
 }
 
-// Sistemas estructurales de edificios en torre y la cantidad de pisos hasta la que se usan (resumen de la cátedra, "Edificio en torre")
+// Sistemas estructurales de edificios en torre y la cantidad de pisos hasta la que se usan 
 export const TOWER_SYSTEMS = [
   { id: 'tabiques', name: 'Sistema de tabiques contraviento', max: 35, text: 'tabiques de hormigón armado que trabajan a flexocompresión como una ménsula empotrada en el suelo' },
   { id: 'aporticado', name: 'Sistema aporticado', max: 20, text: 'pórtico múltiple de losas, vigas y columnas con nudos rígidos que trabaja como un solo elemento (flexión en los dinteles, normales en los pilares); la mayor deformación está en la base y disminuye hacia arriba' },
@@ -99,7 +99,7 @@ export function designTower(p) {
   // ---- período, frecuencia y esbeltez
   const T = 0.08 * h / Math.sqrt(L) * Math.sqrt(h / (L + h));
   const freq = 1 / T;
-  const slender = h / Math.min(B, L);                                          // esbeltez = altura / lado menor (resumen de la cátedra: torre si > 3)
+  const slender = h / Math.min(B, L);                                          // esbeltez = altura / lado menor 
   // ---- pesos
   const B1 = Number(p.B1); const L1 = Number(p.L1);
   const q0 = Number(p.qpp0); const q1 = Number(p.qpp1);
@@ -137,7 +137,7 @@ export function designTower(p) {
   const fc = Number(p.fc); const sigmaS = Number(p.sigmaS) || 2400;
   const gSeg = Number(p.gammaSeg) || 2.5;
   const rhoMin = 0.008;
-  const sBadm = Number(p.sigmaBadm) > 0 ? Number(p.sigmaBadm) : (fc + rhoMin * 4200) / gSeg;   // (σbk + ρ σek) / γ: criterio de la guía de columnas (γ = 2,5)
+  const sBadm = Number(p.sigmaBadm) > 0 ? Number(p.sigmaBadm) : (fc + rhoMin * 4200) / gSeg;   // (σbk + ρ σek) / γ: criterio habitual (γ = 2,5)
   const tauAdm = Number(p.tauAdm) || 24;
   res.sBadm = sBadm; res.tauAdm = tauAdm; res.sigmaS = sigmaS; res.rhoMin = rhoMin;
   const dist = (As, l, d) => {                                               // armadura por capa: As total en dos capas, Ø d mm a la separación que da la cuantía
@@ -198,7 +198,7 @@ export function designTower(p) {
   res.checks.push({ ok: volc >= 1.5 - 1e-9, label: 'Volcamiento', text: `M equil / M volc = G L1 / 2 / M = ${f1(G0)} t × ${f1(L1 / 2, 1)} m / ${f1(Mbase)} tm = ${f1(volc, 2)} ≥ 1,5 (G sin sobrecarga)` });
   res.checks.push({ ok: e0 <= L1 / 6 + 1e-9, label: 'Resultante en el núcleo central de la base', text: `e = M / N = ${f1(Mbase)} tm / ${f1(G0)} t = ${f1(e0, 2)} m ≤ L1 / 6 = ${f1(L1 / 6, 2)} m` });
   res.checks.push({ ok: sMax / 10 <= sigmaT + 1e-9, label: 'Tensión del terreno (platea de fundación)', text: `σ = −G / F ± M / W = −${f1(G1 / F, 2)} t/m² ± ${f1(Mbase / Wf, 2)} t/m² → ${f1(-sMax, 2)} t/m² / ${f1(-sMin, 2)} t/m² (σmáx = ${f1(sMax / 10, 2)} kg/cm²) ≤ ${f1(sigmaT, 2)} kg/cm²` });
-  res.checks.push({ ok: f <= fAdm + 1e-9, label: 'Flecha en cabeza', text: `f = qv h⁴ / (8 E J) = ${f1(qv, 2)} t/m × ${f1(h, 0)}⁴ / (8 × ${f1(E, 0)} t/m² × ${f1(sumJ, 2)} m⁴) = ${f1(f, 3)} m ≤ h / ${Number(p.flechaRatio) || 500} = ${f1(fAdm, 3)} m (la guía usa h = 70 m: 0,077 m)` });
+  res.checks.push({ ok: f <= fAdm + 1e-9, label: 'Flecha en cabeza', text: `f = qv h⁴ / (8 E J) = ${f1(qv, 2)} t/m × ${f1(h, 0)}⁴ / (8 × ${f1(E, 0)} t/m² × ${f1(sumJ, 2)} m⁴) = ${f1(f, 3)} m ≤ h / ${Number(p.flechaRatio) || 500} = ${f1(fAdm, 3)} m (usual: h = 70 m: 0,077 m)` });
   walls.forEach((w) => {
     const fxs = w.kind === 'rect' ? [w.fx] : [w.fxWeb];
     fxs.forEach((fx) => {
@@ -207,11 +207,11 @@ export function designTower(p) {
     if (w.kind === 'U') res.checks.push({ ok: w.flange.sigma / 10 <= sBadm + 1e-9 && w.flange.sigma > 0, label: `Tabique ${w.name}: ala comprimida`, text: `N = par + losas + peso = ${f1(w.flange.par, 0)} t + ${f1(q1 * w.flange.a * nOver, 0)} t + ${f1(w.flange.Pp, 0)} t = ${f1(w.flange.N, 0)} t; σ = ${f1(w.flange.sigma, 1)} ≤ ${f1(sBadm, 0)} kg/cm²` });
     if (w.dintel) res.checks.push({ ok: w.dintel.tau <= tauAdm + 1e-9, label: `Tabique ${w.name}: dintel al corte`, text: `τ = T / (hd e) = ${f1(w.dintel.T, 2)} t / (${f1(w.dintel.hd * 100, 0)} × ${f1(w.e * 100, 0)} cm) = ${f1(w.dintel.tau, 2)} ≤ ${tauAdm} kg/cm² (Qj = ${f1(w.dintel.Qj, 1)} t, ti = Q S / J = ${f1(w.dintel.ti, 2)} t/m)` });
   });
-  // esbeltez λ = h / lado menor (resumen de la cátedra): torre si λ > 3; con λ < 5 puede omitirse el viento; entre 5 y 10 hay que considerar la estructura contraviento; con λ > 10 hacen falta estudios especiales
+  // esbeltez λ = h / lado menor : torre si λ > 3; con λ < 5 puede omitirse el viento; entre 5 y 10 hay que considerar la estructura contraviento; con λ > 10 hacen falta estudios especiales
   const lmin = Math.min(B, L);
   res.slenderClass = slender <= 3 ? 'no-torre' : slender < 5 ? 'omitible' : slender <= 10 ? 'contraviento' : 'especial';
   if (slender <= 3) res.notes.push(`Esbeltez λ = h / lado menor = ${f1(h, 1)} / ${f1(lmin, 1)} = ${f1(slender, 2)} ≤ 3: no se considera un edificio en torre (ni el viento ni el volcamiento suelen gobernar); se calcula igual como ménsula.`);
-  else if (slender < 5) res.notes.push(`Esbeltez λ = h / lado menor = ${f1(slender, 2)} (entre 3 y 5): es un edificio en torre pero, según el resumen de la cátedra, podría omitirse la consideración del viento. Acá se calcula igual, del lado de la seguridad.`);
+  else if (slender < 5) res.notes.push(`Esbeltez λ = h / lado menor = ${f1(slender, 2)} (entre 3 y 5): es un edificio en torre pero, podría omitirse la consideración del viento. Acá se calcula igual, del lado de la seguridad.`);
   else if (slender <= 10) res.notes.push(`Esbeltez λ = h / lado menor = ${f1(slender, 2)} (entre 5 y 10): se debe considerar estructura contraviento (tabiques, pórticos o tubos), como en este cálculo.`);
   else { res.notes.push(`Esbeltez λ = h / lado menor = ${f1(slender, 2)} > 10: requiere estudios especiales para su materialización (túnel de viento, análisis dinámico). Este predimensionado no alcanza.`); res.checks.push({ ok: false, label: 'Esbeltez', text: `λ = ${f1(slender, 1)} > 10: requiere estudios especiales` }); }
   // sistema de tabiques contraviento: se usa hasta 35 pisos
@@ -219,7 +219,7 @@ export function designTower(p) {
   res.floors = floors;
   res.systems = systemsFor(floors);
   if (floors > 35) res.notes.push(`${floors} pisos: el sistema de tabiques contraviento se usa hasta 35 pisos. Para esta altura corresponde un sistema combinado tabique-pórtico (hasta 50), un tubo (hasta 60), tubo en tubo (hasta 83) o un haz de tubos (hasta 110); este cálculo solo dimensiona tabiques.`);
-  // comportamiento en planta (resumen de la cátedra): traslación o rototraslación y estabilidad de la disposición de tabiques
+  // comportamiento en planta : traslación o rototraslación y estabilidad de la disposición de tabiques
   const xs = [...new Set(walls.map((w) => Math.round(Number(w.x) * 100) / 100))];
   const nU = walls.filter((w) => w.kind === 'U').length;
   const nPar = walls.length; const nPer = 2 * nU;                             // paralelos al viento (almas y tabiques rectos) y perpendiculares (alas de los U)
@@ -239,7 +239,7 @@ export function designTower(p) {
   res.checks.push({ ok: stab, label: 'Estabilidad del sistema de tabiques', text: stabText });
   if (stab && !hasU) res.notes.push('Todos los tabiques son paralelos a este viento: con el viento en el otro sentido ninguno trabajaría de canto y el sistema sería inestable. Agregá tabiques en esa dirección (por ejemplo, un núcleo o tabiques en U) y repetí el cálculo girado.');
   if (nuclei.length && !res.notes.some((n) => /núcleo/.test(n))) res.notes.push(`Un núcleo de tabiques unidos toma traslación y rotación y es más eficaz que los tabiques aislados: ${nuclei.map((q) => `${q.name} tiene J = ${f1(q.J, 1)} m⁴, ${f1(q.ratio, 1)} veces la de su alma sola (${f1(q.Jw, 1)} m⁴)`).join('; ')}. Además tiene rigidez en las dos direcciones.`);
-  if (freq < 1) res.notes.push(`Período T = ${f1(T, 2)} s, frecuencia ${f1(freq, 2)} Hz < 1 Hz: el edificio es flexible y correspondería amplificar el viento con el factor Gf (CIRSOC 102, 5.8.2). Como la guía, se sigue con G = ${G} (edificio rígido).`);
+  if (freq < 1) res.notes.push(`Período T = ${f1(T, 2)} s, frecuencia ${f1(freq, 2)} Hz < 1 Hz: el edificio es flexible y correspondería amplificar el viento con el factor Gf (CIRSOC 102, 5.8.2). Se sigue con G = ${G} (edificio rígido).`);
   if (Math.abs(eRot) > 0.005) res.notes.push(`El centro de rigidez de los tabiques (x = ${f1(xr, 2)} m) no coincide con la recta de acción del viento (B / 2 = ${f1(B / 2, 2)} m): excentricidad e = ${f1(eRot, 2)} m. Se suma la rotación al reparto por traslación.`);
   res.notes.push('Se verifica la dirección más crítica (viento sobre la cara mayor). Falta repetir el cálculo con el viento sobre la cara menor (intercambiando B y L y la orientación de los tabiques) y la flecha en ese sentido.');
   res.ok = res.checks.every((c) => c.ok);

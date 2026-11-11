@@ -1,6 +1,6 @@
 // Cáscaras de hormigón armado: módulo de paraboloide hiperbólico (cuatro sectores con una columna central) y cúpula de generatriz circular.
-// FUENTE: guías de predimensionado 3.1 "Cáscaras - Paraboloide hiperbólico" y 3.2 "Cáscaras - Cúpulas" del Taller de Estructuras E4 (curso 2024; carpeta e4/cascaras).
-// Método de la cátedra (membrana, franjas de 1 m de ancho):
+// Predimensionado aproximado: 3.1 "Cáscaras - Paraboloide hiperbólico" y 3.2 "Cáscaras - Cúpulas".
+// Método (membrana, franjas de 1 m de ancho):
 // - PH equilátero: la cáscara se divide en parábolas comprimidas y traccionadas de igual luz y flecha que toman q / 2 cada una, H = (q / 2) L² / 8 f (R ≈ H con f / L ≈ 10 %),
 //   σ = H / (e 100) ≤ σadm, armadura por cuantía mínima o por tracción Fe = H / σe, corte δ = H / (e 100). Las vigas de borde reciben H por metro (externas) o 2 H por metro (internas, comprimidas).
 // - Cúpula de generatriz circular y carga uniforme q por metro cuadrado: Nm = −q R / (1 + cos φ), Np = q R (−cos φ + 1 / (1 + cos φ)), R = (L² + 4 f²) / (8 f), cos φ0 = (R − f) / R.
@@ -50,7 +50,7 @@ export function designShellPH(p) {
   res.plan = { nx, ny, total: nx * ny * 4 * a * b, modules: nx * ny };
   const f1 = (v, n = 0) => Number(v).toFixed(n);
   res.checks = [
-    { ok: res.ratio >= 0.07 - 1e-9 && res.ratio <= 0.15 + 1e-9, label: 'Relación flecha / luz de la parábola', text: `f / L = ${f1(f, 2)} / ${f1(L, 2)} = ${f1(res.ratio * 100, 1)} % (hipótesis de la guía: entre 7 % y 15 %); L = 2 × ${f1(lo, 2)} × √2, f = ${f1(h, 2)} × ${f1(lo, 2)} / ${f1(hi, 2)}` },
+    { ok: res.ratio >= 0.07 - 1e-9 && res.ratio <= 0.15 + 1e-9, label: 'Relación flecha / luz de la parábola', text: `f / L = ${f1(f, 2)} / ${f1(L, 2)} = ${f1(res.ratio * 100, 1)} % (hipótesis habitual: entre 7 % y 15 %); L = 2 × ${f1(lo, 2)} × √2, f = ${f1(h, 2)} × ${f1(lo, 2)} / ${f1(hi, 2)}` },
     { ok: sigC <= res.sigmaC + 1e-9, label: 'Parábolas comprimidas', text: `H = (q / 2) L² / 8 f = ${f1(q / 2)} × ${f1(L * L, 0)} / (8 × ${f1(f, 2)}) = ${f1(H)} kg/m; σ = H / (e 100) = ${f1(sigC, 2)} ≤ ${res.sigmaC} kg/cm²` },
     { ok: true, label: 'Armadura de la cáscara (malla en los dos sentidos)', text: `por cuantía mínima ${f1(Number(p.rhoMin) * 100, 1)} %: ${f1(FeMin, 2)} cm²/m; por tracción H / σe = ${f1(FeT, 2)} cm²/m → Ø${p.barD} c/${f1(spacing, 1)} cm (${f1(FeAdopt, 2)} cm²/m)`, info: true },
     { ok: tau <= res.tauAdm + 1e-9, label: 'Esfuerzos tangenciales en las generatrices rectas', text: `δ = H / (e 100) = ${f1(tau, 2)} ≤ ${res.tauAdm} kg/cm²` },
@@ -120,7 +120,7 @@ export function designDome(p) {
     { ok: sigTen <= res.sigmaS + 1e-9, label: 'Paralelos traccionados', text: NpTen > 0 ? `Np máx = ${f1(NpTen)} kg/m (el paralelo neutro está en φ = ${f1(phiNeutral, 1)}°); σ = Np / Fe = ${f1(NpTen)} / ${f1(FeAdopt, 2)} = ${f1(sigTen, 1)} ≤ ${res.sigmaS} kg/cm²` : `No hay paralelos traccionados (φ de borde ${f1(phi0, 1)}° < ${f1(phiNeutral, 1)}°, el paralelo neutro)` },
     { ok: eta * sigM <= sigCrit + 1e-9, label: 'Pandeo', text: `η σ = ${f1(eta, 1)} × ${f1(sigM, 2)} = ${f1(eta * sigM, 2)} ≤ σcrít = 0,6 Eb e / R = 0,6 × ${f1(res.Eb)} × ${f1(e / 100, 2)} / ${f1(R, 2)} = ${f1(sigCrit, 1)} kg/cm²` },
     { ok: hAdopt >= hNec - 1e-9 && hAdopt >= lBeam * 10 - 1e-9, label: 'Viga de apoyo (junta constructiva)', text: `carga = NmV + peso propio = ${f1(NmV)} + ${f1(Number(p.beamSelf))} = ${f1(wBeam)} kg/m; l = ${f1(lBeam, 2)} m (${nCol} columnas); M = q l² / 10 = ${f1(M, 2)} tm; h = 8 √(M / b) = ${f1(hNec, 1)} cm y h ≥ l / 10 = ${f1(lBeam * 10, 1)} cm → ${f1(bB * 100, 0)} × ${f1(hAdopt, 0)} cm; Fe = 0,5 M / h = ${f1(FeBeam, 2)} cm²` },
-    { ok: true, label: 'Anillo de borde (tracción del apoyo)', text: `T = NmH Rp = ${f1(NmH, 1)} × ${f1(Rp, 1)} = ${f1(T)} kg → Fe = T / ${res.sigmaS} = ${f1(T / res.sigmaS, 2)} cm² → ${res.support.nRing} Ø${p.ringD}. La guía usa NmV (${f1(NmV, 2)}) en lugar de NmH: T = ${f1(res.support.TguiaV)} kg, Fe = ${f1(res.support.TguiaV / res.sigmaS, 2)} cm²`, info: true },
+    { ok: true, label: 'Anillo de borde (tracción del apoyo)', text: `T = NmH Rp = ${f1(NmH, 1)} × ${f1(Rp, 1)} = ${f1(T)} kg → Fe = T / ${res.sigmaS} = ${f1(T / res.sigmaS, 2)} cm² → ${res.support.nRing} Ø${p.ringD}. Usual: NmV (${f1(NmV, 2)}) en lugar de NmH: T = ${f1(res.support.TguiaV)} kg, Fe = ${f1(res.support.TguiaV / res.sigmaS, 2)} cm²`, info: true },
     { ok: res.support.col.areaAdopt >= Fb - 1e-9, label: 'Columnas de apoyo', text: `N = q l = ${f1(Nc)} kg; Fb = N / ${p.sigmaB} = ${f1(Fb)} cm² → ø ${f1(res.support.col.D, 1)} cm mínimo; adoptada ø ${f1(res.support.col.Dadopt, 0)} cm (${f1(res.support.col.areaAdopt)} cm²), Fe = 1 % de Fb = ${f1(Fb / 100, 2)} cm²` },
   ];
   res.ok = res.checks.every((c) => c.ok);

@@ -1,5 +1,5 @@
 // Grandes luces: losa plegada de hormigón armado. Motor en js/structural/folded.js.
-// FUENTE: guía 4 "Plegados" del Taller de Estructuras E4 (curso 2024).
+// Predimensionado aproximado: 4 "Plegados".
 import * as F from '../structural/folded.js';
 import { REBAR_DIAMETERS } from '../structural/big-beams.js';
 import { escapeHtml } from '../utils.js';
@@ -7,7 +7,7 @@ import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js
 
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
-export const FOLD_NOTE = 'Predimensionado según la guía 4 "Plegados" del Taller de Estructuras E4 (2024): el plegado se asimila a una viga simplemente apoyada con la sección de un módulo de onda (alas de hormigón comprimido y traccionado más un alma equivalente), con tensiones admisibles de la cátedra. La viga tímpano y las columnas se predimensionan con las reglas rápidas de la guía (sin la tabla de coeficientes ke y kx, que no se adjuntó: se usa h = 8 √(M / b) y Fe = 0,5 M / h). No se verifican el pandeo de las columnas, las aristas del plegado, el pandeo local de las chapas ni la fisuración. Herramienta de apoyo para el predimensionado.';
+export const FOLD_NOTE = 'Predimensionado aproximado: el plegado se asimila a una viga simplemente apoyada con la sección de un módulo de onda (alas de hormigón comprimido y traccionado más un alma equivalente), con tensiones admisibles. La viga tímpano y las columnas se predimensionan con las reglas rápidas (sin la tabla de coeficientes ke y kx, que no se adjuntó: se usa h = 8 √(M / b) y Fe = 0,5 M / h). No se verifican el pandeo de las columnas, las aristas del plegado, el pandeo local de las chapas ni la fisuración. Herramienta de apoyo para el predimensionado.';
 
 // ---------------------------------------------------------------- figuras
 function waveFigure(d) {
@@ -77,7 +77,7 @@ function step1(calc) {
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.B', 'Ancho del módulo B', d.B, { unit: 'm', hint: 'B = 2 b + 2 b′' })}${numField('design.H', 'Altura de la onda H', d.H, { unit: 'm', hint: `Punto de partida: 10 % de la luz = ${fmt(num(d.L) / 10, 2)} m.` })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.b', 'Ancho de las alas b', d.b, { unit: 'm' })}${numField('design.d', 'Espesor del hormigón d', d.d, { unit: 'm' })}</div></div>
     <div class="card"><h3 style="margin-top:0;">Cargas y apoyos</h3>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.gamma', 'Peso del hormigón', d.gamma, { unit: 'kg/m³' })}${numField('design.sc', 'Sobrecarga en planta', d.sc, { unit: 'kg/m²', hint: 'La guía usa 300 kg por metro de onda = 100 kg/m² × 3 m. El viento se desprecia: tiende a descargar.' })}</div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.gamma', 'Peso del hormigón', d.gamma, { unit: 'kg/m³' })}${numField('design.sc', 'Sobrecarga en planta', d.sc, { unit: 'kg/m²', hint: 'Usual: 300 kg por metro de onda = 100 kg/m² × 3 m. El viento se desprecia: tiende a descargar.' })}</div>
       <h4 style="margin:10px 0 4px; font-size:13px;">Viga tímpano de apoyo</h4>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.tl', 'Luz del tramo del tímpano', d.tl, { unit: 'm' })}${numField('design.tb', 'Ancho del tímpano', d.tb, { unit: 'm' })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.th', 'Altura del tímpano', d.th, { unit: 'm', hint: 'Normalmente igual a la altura de la onda.' })}${numField('design.tn', 'Módulos que apoyan en el tramo', d.tn, { step: 1, hint: '0 = luz del tramo / B.' })}</div>
@@ -109,10 +109,10 @@ function step3(calc, out) {
   if (out.error) return `<div class="card"><div class="empty-state">${out.error}</div></div>`;
   const r = out.res; const d = calc.design;
   const data = `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Tensión de compresión admisible', d.sigmaC, { unit: 'kg/cm²', hint: 'Guía: 80 (H-17 homogeneizado).' })}${numField('design.tau', 'Tensión de corte admisible', d.tau, { unit: 'kg/cm²', hint: 'La guía admite de 10 a 15.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaS', 'Tensión del acero (AB-42)', d.sigmaS, { unit: 'kg/cm²', hint: 'Guía: 2400.' })}${selField('design.barD', 'Diámetro de las barras del valle', d.barD, REBAR_DIAMETERS.map((x) => [x, `Ø${x} mm`]))}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.E', 'Módulo de elasticidad', d.E, { unit: 'kg/cm²', hint: 'Guía: 210000.' })}${numField('design.flechaRatio', 'Flecha admisible L /', d.flechaRatio, { step: 1 })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaCol', 'Tensión para las columnas (Fb = N / σ)', d.sigmaCol, { unit: 'kg/cm²', hint: 'Guía: 80 (H-17, coeficiente 2,5, cuantía 1 %).' })}${numField('design.rhoCol', 'Cuantía de las columnas', d.rhoCol, { hint: 'Guía: 0,01.' })}</div></div>`;
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Tensión de compresión admisible', d.sigmaC, { unit: 'kg/cm²', hint: 'Usual: 80 (H-17 homogeneizado).' })}${numField('design.tau', 'Tensión de corte admisible', d.tau, { unit: 'kg/cm²', hint: 'Usual: de 10 a 15.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaS', 'Tensión del acero (AB-42)', d.sigmaS, { unit: 'kg/cm²', hint: 'Usual: 2400.' })}${selField('design.barD', 'Diámetro de las barras del valle', d.barD, REBAR_DIAMETERS.map((x) => [x, `Ø${x} mm`]))}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.E', 'Módulo de elasticidad', d.E, { unit: 'kg/cm²', hint: 'Usual: 210000.' })}${numField('design.flechaRatio', 'Flecha admisible L /', d.flechaRatio, { step: 1 })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaCol', 'Tensión para las columnas (Fb = N / σ)', d.sigmaCol, { unit: 'kg/cm²', hint: 'Usual: 80 (H-17, coeficiente 2,5, cuantía 1 %).' })}${numField('design.rhoCol', 'Cuantía de las columnas', d.rhoCol, { hint: 'Usual: 0,01.' })}</div></div>`;
   const extra = `<div class="card" style="margin-top:16px;"><table class="data-table"><tbody>
     <tr><td>Viga tímpano: carga q = R n / l + peso propio (${r.timp.n} módulos)</td><td style="text-align:right;">${kg(r.timp.q)} kg/m</td></tr>
     <tr><td>M = q l² / 10</td><td style="text-align:right;">${fmt(r.timp.M, 2)} tm</td></tr>
@@ -124,7 +124,7 @@ function step3(calc, out) {
 function memoria(calc, out) {
   if (!out || out.error || !out.res) return null;
   const r = out.res; const d = calc.design;
-  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Losa plegada de hormigón armado', 'Guía de predimensionado E4 · 4')}${memoRow('Luz · módulos', `L = ${fmt(d.L, 2)} m · ${fmt(d.nMod, 0)} módulos de ${fmt(d.B, 2)} m`)}
+  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Losa plegada de hormigón armado', 'Predimensionado')}${memoRow('Luz · módulos', `L = ${fmt(d.L, 2)} m · ${fmt(d.nMod, 0)} módulos de ${fmt(d.B, 2)} m`)}
       ${memoRow('Módulo', `H = ${fmt(d.H, 2)} m · b = ${fmt(d.b, 2)} m · b′ = ${fmt(r.bp, 2)} m · d = ${fmt(num(d.d) * 100, 0)} cm · α = ${fmt(r.alpha, 2)}°`)}
       ${memoRow('Cargas por metro de onda', `peso propio ${kg(r.Pp)} + sobrecarga ${kg(r.sob)} = ${kg(r.q)} kg/m`)}</table>
     ${elevationFigure(d)}${waveFigure(d)}<h2>2. Esfuerzos principales</h2><table>${memoRow('Mmax = q L² / 8', `${kg(r.M)} kg·m`)}${memoRow('Qmax = q L / 2', `${kg(r.Q)} kg`)}${memoRow('bo = 2 d / sen α · Z = H − d', `${fmt(r.bo * 100, 1)} cm · ${fmt(r.Z, 2)} m`)}${memoRow('C = T = M / Z', `${kg(r.C)} kg`)}${memoRow('J del perfil equivalente', `${r.J.toExponential(3)} cm⁴`)}</table>

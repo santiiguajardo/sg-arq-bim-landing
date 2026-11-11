@@ -1,9 +1,9 @@
 // Estructuras de grandes luces traccionadas (cables y telas): cercha Jawerth, cubierta pesada, paraboloide hiperbólico e hiperboloide de revolución.
-// FUENTE: guías de predimensionado del Taller de Estructuras E4 (curso 2024; carpeta e4/traccion): 1.1 Cercha Jawerth, 1.2 Cubierta pesada, 1.3 Hiperboloide de revolución,
-// 1.4 Paraboloide hiperbólico y 1.5 Anexo de tablas (cables 6x19 y 6x24x7, telas, caños DIN 2448, ω de F-22 y F-24). Método de la cátedra: en cada cable portante
+// Predimensionado aproximado:: 1.1 Cercha Jawerth, 1.2 Cubierta pesada, 1.3 Hiperboloide de revolución,
+// 1.4 Paraboloide hiperbólico y 1.5 Anexo de tablas (cables 6x19 y 6x24x7, telas, caños DIN 2448, ω de F-22 y F-24). Método: en cada cable portante
 // con flecha del orden del 10 % de la luz la catenaria se resuelve como parábola, H = q L² / 8 f, V = q L / 2, R = √(H² + V²) (kg, m); tensión previa Tp ≥ la mayor fuerza que
 // tiende a comprimir los cables × β1 (1,5 a 2); la carga de rotura del cable es el máximo esfuerzo × β2 (2) y se busca en la tabla de cables; apoyos descompuestos en tensor y columna.
-// Todos los valores salen de las guías o de sus tablas; los datos de cargas, geometría y coeficientes los ingresa el usuario. Unidades: kg, m, cm donde se indica.
+// Todos los valores salen de tablas de catálogo; los datos de cargas, geometría y coeficientes los ingresa el usuario. Unidades: kg, m, cm donde se indica.
 import * as S from './steel.js';
 import { CABLE_TABLE_1, CABLE_TABLE_2, CABLE_STRENGTHS, GUIDE_CABLE, TELAS, TUBES_G } from './cables-data.js';
 
@@ -12,7 +12,7 @@ export { TELAS, TUBES_G, CABLE_STRENGTHS };
 
 // ---------------------------------------------------------------- catálogos de cables
 export const CABLE_CATALOGS = [
-  ['guide', 'Valores citados en las guías: 6×19 con alma textil, 180 kg/mm²'],
+  ['guide', 'Valores de referencia: 6×19 con alma textil, 180 kg/mm²'],
   ...CABLE_STRENGTHS.map((s) => [`t1:${s}`, `Tabla 1 del anexo: 6×19×1 con alma textil, ${s} kg/mm²`]),
   ...CABLE_STRENGTHS.map((s) => [`t2:${s}`, `Tabla 2 del anexo: 6×24×7 con almas textiles, ${s} kg/mm²`]),
 ];
@@ -58,7 +58,7 @@ export function selectCable(catalogId, Frot, n = 1) {
 // ---------------------------------------------------------------- cable parabólico
 // shape 'uniform': carga q (kg/m) repartida en toda la luz, H = q L² / 8 f, V = q L / 2.
 // shape 'triangular' (cercha Jawerth radial: la faja de cubierta se ensancha hacia el borde): q es el valor máximo en los apoyos y cero en el centro,
-// H = q L² / 24 f, V = q L / 4 (guía 1.1, anexo 2). La pendiente en el apoyo sale de V / H.
+// H = q L² / 24 f, V = q L / 4 . La pendiente en el apoyo sale de V / H.
 export function parabola({ q, L, f, shape = 'uniform' }) {
   const tri = shape === 'triangular';
   const H = tri ? q * L * L / (24 * f) : q * L * L / (8 * f);
@@ -130,7 +130,7 @@ export function pendantR(net, cover) {
 
 // Descomposición de qe en la dirección que toma la tela (o el pendolón inclinado) entre un cable superior y uno inferior desfasados medio módulo:
 // la separación horizontal entre ellos es a / 2 y la vertical varía de hA − hB en los apoyos a sc en la clave. Por cada metro de cable la tela toma qe (en dos paños):
-// T = qe / (2 sen φ) con tg φ = separación vertical / (a / 2). La guía obtiene gráficamente 16,25 kg cada 50 mm en el apoyo y 73,80 en la clave.
+// T = qe / (2 sen φ) con tg φ = separación vertical / (a / 2).
 export function slantForce({ q, rise, run }) {
   const phi = Math.atan2(Math.abs(rise), run);
   return { phi: phi * 180 / Math.PI, T: Math.sin(phi) > 1e-9 ? q / (2 * Math.sin(phi)) : Infinity };
@@ -233,7 +233,7 @@ export function designHeavyRoof(p) {
   return res;
 }
 
-// Columna de hormigón armado predimensionada con la regla de la guía: Fb = N / σ (σ = 60 kg/cm² para H13, AB42, coeficiente 2,5 y cuantía 1 %), Fe = cuantía × Fb
+// Columna de hormigón armado predimensionada con la regla habitual: Fb = N / σ (σ = 60 kg/cm² para H13, AB42, coeficiente 2,5 y cuantía 1 %), Fe = cuantía × Fb
 export function concreteColumnGuide({ N, sigma = 60, rho = 0.01 }) {
   const Fb = N / sigma;
   return { Fb, Fe: Fb * rho, sigma, rho };

@@ -6,7 +6,7 @@ import * as J from '../structural/steel-joints.js';
 import { escapeHtml } from '../utils.js';
 import { fmt, selField, numField, memoRow } from './structural-ui.js';
 
-export const SOURCE_NOTE = 'Uniones verificadas con el Proyecto de Reglamento CIRSOC 301/2017 (INTI), Cap. J, por resistencia (LRFD) con las fuerzas de servicio del cálculo elástico mayoradas por el coeficiente indicado. Los apuntes de la cátedra no desarrollan uniones: el proyectista debe revisar cada detalle (excentricidades, chapas de nudo a compresión, soldaduras en obra). Los anclajes se verifican con el Apéndice D del CIRSOC 201.';
+export const SOURCE_NOTE = 'Uniones verificadas con el Proyecto de Reglamento CIRSOC 301/2017 (INTI), Cap. J, por resistencia (LRFD) con las fuerzas de servicio del cálculo elástico mayoradas por el coeficiente indicado. El proyectista debe revisar cada detalle (excentricidades, chapas de nudo a compresión, soldaduras en obra). Los anclajes se verifican con el Apéndice D del CIRSOC 201.';
 
 export const DEFL_OPTS = Object.entries(J.DEFLECTION_LIMITS).map(([k, v]) => [k, v.label]);
 export const deflSelect = (path, value, hint = 'CIRSOC 301/2017, Tabla L.3-1 (la flecha por sobrecarga es la de la sobrecarga sola).') => selField(path, 'Límite de flecha', value, DEFL_OPTS, hint);

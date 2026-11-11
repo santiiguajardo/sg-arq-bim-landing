@@ -1,6 +1,6 @@
 // Editor de luces del calculador estructural: en lugar de una lista escrita a mano ("5, 6"), cada tramo es un casillero entre dos ejes,
 // con botones para agregar o quitar tramos, un atajo para tramos iguales, los voladizos en los extremos y un dibujo que se actualiza solo.
-import { setCalcField } from '../state.js';
+import { setCalcField, setCalcFields } from '../state.js';
 import { showToast } from '../utils.js';
 import { fmt } from './structural-ui.js';
 
@@ -184,21 +184,115 @@ function dimV(x, y1, y2, label, side = -1) {
 const tri = (x, y) => `<path d="M ${x} ${y} l -8 13 h 16 z" fill="var(--panel)" stroke="${INK}" stroke-width="1.5"/>`;
 const bar = (x1, y1, x2, y2, w = 3) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${INK}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
 
+
+// ---------------------------------------------------------------- puntos rojos arrastrables en los esquemas
+// Mientras se arrastra, la escala del dibujo queda fija (si no, el punto se escaparía del mouse cada vez que cambia el tamaño).
+let SKETCH_LOCK = null;
+export const setSketchLock = (v) => { SKETCH_LOCK = v; };
+const lockOf = (kind) => (SKETCH_LOCK && SKETCH_LOCK.kind === kind ? SKETCH_LOCK : null);
+const HANDLE = (id, kind, cx, cy, p) => `<g class="dh" data-dh="${id}" data-kind="${kind}" data-k="${p.k}" data-ox="${p.ox}" data-oy="${p.oy}" data-x0="${p.x0 || 0}" data-y0="${p.y0 || 0}"${p.i != null ? ` data-i="${p.i}"` : ''} style="cursor:grab;"><title>Arrastrá para cambiar la forma</title><circle cx="${cx}" cy="${cy}" r="15" fill="transparent"/><circle cx="${cx}" cy="${cy}" r="${p.r || 6.5}" fill="#e5484d" stroke="#fff" stroke-width="2"/></g>`;
+const HINT = '<text x="8" y="16" font-size="11" font-weight="600" fill="#e5484d">● Arrastrá los puntos rojos para cambiar la forma</text>';
+const snap = (v, s) => Math.round(v / s) * s;
+const rnd = (v, d = 2) => Number(v.toFixed(d));
+const clampN = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const nodeLines = (t) => String(t || '').split('\n').filter((l) => l.trim());
+
+const DRAG = {
+  'jawerth.sag': (d, m) => ({ 'design.f': Math.max(0.2, rnd(snap(-m.ym, 0.05))) }),
+  'jawerth.supportR': (d, m) => ({ 'design.L': Math.max(4, rnd(snap(m.xm, 0.5))) }),
+  'arcgl.ridge': (d, m) => ({ 'design.f': Math.max(0.5, rnd(snap(m.ym, 0.1))) }),
+  'arcgl.eaveR': (d, m) => ({ 'design.L': Math.max(4, rnd(snap(m.xm, 0.5))) }),
+  'vier.cornerR': (d, m) => ({ 'design.L': Math.max(4, rnd(snap(m.xm, 0.5))), 'design.H': Math.max(0.5, rnd(snap(m.ym, 0.1))) }),
+  'post.sag': (d, m) => ({ 'design.f': Math.max(0.1, rnd(snap(-m.ym, 0.05))) }),
+  'post.supportR': (d, m) => ({ 'design.L': Math.max(4, rnd(snap(m.xm, 0.5))) }),
+  'dome.crown': (d, m) => ({ 'design.f': Math.max(0.5, rnd(snap(m.ym, 0.1))) }),
+  'dome.baseR': (d, m) => ({ 'design.L': Math.max(4, rnd(snap(m.xm, 0.5))) }),
+  'portal.ridge': (d, m) => ({ 'design.theta': clampN(rnd(snap(Math.atan(Math.max(0.05, m.ym - num(d.H, 4)) / (num(d.A, 10) / 2)) * 180 / Math.PI, 0.5), 1), 0, 45) }),
+  'portal.eaveR': (d, m) => ({ 'design.A': Math.max(3, rnd(snap(m.xm, 0.25))), 'design.H': Math.max(1, rnd(snap(m.ym, 0.25))) }),
+  'portal.eaveL': (d, m) => ({ 'design.H': Math.max(1, rnd(snap(m.ym, 0.25))) }),
+  'cab.ridge': (d, m) => ({ 'design.f': Math.max(0.2, rnd(snap(m.ym - num(d.H, 4), 0.05))) }),
+  'cab.eaveR': (d, m) => ({ 'design.A': Math.max(3, rnd(snap(m.xm, 0.25))), 'design.H': Math.max(1, rnd(snap(m.ym, 0.25))) }),
+  'cab.eaveL': (d, m) => ({ 'design.H': Math.max(1, rnd(snap(m.ym, 0.25))) }),
+  'arch.ridge': (d, m) => ({ 'design.f': Math.max(0.2, rnd(snap(m.ym - Math.max(0, Number(d.H) || 0), 0.05))) }),
+  'arch.eaveR': (d, m) => ({ 'design.A': Math.max(3, rnd(snap(m.xm, 0.25))), 'design.H': Math.max(0, rnd(snap(m.ym, 0.25))) }),
+  'arch.eaveL': (d, m) => ({ 'design.H': Math.max(0, rnd(snap(m.ym, 0.25))) }),
+  'gable.ridge': (d, m) => ({ 'design.f': Math.max(0.2, rnd(snap(m.ym, 0.05))) }),
+  'gable.supportR': (d, m) => ({ 'design.L': Math.max(2, rnd(snap(m.xm, 0.25))) }),
+  'parallel.cornerR': (d, m) => ({ 'design.L': Math.max(2, rnd(snap(m.xm, 0.25))), 'design.h': Math.max(0.3, rnd(snap(m.ym, 0.05))) }),
+  'custom.node': (d, m, meta) => {
+    const ls = nodeLines(d.nodesText);
+    const i = Number(meta.i);
+    if (!(i >= 0 && i < ls.length)) return {};
+    ls[i] = `${rnd(snap(m.xm, 0.05))} ${rnd(snap(m.ym, 0.05))}`;
+    return { 'design.nodesText': ls.join('\n') };
+  },
+};
+
+// Activa el arrastre de los puntos rojos de los esquemas de la pantalla (se llama después de dibujar la vista).
+export function wireSketchDrag(root, calc) {
+  root.querySelectorAll('.dh').forEach((h) => h.addEventListener('pointerdown', (e) => {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    const meta = { ...h.dataset };
+    const fn = DRAG[`${meta.kind}.${meta.dh}`];
+    if (!fn) return;
+    const k = Number(meta.k); const ox = Number(meta.ox); const oy = Number(meta.oy); const x0 = Number(meta.x0); const y0 = Number(meta.y0);
+    setSketchLock({ kind: meta.kind, k, x0, y0 });
+    let pending = null;
+    let timer = 0;
+    const toModel = (ev) => {
+      const sv = document.querySelector(`svg[data-sketch="${meta.kind}"]`);
+      if (!sv || !sv.getScreenCTM) return null;
+      const pt = sv.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+      const p = pt.matrixTransform(sv.getScreenCTM().inverse());
+      return { xm: (p.x - ox) / k + x0, ym: (oy - p.y) / k + y0 };
+    };
+    const flush = () => {
+      timer = 0;
+      if (!pending) return;
+      const m = toModel(pending); pending = null;
+      if (!m) return;
+      const patch = fn(calc.design || {}, m, meta);
+      const changed = {};
+      let any = false;
+      Object.entries(patch).forEach(([path, v]) => {
+        const cur = path.split('.').reduce((o, key) => (o ? o[key] : undefined), calc);
+        if (String(cur) !== String(v)) { changed[path] = v; any = true; }
+      });
+      if (any) setCalcFields(calc.id, changed, { clearChosen: true });
+    };
+    const move = (ev) => { pending = ev; if (!timer) timer = setTimeout(flush, 70); };
+    const up = (ev) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      if (timer) clearTimeout(timer);
+      if (ev && ev.clientX != null) pending = ev;
+      flush();
+      setSketchLock(null);
+      window.dispatchEvent(new HashChangeEvent('hashchange'));          // vuelve a dibujar con la escala automática
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  }));
+}
+
 // kind: 'portal' | 'cab' | 'arch' | 'gable' | 'parallel'; d: datos del diseño del cálculo
 export function previewSketch(kind, d, extra = null) {
   const W = 560;
   const Hh = 230;
   let body = '';
-  const A = num(kind === 'gable' || kind === 'parallel' ? d.L : d.A, 10);
-  if (kind === 'portal' || kind === 'cab' || kind === 'arch') {
-    const H = Number(d.H) >= 0 ? Number(d.H) : 4;
+  const A = num(kind === 'gable' || kind === 'parallel' || kind === 'arcgl' ? d.L : d.A, 10);
+  if (kind === 'portal' || kind === 'cab' || kind === 'arch' || kind === 'arcgl') {
+    const H = kind === 'arcgl' ? 0 : (Number(d.H) >= 0 ? Number(d.H) : 4);
     const f = kind === 'portal' ? (A / 2) * Math.tan(num(d.theta, 10) * Math.PI / 180) : num(d.f, 2);
-    const k = Math.min(380 / A, 135 / Math.max(H + f, 0.5));
+    const k = lockOf(kind) ? lockOf(kind).k : Math.min(380 / A, 135 / Math.max(H + f, 0.5));
     const ox = 90;
     const oy = 176;
     const X = (m) => ox + m * k;
     const Y = (m) => oy - m * k;
-    if (kind === 'arch') {
+    if (kind === 'arch' || kind === 'arcgl') {
       const pts = [];
       for (let i = 0; i <= 40; i++) { const x = A * i / 40; pts.push(`${X(x)},${Y(H + 4 * f * x * (A - x) / (A * A))}`); }
       body += `<polyline points="${pts.join(' ')}" fill="none" stroke="${INK}" stroke-width="3"/>`;
@@ -214,10 +308,12 @@ export function previewSketch(kind, d, extra = null) {
     body += `<line x1="${X(A / 2) + 14}" y1="${Y(H)}" x2="${X(A / 2) + 14}" y2="${Y(H + f)}" stroke="${ACC}" stroke-width="1.2"/><line x1="${X(A / 2) + 10}" y1="${Y(H)}" x2="${X(A / 2) + 18}" y2="${Y(H)}" stroke="${ACC}"/><line x1="${X(A / 2) + 10}" y1="${Y(H + f)}" x2="${X(A / 2) + 18}" y2="${Y(H + f)}" stroke="${ACC}"/><text x="${X(A / 2) + 24}" y="${Y(H + f) + 4}" font-size="12" font-weight="600" fill="${ACCI}">f = ${fmt(f, 2)} m</text>`;
     if (kind === 'portal') body += `<text x="${X(A * 0.1)}" y="${Y(H) + 22}" font-size="12" fill="${ACCI}">θ = ${fmt(num(d.theta, 10), 0)}°</text>`;
     body += `<text x="${W - 8}" y="16" text-anchor="end" font-size="11" fill="var(--ink-soft)">Elevación del pórtico · el largo B y la separación S no se ven (van en profundidad)</text>`;
+    const hp = { k, ox, oy };
+    body += HINT + (kind === 'arcgl' ? '' : HANDLE('eaveL', kind, X(0), Y(H), hp)) + HANDLE('eaveR', kind, X(A), Y(H), hp) + HANDLE('ridge', kind, X(A / 2), Y(H + f), hp);
   } else if (kind === 'gable') {
     const f = num(d.f, 2);
     const n = Math.max(2, Math.min(12, Math.round(num(d.n, 4))));
-    const k = Math.min(400 / A, 130 / f);
+    const k = lockOf(kind) ? lockOf(kind).k : Math.min(400 / A, 130 / f);
     const ox = 80; const oy = 168;
     const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
     const top = (x) => (x <= A / 2 ? f * x / (A / 2) : f * (A - x) / (A / 2));
@@ -225,28 +321,85 @@ export function previewSketch(kind, d, extra = null) {
     for (let i = 1; i < 2 * n; i++) { const x = A * i / (2 * n); body += bar(X(x), Y(0), X(x), Y(top(x)), 1.1); }
     body += tri(X(0), Y(0)) + tri(X(A), Y(0)) + dimH(X(0), X(A), oy + 22, `Luz = ${fmt(A, 2)} m`) + dimV(X(A / 2) + 12, Y(0), Y(f), `f = ${fmt(f, 2)} m`, 1);
     body += `<text x="${W - 8}" y="16" text-anchor="end" font-size="11" fill="var(--ink-soft)">${2 * n} paneles (${n} por faldón)</text>`;
+    const hg = { k, ox, oy };
+    body += HINT.replace('x="8"', 'x="8" y="32"').replace('y="16"', '') + HANDLE('supportR', kind, X(A), Y(0), hg) + HANDLE('ridge', kind, X(A / 2), Y(f), hg);
   } else if (kind === 'parallel') {
     const h = num(d.h, 1);
     const n = Math.max(2, Math.min(40, Math.round(num(d.n, 6))));
-    const k = Math.min(420 / A, 120 / h);
+    const k = lockOf(kind) ? lockOf(kind).k : Math.min(420 / A, 120 / h);
     const ox = 70; const oy = 164;
     const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
     body += bar(X(0), Y(0), X(A), Y(0), 2.6) + bar(X(0), Y(h), X(A), Y(h), 2.6) + bar(X(0), Y(0), X(0), Y(h), 1.4) + bar(X(A), Y(0), X(A), Y(h), 1.4);
     for (let i = 0; i < n; i++) { const x1 = A * i / n; const x2 = A * (i + 1) / n; body += bar(X(x1), Y(i % 2 ? h : 0), X(x2), Y(i % 2 ? 0 : h), 1.1); }
     body += tri(X(0), Y(0)) + tri(X(A), Y(0)) + dimH(X(0), X(A), oy + 22, `Luz = ${fmt(A, 2)} m`) + dimV(X(0) - 14, Y(0), Y(h), `h = ${fmt(h, 2)} m`);
+    body += HINT + HANDLE('cornerR', kind, X(A), Y(h), { k, ox, oy });
   }
   else if (kind === 'custom') {
     const g = extra;
     if (!g || !g.nodes || !g.nodes.length) return '';
     const xs = g.nodes.map((n) => n.x); const ys = g.nodes.map((n) => n.y);
-    const x0 = Math.min(...xs); const x1 = Math.max(...xs); const y0 = Math.min(...ys); const y1 = Math.max(...ys);
-    const k = Math.min(420 / Math.max(x1 - x0, 0.1), 150 / Math.max(y1 - y0, 0.1));
+    const lk = lockOf('custom');
+    const x0 = lk ? lk.x0 : Math.min(...xs); const x1 = Math.max(...xs); const y0 = lk ? lk.y0 : Math.min(...ys); const y1 = Math.max(...ys);
+    const k = lk ? lk.k : Math.min(420 / Math.max(x1 - x0, 0.1), 150 / Math.max(y1 - y0, 0.1));
     const ox = 70; const oy = 175;
     const X = (m) => ox + (m - x0) * k; const Y = (m) => oy - (m - y0) * k;
     (g.bars || []).forEach((b) => { const p = g.nodes[b.a]; const q = g.nodes[b.b]; if (p && q) body += bar(X(p.x), Y(p.y), X(q.x), Y(q.y), 1.8); });
     g.nodes.forEach((n, i) => { body += `<circle cx="${X(n.x)}" cy="${Y(n.y)}" r="3.5" fill="var(--panel)" stroke="${INK}" stroke-width="1.2"/><text x="${X(n.x) + 5}" y="${Y(n.y) - 6}" font-size="10.5" font-weight="600" fill="${ACCI}">${i + 1}</text>`; });
     body += dimH(X(x0), X(x1), oy + 26, `${fmt(x1 - x0, 2)} m`);
     body += `<text x="${W / 2}" y="${Hh - 6}" text-anchor="middle" font-size="11" fill="var(--ink-soft)">Los números son los nudos, como se usan en las listas de barras y cargas</text>`;
+    body += HINT;
+    g.nodes.forEach((n, i) => { body += HANDLE('node', 'custom', X(n.x), Y(n.y), { k, ox, oy, x0, y0, i, r: 5.5 }); });
+  } else if (kind === 'jawerth') {
+    const L = num(d.L, 20); const f = num(d.f, 2);
+    const lk = lockOf(kind);
+    const k = lk ? lk.k : Math.min(400 / L, 110 / Math.max(f, 0.5));
+    const ox = 80; const oy = 70;
+    const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
+    const sag = (x) => 4 * f * x * (L - x) / (L * L);
+    const pts = [];
+    for (let i = 0; i <= 40; i++) { const x = L * i / 40; pts.push(`${X(x)},${Y(-sag(x))}`); }
+    body += bar(X(0), Y(0), X(L), Y(0), 1.6) + `<polyline points="${pts.join(' ')}" fill="none" stroke="${INK}" stroke-width="2.6"/>`;
+    for (let i = 1; i < 10; i++) { const x = L * i / 10; body += bar(X(x), Y(0), X(x), Y(-sag(x)), 1); }
+    body += tri(X(0), Y(0) - 13).replace('M ', 'M ') + tri(X(L), Y(0) - 13);
+    body += dimH(X(0), X(L), Y(0) + f * k + 26, `Luz = ${fmt(L, 2)} m`) + dimV(X(L / 2) + 14, Y(0), Y(-f), `f = ${fmt(f, 2)} m`, 1);
+    body += HINT + HANDLE('supportR', kind, X(L), Y(0), { k, ox, oy }) + HANDLE('sag', kind, X(L / 2), Y(-f), { k, ox, oy });
+  } else if (kind === 'vier') {
+    const L = num(d.L, 20); const h = num(d.H, 3);
+    const lk = lockOf(kind);
+    const k = lk ? lk.k : Math.min(420 / L, 110 / h);
+    const ox = 70; const oy = 150;
+    const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
+    const n = 8;
+    body += bar(X(0), Y(0), X(L), Y(0), 3) + bar(X(0), Y(h), X(L), Y(h), 3);
+    for (let i = 0; i <= n; i++) body += bar(X(L * i / n), Y(0), X(L * i / n), Y(h), 2);
+    body += tri(X(0), Y(0)) + tri(X(L), Y(0)) + dimH(X(0), X(L), oy + 22, `Luz = ${fmt(L, 2)} m`) + dimV(X(0) - 14, Y(0), Y(h), `H = ${fmt(h, 2)} m`);
+    body += HINT + HANDLE('cornerR', kind, X(L), Y(h), { k, ox, oy });
+  } else if (kind === 'post') {
+    const L = num(d.L, 20); const f = num(d.f, 0.8);
+    const lk = lockOf(kind);
+    const k = lk ? lk.k : Math.min(420 / L, 70 / Math.max(f, 0.3));
+    const ox = 70; const oy = 80;
+    const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
+    const sag = (x) => 4 * f * x * (L - x) / (L * L);
+    const pts = [];
+    for (let i = 0; i <= 40; i++) { const x = L * i / 40; pts.push(`${X(x)},${Y(-sag(x))}`); }
+    body += `<rect x="${X(0)}" y="${oy - 14}" width="${L * k}" height="28" fill="var(--line)" stroke="${INK}" stroke-width="1.6"/>`;
+    body += `<polyline points="${pts.join(' ')}" fill="none" stroke="${ACC}" stroke-width="2.6"/>`;
+    body += tri(X(0), oy + 14) + tri(X(L), oy + 14);
+    body += dimH(X(0), X(L), oy + f * k + 40, `Luz = ${fmt(L, 2)} m`) + dimV(X(L / 2) + 16, oy, Y(-f), `f del cable = ${fmt(f, 2)} m`, 1);
+    body += HINT + HANDLE('supportR', kind, X(L), Y(0), { k, ox, oy }) + HANDLE('sag', kind, X(L / 2), Y(-f), { k, ox, oy });
+  } else if (kind === 'dome') {
+    const L = num(d.L, 20); const f = num(d.f, 6);
+    const lk = lockOf(kind);
+    const k = lk ? lk.k : Math.min(380 / L, 130 / f);
+    const ox = 90; const oy = 170;
+    const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
+    const R = (L * L / 4 + f * f) / (2 * f);
+    const pts = [];
+    for (let i = 0; i <= 60; i++) { const x = L * i / 60; pts.push(`${X(x)},${Y(f - R + Math.sqrt(Math.max(R * R - (x - L / 2) * (x - L / 2), 0)))}`); }
+    body += `<polyline points="${pts.join(' ')}" fill="none" stroke="${INK}" stroke-width="3"/>` + bar(X(0), Y(0), X(L), Y(0), 1.6);
+    body += tri(X(0), Y(0)) + tri(X(L), Y(0)) + dimH(X(0), X(L), oy + 22, `Diámetro = ${fmt(L, 2)} m`) + dimV(X(L / 2) + 14, Y(0), Y(f), `f = ${fmt(f, 2)} m`, 1);
+    body += HINT + HANDLE('baseR', kind, X(L), Y(0), { k, ox, oy }) + HANDLE('crown', kind, X(L / 2), Y(f), { k, ox, oy });
   } else if (kind === 'tie') {
     const T = Number(d.T) || 0;
     const L = num(d.L, 2);
@@ -301,5 +454,5 @@ export function previewSketch(kind, d, extra = null) {
     body += `<text x="${xc + 12}" y="${yT - 22}" font-size="12" font-weight="600" fill="var(--warn)">N = ${fmt(Number(d.N) || 0, 0)} kg</text>`;
     body += dimV(xc - 90, yT, yB, `H = ${fmt(H, 2)} m`);
   }
-  return `<svg viewBox="0 0 ${W} ${Hh}" style="width:100%; max-width:560px; height:auto; display:block; margin:6px 0 12px;" role="img" aria-label="Esquema con las cotas">${body}</svg>`;
+  return `<svg data-sketch="${kind}" viewBox="0 0 ${W} ${Hh}" style="width:100%; max-width:560px; height:auto; display:block; margin:6px 0 12px; touch-action:none; user-select:none;" role="img" aria-label="Esquema con las cotas">${body}</svg>`;
 }

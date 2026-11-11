@@ -1,5 +1,5 @@
-// Estructuras de acero (método elástico de la cátedra de Estructuras III): viga, correa, columna, tensor y edificio (entrepiso).
-// Unidades: kg, kg·m, kg/cm² y cm (como en los apuntes). Ver js/structural/steel.js y steel-design.js.
+// Estructuras de acero (método elástico): viga, correa, columna, tensor y edificio (entrepiso).
+// Unidades: kg, kg·m, kg/cm² y cm. Ver js/structural/steel.js y steel-design.js.
 import * as S from '../structural/steel.js';
 import * as D from '../structural/steel-design.js';
 import { setCalcField } from '../state.js';
@@ -11,17 +11,17 @@ import { axisEditor, gridSketch, previewSketch } from './structural-spans.js';
 import { deflSelect, jointsPanel, jointsMemo, jointsBeam, jointsPurlin, jointsColumn, jointsFloor, jointsTie } from './structural-joints.js';
 
 const ART = {
-  method: 'Método elástico: σ ≤ σadm = fluencia / 1,6 (apunte "Teoría acero", CIRSOC 301)',
-  omega: 'Método ω de pandeo (apunte "Compresión con pandeo"; tablas de coeficientes de pandeo)',
+  method: 'Método elástico: σ ≤ σadm = fluencia / 1,6 (CIRSOC 301)',
+  omega: 'Método ω de pandeo (; tablas de coeficientes de pandeo)',
   shear: 'Tensión de corte por flexión (Colignon): τ = Q S / (J t) ≤ τadm',
-  defl: 'Flecha admisible L/300 (apunte), correas de techo L/200',
-  oblique: 'Flexión simple oblicua (apunte "Correas"): σ = Mx/Wx + My/Wy ≤ σadm',
+  defl: 'Flecha admisible L/300, correas de techo L/200',
+  oblique: 'Flexión simple oblicua: σ = Mx/Wx + My/Wy ≤ σadm',
   roof: 'CIRSOC 101-1982, art. 4.1.7.1 (sobrecarga de cubierta)',
-  battened: 'Columnas compuestas con presillas (TP 5): λi = √(λy² + (m/2) λ1²), Q = ω N / 80',
-  tie: 'Tensores: A ≥ T / σadm y ΔL = T L / (E A) (apunte)',
+  battened: 'Columnas compuestas con presillas : λi = √(λy² + (m/2) λ1²), Q = ω N / 80',
+  tie: 'Tensores: A ≥ T / σadm y ΔL = T L / (E A)',
 };
 const GRADE_OPTS = Object.entries(S.GRADES).map(([k, g]) => [k, g.label]);
-const OMEGA_OPTS = [['grade', 'Tabla ω del acero elegido (más conservadora)'], ['St37', 'Tabla 3 del apunte (acero St 37), como en los ejemplos de la cátedra']];
+const OMEGA_OPTS = [['grade', 'Tabla ω del acero elegido (más conservadora)'], ['St37', 'Tabla ω para acero St 37 (alternativa)']];
 const BEAM_TYPES = [['IPN', 'Doble T normal (IPN)'], ['UPN', 'Perfil U normal (UPN)'], ['IPE', 'Doble T IPE'], ['HEB', 'Doble T ala ancha (HEB)'], ['TR', 'Tubo rectangular'], ['TC', 'Tubo cuadrado']];
 const SUP_OPTS = Object.entries(S.SUPPORTS_BUCKLING).map(([k, v]) => [k, `${v.label} (Lp = ${v.k} H)`]);
 const kgm = (v) => `${fmt(v, 0)} kg·m`;
@@ -34,7 +34,7 @@ function materialsCard(calc, extra = '') {
       ${selField('materials.omegaTable', 'Coeficiente de pandeo ω', m.omegaTable, OMEGA_OPTS, 'Solo cuenta en piezas comprimidas.')}
     </div>
     ${extra}
-    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">${ART.method}. Los perfiles de chapa plegada (PGC) se verifican con σ = ${S.SIGMA_FORMED} kg/cm² (apunte, para no verificar pandeo lateral ni abolladura). Los perfiles salen de las tablas del apunte.</p></div>`;
+    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">${ART.method}. Los perfiles de chapa plegada (PGC) se verifican con σ = ${S.SIGMA_FORMED} kg/cm² (para no verificar pandeo lateral ni abolladura). Los perfiles salen de las tablas habitual.</p></div>`;
 }
 
 function profileSelect(calc, res, types, label = 'Perfil') {
@@ -101,7 +101,7 @@ export const steelBeamModule = {
         <div class="card">
           <h3 style="margin-top:0;">Esquema estructural</h3>
           ${axisEditor({ path: 'design.spans', spans: d.spans, title: 'Luces de la viga entre apoyos', kind: 'num', hint: ns === 1 ? 'Un tramo: viga simplemente apoyada. Agregá tramos para una viga continua.' : `${ns} tramos: viga continua sobre ${ns + 1} apoyos.`, cant: { left: { path: 'design.cantL', value: d.cantL, label: 'Voladizo izq.' }, right: { path: 'design.cantR', value: d.cantR, label: 'Voladizo der.' } } })}
-          <p class="text-muted" style="font-size:12px; margin:0;">Análisis elástico exacto de la viga continua (la cátedra usa métodos aproximados: los resultados difieren pocos por ciento).</p>
+          <p class="text-muted" style="font-size:12px; margin:0;">Análisis elástico exacto de la viga continua (los métodos aproximados difieren pocos por ciento).</p>
         </div>
         <div class="card">
           <h3 style="margin-top:0;">Cargas</h3>
@@ -110,10 +110,10 @@ export const steelBeamModule = {
             ${numField('design.g', 'Carga permanente g', d.g, { unit: 'kg/m²', hint: 'Piso, correas, cielorraso, instalaciones (sin el peso de la viga).' })}
           </div>
           <div class="field-row" style="flex-wrap:wrap;">
-            ${numField('design.p', 'Sobrecarga p', d.p, { unit: 'kg/m²', hint: 'CIRSOC 101. Ej.: oficinas 250 kg/m² (TP 4).' })}
+            ${numField('design.p', 'Sobrecarga p', d.p, { unit: 'kg/m²', hint: 'CIRSOC 101. Ej.: oficinas 250 kg/m².' })}
             ${numField('design.line', 'Carga lineal permanente extra', d.line, { unit: 'kg/m', hint: 'Muros, barandas.' })}
           </div>
-          ${selField('design.pattern', 'Sobrecarga en los tramos', d.pattern === 'alt' ? 'alt' : 'all', [['all', 'En todos los tramos (como en la cátedra)'], ['alt', 'Alternada: envolvente de momentos y cortes']])}
+          ${selField('design.pattern', 'Sobrecarga en los tramos', d.pattern === 'alt' ? 'alt' : 'all', [['all', 'En todos los tramos'], ['alt', 'Alternada: envolvente de momentos y cortes']])}
           <p class="text-muted" style="font-size:12px; margin:6px 0 0;">Carga total por metro = (g + p) × ancho + extra + peso propio del perfil.</p>
         </div>
       </div>
@@ -233,7 +233,7 @@ function beamMemoria(calc, out) {
       ${fig}
       <table>${memoRow('Momento máximo', kgm(res.Mabs))}${memoRow('Corte máximo', `${fmt(res.Vmax, 0)} kg`)}${memoRow('Reacciones', `${res.Rmax.map((r) => fmt(r, 0)).join(' · ')} kg`)}</table>
       <h2>3. Perfil y verificaciones</h2>
-      <table>${memoRow('Perfil adoptado', `${escapeHtml(res.profile.n)}${res.mult === 2 ? ' × 2' : ''}: Wx = ${fmt(res.profile.Wx * res.mult, 1)} cm³, Jx = ${fmt(res.profile.Ix * res.mult, 0)} cm⁴`, 'Tablas de perfiles del apunte')}
+      <table>${memoRow('Perfil adoptado', `${escapeHtml(res.profile.n)}${res.mult === 2 ? ' × 2' : ''}: Wx = ${fmt(res.profile.Wx * res.mult, 1)} cm³, Jx = ${fmt(res.profile.Ix * res.mult, 0)} cm⁴`, 'Tablas de perfiles')}
         ${memoRow('σ = M / W', `${fmt(c.sigma, 0)} ≤ ${fmt(c.sigmaAllow, 0)} kg/cm²`, ART.method)}${memoRow('τ', `${fmt(c.tau, 0)} ≤ ${fmt(c.tauAllow, 0)} kg/cm²`, ART.shear)}
         ${memoRow(`Flecha (${res.worst.where})`, `${fmt(c.f, 2)} ≤ ${fmt(c.fAllow, 2)} cm (L/${res.fRatio})`, ART.defl)}
         ${c.fLive !== undefined ? memoRow('Flecha por sobrecarga', `${fmt(c.fLive, 2)} ≤ ${fmt(c.fLiveAllow, 2)} cm (L/${input.fLiveRatio})`, 'CIRSOC 301/2017, Tabla L.3-1') : ''}
@@ -291,14 +291,14 @@ export const steelPurlinModule = {
           <h3 style="margin-top:0;">Cargas</h3>
           <div class="field-row" style="flex-wrap:wrap;">
             ${numField('design.gSurf', 'Cubierta y accesorios (sin la correa)', d.gSurf, { unit: 'kg/m²', hint: 'Sobre la superficie inclinada; se pasa a proyección horizontal con 1/cos α.' })}
-            ${numField('design.sv', 'Succión del viento', d.sv, { unit: 'kg/m²', hint: 'Dato (CIRSOC 102), perpendicular a la cubierta. Ej.: 37 kg/m² del apunte.' })}
+            ${numField('design.sv', 'Succión del viento', d.sv, { unit: 'kg/m²', hint: 'Dato (CIRSOC 102), perpendicular a la cubierta.' })}
           </div>
           <div class="field-row" style="flex-wrap:wrap;">
             ${selField('design.pAuto', 'Sobrecarga', auto ? 'yes' : 'no', [['yes', 'Según CIRSOC 101-1982 (por inclinación)'], ['no', 'La ingreso yo']])}
             ${auto ? selField('design.roofKind', 'Tipo de cubierta', d.roofKind === 'other' ? 'other' : 'light', [['light', 'Liviana (CIRSOC 303, hasta 50 kg/m² de peso)'], ['other', 'Otro tipo de cubierta']], `p = ${fmt(pAuto, 0)} kg/m² en proyección horizontal (${ART.roof}).`)
               : numField('design.pHor', 'Sobrecarga p', d.pHor, { unit: 'kg/m²', hint: 'En proyección horizontal.' })}
           </div>
-          ${numField('design.point', 'Carga concentrada en el centro', d.point, { unit: 'kg', hint: 'Apunte: 100 kg. 0 = no verificar.' })}
+          ${numField('design.point', 'Carga concentrada en el centro', d.point, { unit: 'kg', hint: 'Usual: 100 kg. 0 = no verificar.' })}
         </div>
       </div>`;
   },
@@ -311,7 +311,7 @@ export const steelPurlinModule = {
         <div class="card">
           <h3 style="margin-top:0;">Perfil</h3>
           ${selField('section.type', 'Tipo de perfil', calc.section.type, [['C', 'Costanera C de chapa plegada (PGC)'], ...BEAM_TYPES])}
-          ${numField('design.K', 'Relación Wx / Wy supuesta (K)', calc.design.K, { hint: 'Apunte: K = 3, 4 o 5.' })}
+          ${numField('design.K', 'Relación Wx / Wy supuesta (K)', calc.design.K, { hint: 'Usual: K = 3, 4 o 5.' })}
           ${res ? `<p class="text-muted" style="font-size:12.5px; margin:8px 0 0;">Wx necesario ≈ (Mx + K·My) / σ = <b>${fmt(res.Wnec, 1)} cm³</b>. En el paso 3 se elige el perfil más liviano que verifica σ, τ, flecha y la carga concentrada.</p>` : ''}
         </div>
       </div>`;
@@ -381,7 +381,7 @@ function purlinMemoria(calc, out) {
       ${purlinFigure(res, 'print')}
       <table>${s.map((e) => memoRow(e.label, `Mx = ${fmt(e.M, 0)}, My = ${fmt(e.Mt, 0)} kg·m; Q = ${fmt(e.Q, 0)} kg`)).join('')}</table>
       <h2>3. Perfil y verificaciones</h2>
-      <table>${memoRow('Perfil', `${escapeHtml(res.profile.n)}: Wx = ${fmt(res.profile.Wx, 2)}, Wy = ${fmt(res.profile.Wy, 2)} cm³`, 'Tabla 9 del apunte (PGC)')}
+      <table>${memoRow('Perfil', `${escapeHtml(res.profile.n)}: Wx = ${fmt(res.profile.Wx, 2)}, Wy = ${fmt(res.profile.Wy, 2)} cm³`, 'Catálogo de costaneras PGC')}
         ${s.map((e) => memoRow(`σ y flecha, ${e.label.toLowerCase()}`, `σ = ${fmt(e.chk.sigma, 0)} ≤ ${fmt(e.chk.sigmaAllow, 0)} kg/cm²; f = ${fmt(e.chk.f, 2)} ≤ ${fmt(e.chk.fAllow, 2)} cm`, ART.oblique)).join('')}
         ${res.conc ? memoRow(`Carga concentrada de ${fmt(input.pointLoad, 0)} kg`, `σ = ${fmt(res.conc.sigma, 0)} ≤ ${fmt(res.conc.sigmaAllow, 0)} kg/cm²`) : ''}
         ${memoRow('Resultado', res.ok ? 'verifica' : 'no verifica')}</table>
@@ -430,12 +430,12 @@ export const steelColumnModule = {
             ${numField('design.N', 'Carga axial N', d.N, { unit: 'kg', hint: 'De servicio (la mayor reacción de las vigas). Se suma el peso propio de la columna.' })}
             ${numField('design.H', 'Altura H', d.H, { unit: 'm' })}
           </div>
-          ${selField('design.support', 'Sustentación', d.support, SUP_OPTS, 'Longitud de pandeo del apunte.')}
+          ${selField('design.support', 'Sustentación', d.support, SUP_OPTS, 'Coeficiente de longitud de pandeo según la sustentación.')}
           ${comp ? '' : numField('design.M', 'Momento flector (opcional)', d.M, { unit: 'kg·m', hint: 'Flexo-compresión: σ = ωN/A + 0,9 M/W y σ = N/A + M/W.' })}
         </div>
         <div class="card">
           <h3 style="margin-top:0;">Esquema</h3>
-          <p class="text-muted" style="font-size:12.5px; margin:0;">${comp ? 'Dos perfiles iguales (UPN o IPN) separados y unidos con presillas (chapas) cada s cm. El eje material es el de cada perfil; el eje inmaterial pasa entre ellos y se verifica con la esbeltez ideal λi.' : 'Pieza comprimida con pandeo: σ = ω N / A ≤ σadm, con λ = Lp / i del eje más débil. Los perfiles se prueban de menor a mayor peso (método por tanteos del apunte: σ = σadm/2, ω = 1 para estimar el área).'}</p>
+          <p class="text-muted" style="font-size:12.5px; margin:0;">${comp ? 'Dos perfiles iguales (UPN o IPN) separados y unidos con presillas (chapas) cada s cm. El eje material es el de cada perfil; el eje inmaterial pasa entre ellos y se verifica con la esbeltez ideal λi.' : 'Pieza comprimida con pandeo: σ = ω N / A ≤ σadm, con λ = Lp / i del eje más débil. Los perfiles se prueban de menor a mayor peso (método por tanteos habitual: σ = σadm/2, ω = 1 para estimar el área).'}</p>
         </div>
       </div>`;
   },
@@ -449,7 +449,7 @@ export const steelColumnModule = {
         <div class="card">
           <h3 style="margin-top:0;">Sección</h3>
           ${comp ? `<div class="field-row" style="flex-wrap:wrap;">${selField('section.btype', 'Perfiles', calc.section.btype, [['UPN', '2 × UPN'], ['IPN', '2 × IPN']])}
-            ${numField('design.sep', calc.section.btype === 'UPN' ? 'Separación entre almas (sep)' : 'Distancia entre ejes de los perfiles (e)', calc.design.sep, { unit: 'cm', hint: calc.section.btype === 'UPN' ? 'e = sep + 2 ey (TP 5).' : 'Como en el ejemplo de la cátedra.' })}</div>
+            ${numField('design.sep', calc.section.btype === 'UPN' ? 'Separación entre almas (sep)' : 'Distancia entre ejes de los perfiles (e)', calc.design.sep, { unit: 'cm', hint: calc.section.btype === 'UPN' ? 'e = sep + 2 ey .' : '' })}</div>
             ${numField('design.plate', 'Espesor de las presillas', calc.design.plate, { unit: 'cm', hint: '1/4" = 0,64 cm.' })}`
     : selField('section.type', 'Tipo de perfil', calc.section.type, [['CAÑO', 'Caño circular'], ...BEAM_TYPES, ['C', 'Costanera C (PGC)']])}
           ${res && res.A0 ? `<p class="text-muted" style="font-size:12.5px; margin:8px 0 0;">Por tanteos: con σ = σadm/2 = ${fmt(res.grade.sadm / 2, 0)} kg/cm² y ω = 1, el área necesaria ≈ <b>${fmt(res.A0, 1)} cm²</b>; se corrige con ω según la esbeltez.</p>` : ''}
@@ -493,7 +493,7 @@ function columnResults(calc, out) {
         <tr><td>Longitud de pandeo Lp (${escapeHtml(res.supportLabel)})</td><td style="text-align:right;">${fmt(res.Lp, 0)} cm</td></tr>
         <tr><td>Carga con el peso propio de la columna</td><td style="text-align:right;">${fmt(res.N, 0)} kg</td></tr>
       </tbody></table>
-      ${c.imin < 1.5 ? '<p class="text-muted" style="font-size:12px; margin:8px 0 0;">Radio de giro chico: la experiencia del apunte aconseja, por ejemplo, caños de 3" como mínimo en columnas; revisá si conviene un perfil mayor.</p>' : ''}
+      ${c.imin < 1.5 ? '<p class="text-muted" style="font-size:12px; margin:8px 0 0;">Radio de giro chico: la experiencia aconseja, por ejemplo, caños de 3" como mínimo en columnas; revisá si conviene un perfil mayor.</p>' : ''}
     </div>
     <div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Esquema de cálculo</h3>${columnFig(res, input, 'screen')}</div>
     ${checksCard({ ok: res.ok, checks })}
@@ -513,7 +513,7 @@ function columnMemoria(calc, out) {
         ${input.M ? memoRow('Momento flector', kgm(input.M)) : ''}</table>
       <h2>2. Esquema</h2>${columnFig(res, input, 'print')}
       <h2>3. Verificación</h2>
-      <table>${memoRow('Perfil', `${escapeHtml(res.profile.n)}: A = ${fmt(res.profile.A, 2)} cm², imín = ${fmt(c.imin, 2)} cm`, 'Tablas de perfiles del apunte')}
+      <table>${memoRow('Perfil', `${escapeHtml(res.profile.n)}: A = ${fmt(res.profile.A, 2)} cm², imín = ${fmt(c.imin, 2)} cm`, 'Tablas de perfiles')}
         ${memoRow('Esbeltez λ = Lp / imín', fmt(c.lambda, 1))}${memoRow('Coeficiente ω', c.omega === null ? '—' : fmt(c.omega, 2), ART.omega)}
         ${memoRow('σ = ω N / A', `${fmt(c.sigma, 0)} ≤ ${fmt(c.sigmaAllow, 0)} kg/cm²`)}${memoRow('Resultado', res.ok ? 'verifica' : 'no verifica')}</table>
       <h2>4. Uniones</h2>
@@ -595,7 +595,7 @@ export const steelTieModule = {
     return `<div class="grid grid-2" style="align-items:start;"><div class="card"><h3 style="margin-top:0;">Tensor</h3>${previewSketch('tie', d)}
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.T', 'Tracción T', d.T, { unit: 'kg' })}${numField('design.L', 'Longitud L', d.L, { unit: 'm' })}</div>
       ${selField('design.kind', 'Material del tensor', d.kind, [['caño', 'Caño circular'], ['barra', 'Barra de acero (redondo)']])}
-      <p class="text-muted" style="font-size:12.5px; margin:6px 0 0;">${ART.tie}. Si el tensor se ancla a una base de hormigón, el peso del macizo debe ser al menos 1,5 T (apunte).</p></div></div>`;
+      <p class="text-muted" style="font-size:12.5px; margin:6px 0 0;">${ART.tie}. Si el tensor se ancla a una base de hormigón, el peso del macizo debe ser al menos 1,5 T.</p></div></div>`;
   },
   step2(calc) {
     const out = this.run(calc);
@@ -697,13 +697,13 @@ export const steelFloorModule = {
           ${axisEditor({ path: P + 'xSpans', spans: d.xSpans, title: 'Vigas principales (eje X): luz entre ejes de columnas', kind: 'num', sketch: false, hint: `Los ejes 1 a ${nx + 1} llevan las columnas; cada casillero es la luz del tramo entre dos ejes.`, cant: { left: { path: P + 'cantXL', value: d.cantXL, label: `Voladizo eje 1` }, right: { path: P + 'cantXR', value: d.cantXR, label: `Voladizo eje ${nx + 1}` } } })}
           ${axisEditor({ path: P + 'ySpans', spans: d.ySpans, title: 'Correas (eje Y): luz entre líneas de vigas', kind: 'letter', sketch: false, hint: `Las líneas de vigas son ${Array.from({ length: ny + 1 }, (_, i) => letter(i)).join(', ')}; las correas apoyan sobre ellas y son continuas.`, cant: { left: { path: P + 'cantYB', value: d.cantYB, label: 'Voladizo línea A' }, right: { path: P + 'cantYF', value: d.cantYF, label: `Voladizo línea ${letter(ny)}` } } })}
           <div class="axed-sketch" style="border:0; padding:0 0 10px;">${gridSketch({ xs: d.xSpans.map(Number), ys: d.ySpans.map(Number), cantXL: Number(d.cantXL) || 0, cantXR: Number(d.cantXR) || 0, cantYB: Number(d.cantYB) || 0, cantYF: Number(d.cantYF) || 0 })}</div>
-          ${numField(P + 'sCorr', 'Separación entre correas', d.sCorr, { unit: 'm', hint: 'Entre ejes. TP 4 de la cátedra: 61 cm.' })}
+          ${numField(P + 'sCorr', 'Separación entre correas', d.sCorr, { unit: 'm', hint: 'Entre ejes. Usual: 61 cm.' })}
         </div>
         <div class="card">
           <h3 style="margin-top:0;">Cargas y columnas</h3>
           <div class="field-row" style="flex-wrap:wrap;">
             ${numField(P + 'g', 'Carga permanente g', d.g, { unit: 'kg/m²', hint: 'Piso, contrapiso, cielorraso, instalaciones (sin las correas ni las vigas, que se suman).' })}
-            ${numField(P + 'p', 'Sobrecarga p', d.p, { unit: 'kg/m²', hint: 'CIRSOC 101. TP 4: 250 kg/m².' })}
+            ${numField(P + 'p', 'Sobrecarga p', d.p, { unit: 'kg/m²', hint: 'CIRSOC 101. Ej.: 250 kg/m².' })}
           </div>
           ${numField(P + 'edgeLoad', 'Carga lineal permanente en las vigas de borde', d.edgeLoad, { unit: 'kg/m', hint: 'Muros o parapetos sobre las líneas A y ' + letter(ny) + '.' })}
           ${deflSelect(P + 'deflLimit', d.deflLimit || 'course')}
@@ -767,7 +767,7 @@ function floorInputsCard(calc) {
   const emb = Boolean(calc.floorPrefix);
   return `<div class="card"><h3 style="margin-top:0;">${emb ? 'Entrepiso: datos de dimensionado' : 'Datos de dimensionado'}</h3>
       ${selField(P + 'unify', 'Perfiles', calc.design.unify === 'no' ? 'no' : 'yes', [['yes', 'Unificados (el más exigente para todas las vigas y columnas)'], ['no', 'Cada elemento con su perfil mínimo']])}
-      ${selField(P + 'pattern', 'Sobrecarga en los tramos', calc.design.pattern === 'alt' ? 'alt' : 'all', [['all', 'En todos los tramos (como en la cátedra)'], ['alt', 'Alternada: envolvente']])}
+      ${selField(P + 'pattern', 'Sobrecarga en los tramos', calc.design.pattern === 'alt' ? 'alt' : 'all', [['all', 'En todos los tramos'], ['alt', 'Alternada: envolvente']])}
       ${emb ? '<p class="text-muted" style="font-size:12px; margin:0;">El acero, el coeficiente de pandeo, el hormigón de las bases y el suelo son los de la nave (pasos 2 y 3).</p>' : `${selField('materials.omegaTable', 'Coeficiente de pandeo ω', calc.materials.omegaTable, OMEGA_OPTS)}
       <div class="field-row" style="flex-wrap:wrap;">
         ${selField('materials.fc', "Hormigón de las bases (f'c)", calc.materials.fc, [20, 25, 30].map((c) => [c, `H-${c}`]))}

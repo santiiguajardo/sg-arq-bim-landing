@@ -1,12 +1,13 @@
 // Grandes luces: cáscaras de hormigón armado (módulo de paraboloide hiperbólico y cúpula de generatriz circular). Motor en js/structural/shells.js.
-// FUENTE: guías 3.1 y 3.2 de Cáscaras del Taller de Estructuras E4 (curso 2024).
+// Predimensionado aproximado: 3.1 y 3.2 de Cáscaras.
+import { previewSketch } from './structural-spans.js';
 import * as Sh from '../structural/shells.js';
 import { escapeHtml } from '../utils.js';
 import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js';
 
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
-export const SHELL_NOTE = 'Predimensionado según las guías 3.1 (paraboloide hiperbólico) y 3.2 (cúpulas) de Cáscaras del Taller de Estructuras E4 (2024): teoría de membrana con carga uniforme y simétrica, franjas de 1 m de ancho, tensiones admisibles de la cátedra. No se verifican las perturbaciones de borde, el punzonado de la columna central, el pandeo de las columnas, el viento con su coeficiente real, la distribución asimétrica de cargas ni el comportamiento del hormigón fisurado. Herramienta de apoyo para el predimensionado.';
+export const SHELL_NOTE = 'Predimensionado aproximado: teoría de membrana con carga uniforme y simétrica, franjas de 1 m de ancho, tensiones admisibles. No se verifican las perturbaciones de borde, el punzonado de la columna central, el pandeo de las columnas, el viento con su coeficiente real, la distribución asimétrica de cargas ni el comportamiento del hormigón fisurado. Herramienta de apoyo para el predimensionado.';
 const BAR_D = [6, 8, 10, 12];
 const EDGE_D = [10, 12, 16, 20, 25];
 
@@ -91,14 +92,14 @@ function phStep1(calc) {
   const d = calc.design; const out = phCompute(calc); const r = out.res;
   return `<div class="grid grid-2" style="align-items:start;">
     <div class="card"><h3 style="margin-top:0;">Cáscara de paraboloide hiperbólico (módulo de cuatro sectores)</h3>${phPlan(d)}
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.a', 'Semilado menor del módulo a', d.a, { unit: 'm', hint: 'La guía: módulo de 15 × 10 m (a = 5, b = 7,5).' })}${numField('design.b', 'Semilado mayor b', d.b, { unit: 'm' })}</div>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.h', 'Desnivel entre la columna y los bordes', d.h, { unit: 'm', hint: 'La guía: 2,25 m.' })}${numField('design.e', 'Espesor de la cáscara', d.e, { unit: 'cm', hint: 'Guía: 6 cm.' })}</div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.a', 'Semilado menor del módulo a', d.a, { unit: 'm', hint: 'Usual: módulo de 15 × 10 m (a = 5, b = 7,5).' })}${numField('design.b', 'Semilado mayor b', d.b, { unit: 'm' })}</div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.h', 'Desnivel entre la columna y los bordes', d.h, { unit: 'm', hint: 'Usual: 2,25 m.' })}${numField('design.e', 'Espesor de la cáscara', d.e, { unit: 'cm', hint: 'Usual: 6 cm.' })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.nx', 'Módulos en un sentido', d.nx, { step: 1 })}${numField('design.ny', 'Módulos en el otro', d.ny, { step: 1 })}</div>
       <p class="text-muted" style="font-size:12px; margin:0;">${r ? `Superficie cubierta: ${fmt(r.plan.total, 0)} m² con ${r.plan.modules} módulos (y ${r.plan.modules} columnas). ` : ''}Los módulos son repetitivos para amortizar el encofrado.</p></div>
     <div class="card"><h3 style="margin-top:0;">Cargas</h3>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.gamma', 'Peso del hormigón', d.gamma, { unit: 'kg/m³' })}${numField('design.aisl', 'Aislaciones e instalaciones', d.aisl, { unit: 'kg/m²', hint: 'Guía: 20.' })}</div>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.sc', 'Sobrecarga accidental', d.sc, { unit: 'kg/m²', hint: 'Guía: 60.' })}${numField('design.vInc', 'Incremento por viento', d.vInc, { unit: 'kg/m²', hint: 'Hipótesis de la guía: 20 (por su poca pendiente suele trabajar a succión).' })}</div>
-      ${numField('design.qAdopt', 'Carga de diseño adoptada (0 = la suma)', d.qAdopt, { unit: 'kg/m²', hint: r ? `La suma da ${kg(r.qSum)} kg/m²; la guía la redondea a 250.` : '' })}
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.gamma', 'Peso del hormigón', d.gamma, { unit: 'kg/m³' })}${numField('design.aisl', 'Aislaciones e instalaciones', d.aisl, { unit: 'kg/m²', hint: 'Usual: 20.' })}</div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.sc', 'Sobrecarga accidental', d.sc, { unit: 'kg/m²', hint: 'Usual: 60.' })}${numField('design.vInc', 'Incremento por viento', d.vInc, { unit: 'kg/m²', hint: 'Hipótesis habitual: 20 (por su poca pendiente suele trabajar a succión).' })}</div>
+      ${numField('design.qAdopt', 'Carga de diseño adoptada (0 = la suma)', d.qAdopt, { unit: 'kg/m²', hint: r ? `La suma da ${kg(r.qSum)} kg/m²; se redondea a 250.` : '' })}
       <h4 style="margin:10px 0 4px; font-size:13px;">Generatriz</h4>${r ? phSection(r) : ''}</div></div>
     <div class="note" style="margin-top:16px;">${SHELL_NOTE}</div>`;
 }
@@ -124,13 +125,13 @@ function phStep3(calc, out) {
   if (out.error) return `<div class="card"><div class="empty-state">${out.error}</div></div>`;
   const r = out.res; const d = calc.design;
   const data = `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Compresión admisible del hormigón', d.sigmaC, { unit: 'kg/cm²', hint: 'Guía: 50 (homogeneizado).' })}${numField('design.tau', 'Tangencial admisible', d.tau, { unit: 'kg/cm²', hint: 'Guía: 15.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaS', 'Acero en tracción', d.sigmaS, { unit: 'kg/cm²', hint: 'Guía: 1200.' })}${numField('design.rhoMin', 'Cuantía mínima de la cáscara', d.rhoMin, { unit: '%', hint: 'Guía: 0,5.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Compresión admisible del hormigón', d.sigmaC, { unit: 'kg/cm²', hint: 'Usual: 50 (homogeneizado).' })}${numField('design.tau', 'Tangencial admisible', d.tau, { unit: 'kg/cm²', hint: 'Usual: 15.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaS', 'Acero en tracción', d.sigmaS, { unit: 'kg/cm²', hint: 'Usual: 1200.' })}${numField('design.rhoMin', 'Cuantía mínima de la cáscara', d.rhoMin, { unit: '%', hint: 'Usual: 0,5.' })}</div>
     <div class="field-row" style="flex-wrap:wrap;">${selField('design.barD', 'Barras de la malla', d.barD, BAR_D.map((x) => [x, `Ø${x} mm`]))}${selField('design.edgeD', 'Barras de las vigas de borde', d.edgeD, EDGE_D.map((x) => [x, `Ø${x} mm`]))}</div>
     <h4 style="margin:10px 0 4px; font-size:13px;">Vigas de borde internas y columna</h4>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaB', 'Compresión de las vigas y la columna', d.sigmaB, { unit: 'kg/cm²', hint: 'Guía: 60 (H13, AB42, coeficiente 2,5).' })}${numField('design.colSide', 'Lado de la columna cuadrada', d.colSide, { unit: 'cm', hint: 'Guía: 30 × 30 con 8 Ø12.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.eEdge', 'Espesor en el borde exterior', d.eEdge, { unit: 'cm', hint: 'Guía: 10.' })}${numField('design.eCol', 'Espesor cerca de la columna', d.eCol, { unit: 'cm', hint: 'Guía: 18.' })}</div>
-    ${numField('design.desague', 'Desagüe pluvial dentro de la columna', d.desague, { unit: 'cm²', hint: 'Guía: 200.' })}</div>`;
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaB', 'Compresión de las vigas y la columna', d.sigmaB, { unit: 'kg/cm²', hint: 'Usual: 60 (H13, AB42, coeficiente 2,5).' })}${numField('design.colSide', 'Lado de la columna cuadrada', d.colSide, { unit: 'cm', hint: 'Usual: 30 × 30 con 8 Ø12.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.eEdge', 'Espesor en el borde exterior', d.eEdge, { unit: 'cm', hint: 'Usual: 10.' })}${numField('design.eCol', 'Espesor cerca de la columna', d.eCol, { unit: 'cm', hint: 'Usual: 18.' })}</div>
+    ${numField('design.desague', 'Desagüe pluvial dentro de la columna', d.desague, { unit: 'cm²', hint: 'Usual: 200.' })}</div>`;
   const forces = `<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Bordes y columna</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>Viga</th><th style="text-align:right;">Largo (m)</th><th style="text-align:right;">Fuerza (kg)</th><th style="text-align:right;">Sección (cm²)</th><th style="text-align:right;">Armadura</th></tr></thead><tbody>
     <tr><td>V1 (externa, tracción)</td><td style="text-align:right;">${fmt(r.V1.len, 2)}</td><td style="text-align:right;">${kg(r.V1.F)}</td><td style="text-align:right;">Fe ${fmt(r.V1.Fe, 2)}</td><td style="text-align:right;">${r.V1.n} Ø${d.edgeD}</td></tr>
     <tr><td>V2 (externa, tracción)</td><td style="text-align:right;">${fmt(r.V2.len, 2)}</td><td style="text-align:right;">${kg(r.V2.F)}</td><td style="text-align:right;">Fe ${fmt(r.V2.Fe, 2)}</td><td style="text-align:right;">${r.V2.n} Ø${d.edgeD}</td></tr>
@@ -143,7 +144,7 @@ function phStep3(calc, out) {
 function phMemoria(calc, out) {
   if (!out || out.error || !out.res) return null;
   const r = out.res; const d = calc.design;
-  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Cáscara de paraboloide hiperbólico de hormigón armado, módulo de cuatro sectores', 'Guía de predimensionado E4 · 3.1')}${memoRow('Módulo', `${fmt(2 * r.b, 2)} × ${fmt(2 * r.a, 2)} m · desnivel ${fmt(r.h, 2)} m · espesor ${fmt(r.e, 0)} cm`)}${memoRow('Planta', `${r.plan.nx} × ${r.plan.ny} módulos = ${fmt(r.plan.total, 0)} m²`)}${memoRow('Carga de diseño', `peso propio ${kg(r.Pp)} + aislaciones ${kg(num(d.aisl))} + sobrecarga ${kg(num(d.sc))} + viento ${kg(num(d.vInc))} = ${kg(r.qSum)} → q = ${kg(r.q)} kg/m²`)}</table>
+  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Cáscara de paraboloide hiperbólico de hormigón armado, módulo de cuatro sectores', 'Predimensionado')}${memoRow('Módulo', `${fmt(2 * r.b, 2)} × ${fmt(2 * r.a, 2)} m · desnivel ${fmt(r.h, 2)} m · espesor ${fmt(r.e, 0)} cm`)}${memoRow('Planta', `${r.plan.nx} × ${r.plan.ny} módulos = ${fmt(r.plan.total, 0)} m²`)}${memoRow('Carga de diseño', `peso propio ${kg(r.Pp)} + aislaciones ${kg(num(d.aisl))} + sobrecarga ${kg(num(d.sc))} + viento ${kg(num(d.vInc))} = ${kg(r.qSum)} → q = ${kg(r.q)} kg/m²`)}</table>
     ${phPlan(d)}<h2>2. Esfuerzos principales</h2><table>${memoRow('Parábola generatriz', `L = ${fmt(r.L, 2)} m · f = ${fmt(r.f, 2)} m (${fmt(r.ratio * 100, 1)} %)`)}${memoRow('H = (q / 2) L² / 8 f', `${kg(r.H)} kg por metro de ancho`)}${memoRow('σ = H / (e 100) · δ', `${fmt(r.sigC, 2)} · ${fmt(r.tau, 2)} kg/cm²`)}</table>${phSection(r)}
     <h2>3. Bordes y columna</h2><table>${memoRow('V1 · V2', `${kg(r.V1.F)} kg · ${kg(r.V2.F)} kg`)}${memoRow('V3 · V4', `${kg(r.V3.F)} kg · ${kg(r.V4.F)} kg`)}${memoRow('Columna central', `N = ${kg(r.col.N)} kg · ${fmt(r.col.side, 0)} × ${fmt(r.col.side, 0)} cm`)}</table>
     <h2>4. Verificaciones</h2><table>${r.checks.map((c) => memoRow(`${c.ok ? '✓' : '✗'} ${escapeHtml(c.label)}`, escapeHtml(c.text))).join('')}</table>
@@ -174,14 +175,14 @@ function domeCompute(calc) {
 function domeStep1(calc) {
   const d = calc.design; const out = domeCompute(calc); const r = out.res;
   return `<div class="grid grid-2" style="align-items:start;">
-    <div class="card"><h3 style="margin-top:0;">Cúpula de generatriz circular</h3>${domeSection(d, r)}
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.L', 'Diámetro de la planta L', d.L, { unit: 'm', hint: 'Guía: 25 m.' })}${numField('design.f', 'Altura máxima f', d.f, { unit: 'm', hint: 'Guía: 7 m. Con f = L / 2 es una semiesfera.' })}</div>
-      ${numField('design.e', 'Espesor de la cáscara', d.e, { unit: 'cm', hint: 'Guía: 6 cm.' })}
+    <div class="card"><h3 style="margin-top:0;">Cúpula de generatriz circular</h3>${previewSketch('dome', d)}${domeSection(d, r)}
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.L', 'Diámetro de la planta L', d.L, { unit: 'm', hint: 'Usual: 25 m.' })}${numField('design.f', 'Altura máxima f', d.f, { unit: 'm', hint: 'Usual: 7 m. Con f = L / 2 es una semiesfera.' })}</div>
+      ${numField('design.e', 'Espesor de la cáscara', d.e, { unit: 'cm', hint: 'Usual: 6 cm.' })}
       <p class="text-muted" style="font-size:12px; margin:0;">${r ? `Radio de la generatriz R = (L² + 4 f²) / 8 f = ${fmt(r.R, 2)} m; ángulo de borde φ = ${fmt(r.phi0, 1)}° (cos φ = ${fmt(r.cos0, 2)}).` : ''}</p></div>
     <div class="card"><h3 style="margin-top:0;">Cargas</h3>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.gamma', 'Peso del hormigón', d.gamma, { unit: 'kg/m³' })}${numField('design.aisl', 'Aislaciones e instalaciones', d.aisl, { unit: 'kg/m²', hint: 'Guía: 40.' })}</div>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.sc', 'Sobrecarga accidental', d.sc, { unit: 'kg/m²', hint: 'Guía: 60.' })}${numField('design.vInc', 'Incremento por viento', d.vInc, { unit: 'kg/m²', hint: 'Hipótesis de la guía: 20.' })}</div>
-      ${numField('design.qAdopt', 'Carga de diseño adoptada (0 = la suma)', d.qAdopt, { unit: 'kg/m²', hint: r ? `La suma da ${kg(r.qSum)} kg/m² (la guía: 264).` : '' })}
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.gamma', 'Peso del hormigón', d.gamma, { unit: 'kg/m³' })}${numField('design.aisl', 'Aislaciones e instalaciones', d.aisl, { unit: 'kg/m²', hint: 'Usual: 40.' })}</div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.sc', 'Sobrecarga accidental', d.sc, { unit: 'kg/m²', hint: 'Usual: 60.' })}${numField('design.vInc', 'Incremento por viento', d.vInc, { unit: 'kg/m²', hint: 'Hipótesis habitual: 20.' })}</div>
+      ${numField('design.qAdopt', 'Carga de diseño adoptada (0 = la suma)', d.qAdopt, { unit: 'kg/m²', hint: r ? `La suma da ${kg(r.qSum)} kg/m².` : '' })}
       <p class="text-muted" style="font-size:12px; margin:0;">Distribución uniforme y simétrica de la carga por metro cuadrado de cubierta.</p></div></div>
     <div class="note" style="margin-top:16px;">${SHELL_NOTE}</div>`;
 }
@@ -207,15 +208,15 @@ function domeStep3(calc, out) {
   if (out.error) return `<div class="card"><div class="empty-state">${out.error}</div></div>`;
   const r = out.res; const d = calc.design; const s = r.support;
   const data = `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Compresión admisible del hormigón', d.sigmaC, { unit: 'kg/cm²', hint: 'Guía: 50.' })}${numField('design.sigmaS', 'Acero en tracción', d.sigmaS, { unit: 'kg/cm²', hint: 'Guía: 1200.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.rhoMin', 'Cuantía mínima para cúpulas', d.rhoMin, { unit: '%', hint: 'Guía: 0,5.' })}${selField('design.barD', 'Barras de la malla', d.barD, BAR_D.map((x) => [x, `Ø${x} mm`]))}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.Eb', 'Módulo del hormigón Eb', d.Eb, { unit: 'kg/cm²', hint: 'Guía: 240000.' })}${numField('design.eta', 'Coeficiente de seguridad al pandeo η', d.eta, { hint: 'La guía lo indica entre 4 y 5 y usa 5.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaC', 'Compresión admisible del hormigón', d.sigmaC, { unit: 'kg/cm²', hint: 'Usual: 50.' })}${numField('design.sigmaS', 'Acero en tracción', d.sigmaS, { unit: 'kg/cm²', hint: 'Usual: 1200.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.rhoMin', 'Cuantía mínima para cúpulas', d.rhoMin, { unit: '%', hint: 'Usual: 0,5.' })}${selField('design.barD', 'Barras de la malla', d.barD, BAR_D.map((x) => [x, `Ø${x} mm`]))}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.Eb', 'Módulo del hormigón Eb', d.Eb, { unit: 'kg/cm²', hint: 'Usual: 240000.' })}${numField('design.eta', 'Coeficiente de seguridad al pandeo η', d.eta, { hint: 'Usual: entre 4 y 5.' })}</div>
     <h4 style="margin:10px 0 4px; font-size:13px;">Apoyo: viga, anillo y columnas</h4>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.eEdge', 'Espesor máximo en el apoyo', d.eEdge, { unit: 'cm', hint: 'Guía: 25 cm, con pasaje gradual a 6 cm en 155 cm.' })}${numField('design.nCol', 'Cantidad de columnas', d.nCol, { step: 1, hint: 'Guía: 20.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.beamSelf', 'Peso propio de la viga y el engrosamiento', d.beamSelf, { unit: 'kg/m', hint: 'Guía: 430.' })}${numField('design.bBeam', 'Ancho de la viga', d.bBeam, { unit: 'm', hint: 'Guía: 0,25.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.lBeam', 'Luz de la viga (0 = 2 π Rp / columnas)', d.lBeam, { unit: 'm', hint: `Calculada: ${fmt(s.lBeam, 2)} m (la guía toma 4 m).` })}${numField('design.hBeam', 'Altura de la viga (0 = la necesaria)', d.hBeam, { unit: 'cm', hint: `Necesaria: ${fmt(Math.max(s.hNec, s.hMin), 1)} cm.` })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${selField('design.ringD', 'Barras del anillo', d.ringD, EDGE_D.map((x) => [x, `Ø${x} mm`]))}${numField('design.sigmaB', 'Compresión de la columna', d.sigmaB, { unit: 'kg/cm²', hint: 'Guía: 60 (H13, AB42, coeficiente 2,5).' })}</div>
-    ${numField('design.colD', 'Diámetro de la columna circular', d.colD, { unit: 'cm', hint: 'Guía: 25 cm con 4 Ø12.' })}</div>`;
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.eEdge', 'Espesor máximo en el apoyo', d.eEdge, { unit: 'cm', hint: 'Usual: 25 cm, con pasaje gradual a 6 cm en 155 cm.' })}${numField('design.nCol', 'Cantidad de columnas', d.nCol, { step: 1, hint: 'Usual: 20.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.beamSelf', 'Peso propio de la viga y el engrosamiento', d.beamSelf, { unit: 'kg/m', hint: 'Usual: 430.' })}${numField('design.bBeam', 'Ancho de la viga', d.bBeam, { unit: 'm', hint: 'Usual: 0,25.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.lBeam', 'Luz de la viga (0 = 2 π Rp / columnas)', d.lBeam, { unit: 'm', hint: `Calculada: ${fmt(s.lBeam, 2)} m (usual: 4 m).` })}${numField('design.hBeam', 'Altura de la viga (0 = la necesaria)', d.hBeam, { unit: 'cm', hint: `Necesaria: ${fmt(Math.max(s.hNec, s.hMin), 1)} cm.` })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${selField('design.ringD', 'Barras del anillo', d.ringD, EDGE_D.map((x) => [x, `Ø${x} mm`]))}${numField('design.sigmaB', 'Compresión de la columna', d.sigmaB, { unit: 'kg/cm²', hint: 'Usual: 60 (H13, AB42, coeficiente 2,5).' })}</div>
+    ${numField('design.colD', 'Diámetro de la columna circular', d.colD, { unit: 'cm', hint: 'Usual: 25 cm con 4 Ø12.' })}</div>`;
   const sup = `<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Apoyo de la cáscara</h3><table class="data-table"><tbody>
     <tr><td>Esfuerzo del meridiano en el borde Nm</td><td style="text-align:right;">${kg(s.Nm)} kg/m</td></tr>
     <tr><td>NmH = Nm cos φ0 · NmV = Nm sen φ0</td><td style="text-align:right;">${fmt(s.NmH, 1)} · <b>${fmt(s.NmV, 1)} kg/m</b></td></tr>
@@ -229,7 +230,7 @@ function domeStep3(calc, out) {
 function domeMemoria(calc, out) {
   if (!out || out.error || !out.res) return null;
   const r = out.res; const d = calc.design; const s = r.support;
-  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Cúpula de generatriz circular de hormigón armado', 'Guía de predimensionado E4 · 3.2')}${memoRow('Diámetro · altura · espesor', `L = ${fmt(r.L, 2)} m · f = ${fmt(r.f, 2)} m · e = ${fmt(r.e, 0)} cm`)}${memoRow('Generatriz', `R = ${fmt(r.R, 2)} m · φ0 = ${fmt(r.phi0, 1)}° (cos φ0 = ${fmt(r.cos0, 2)})`)}${memoRow('Carga de diseño', `peso propio ${kg(r.Pp)} + aislaciones ${kg(num(d.aisl))} + sobrecarga ${kg(num(d.sc))} + viento ${kg(num(d.vInc))} = ${kg(r.qSum)} → q = ${kg(r.q)} kg/m²`)}</table>
+  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Cúpula de generatriz circular de hormigón armado', 'Predimensionado')}${memoRow('Diámetro · altura · espesor', `L = ${fmt(r.L, 2)} m · f = ${fmt(r.f, 2)} m · e = ${fmt(r.e, 0)} cm`)}${memoRow('Generatriz', `R = ${fmt(r.R, 2)} m · φ0 = ${fmt(r.phi0, 1)}° (cos φ0 = ${fmt(r.cos0, 2)})`)}${memoRow('Carga de diseño', `peso propio ${kg(r.Pp)} + aislaciones ${kg(num(d.aisl))} + sobrecarga ${kg(num(d.sc))} + viento ${kg(num(d.vInc))} = ${kg(r.qSum)} → q = ${kg(r.q)} kg/m²`)}</table>
     ${domeSection(d, r)}<h2>2. Esfuerzos principales (franjas de 1 m)</h2><table>${r.rows.map((x, i) => memoRow(`Posición ${i + 1} · y = ${fmt(x.y, 2)} m · φ = ${fmt(x.phi, 2)}°`, `Nm = ${fmt(x.Nm, 2)} · Np = ${fmt(x.Np, 2)} kg/m`)).join('')}${memoRow('Paralelo neutro', `φ = ${fmt(r.phiNeutral, 1)}°`)}</table>${domeDiagram(r)}
     <h2>3. Apoyo</h2><table>${memoRow('NmH · NmV', `${fmt(s.NmH, 1)} · ${fmt(s.NmV, 1)} kg/m`)}${memoRow('Anillo', `T = NmH Rp = ${kg(s.T)} kg → ${s.nRing} Ø${d.ringD}`)}${memoRow('Viga de apoyo', `${fmt(s.b * 100, 0)} × ${fmt(s.hAdopt, 0)} cm · M = ${fmt(s.M, 2)} tm · Fe = ${fmt(s.FeBeam, 2)} cm²`)}${memoRow('Columnas', `${fmt(s.nCol, 0)} de ø ${fmt(s.col.Dadopt, 0)} cm · N = ${kg(s.col.N)} kg`)}</table>
     <h2>4. Verificaciones</h2><table>${r.checks.map((c) => memoRow(`${c.ok ? '✓' : '✗'} ${escapeHtml(c.label)}`, escapeHtml(c.text))).join('')}</table>

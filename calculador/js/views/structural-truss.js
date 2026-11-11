@@ -1,5 +1,5 @@
 // Cerchas y cabriadas de acero: pantallas del calculador (cabriada de cubierta a dos aguas, cercha o viga reticulada de cordones paralelos y
-// cercha armada nudo por nudo). Motor en js/structural/steel-truss.js; método de la cátedra (Estructuras III): método de los nudos, estados
+// cercha armada nudo por nudo). Motor en js/structural/steel-truss.js; método: método de los nudos, estados
 // de carga 1 (permanentes + sobrecarga) y 2 (permanentes − viento) y dimensionado de cada familia de barras con el método ω.
 import { previewSketch } from './structural-spans.js';
 import * as S from '../structural/steel.js';
@@ -11,17 +11,17 @@ import { trussFigure } from './structural-draw.js';
 import { deflSelect, deflCardHtml, deflMemo, jointsPanel, jointsTruss, jointsMemo } from './structural-joints.js';
 
 const ART = {
-  nodes: 'Método de los nudos (apunte "Cerchas metálicas"): barras articuladas, cargas en los nudos, B = 2N − 3',
-  states: 'Estado 1: permanentes + sobrecarga · Estado 2: permanentes − viento (apunte "Cerchas metálicas")',
+  nodes: 'Método de los nudos: barras articuladas, cargas en los nudos, B = 2N − 3',
+  states: 'Estado 1: permanentes + sobrecarga · Estado 2: permanentes − viento',
   roof: 'CIRSOC 101-1982, art. 4.1.7.1 (sobrecarga de cubierta)',
-  omega: 'Método ω de pandeo (apunte "Compresión con pandeo")',
-  battened: 'Barras compuestas con presillas: λi = √(λy² + (m/2) λ1²), λ1 = s / i1 ≤ 50 (TP 5, apunte "Cabriada nave industrial")',
+  omega: 'Método ω de pandeo',
+  battened: 'Barras compuestas con presillas: λi = √(λy² + (m/2) λ1²), λ1 = s / i1 ≤ 50',
   tension: 'Tracción simple: σ = N / A ≤ σadm',
-  light: 'Viga reticulada (apunte "Vigas reticuladas"): h ≥ L/20, diagonales entre 45° y 70° (ideal 60°)',
+  light: 'Viga reticulada: h ≥ L/20, diagonales entre 45° y 70° (ideal 60°)',
 };
 const FAM_KEYS = Object.keys(T.FAMILIES);
 const GRADE_OPTS = Object.entries(S.GRADES).map(([k, g]) => [k, g.label]);
-const OMEGA_OPTS = [['grade', 'Tabla ω del acero elegido (más conservadora)'], ['St37', 'Tabla 3 del apunte (acero St 37), como en los ejemplos de la cátedra']];
+const OMEGA_OPTS = [['grade', 'Tabla ω del acero elegido (más conservadora)'], ['St37', 'Tabla ω para acero St 37 (alternativa)']];
 const SECTION_OPTS = Object.entries(T.SECTION_TYPES).map(([k, v]) => [k, v.label]);
 const KINDS = [['pratt', 'Pratt (diagonales que bajan hacia el centro)'], ['howe', 'Howe (diagonales que suben hacia el centro)'], ['warren', 'Warren (sin montantes)']];
 const kg = (v) => fmt(v, 0);
@@ -213,7 +213,7 @@ export const trussModule = {
             <h3 style="margin-top:0;">Apoyos y cargas</h3>
             <div class="field"><label>Apoyos <span class="text-muted">(nudo fijo o nudo movil)</span></label><textarea data-f="design.supportsText" rows="3" style="width:100%; font-family:monospace;">${escapeHtml(d.supportsText)}</textarea></div>
             <div class="field"><label>Cargas en los nudos <span class="text-muted">(nudo permanente sobrecarga viento, en kg; el viento es hacia arriba)</span></label><textarea data-f="design.loadsText" rows="6" style="width:100%; font-family:monospace;">${escapeHtml(d.loadsText)}</textarea></div>
-            <p class="text-muted" style="font-size:12px; margin:0;">Las barras se consideran articuladas en los nudos y los ejes de las barras deben concurrir a un mismo punto (apunte). Los pesos propios se suman a mano en las cargas.</p>
+            <p class="text-muted" style="font-size:12px; margin:0;">Las barras se consideran articuladas en los nudos y los ejes de las barras deben concurrir a un mismo punto. Los pesos propios se suman a mano en las cargas.</p>
           </div>
         </div>`;
     }
@@ -226,7 +226,7 @@ export const trussModule = {
             <h3 style="margin-top:0;">Geometría de la cabriada</h3>
             ${previewSketch('gable', d)}
             <div class="field-row" style="flex-wrap:wrap;">
-              ${numField('design.L', 'Luz', d.L, { unit: 'm' })}${numField('design.f', 'Flecha (altura al centro)', d.f, { unit: 'm', hint: 'tg α = f / (L/2). Cubiertas: α entre 20° y 30° (apunte).' })}
+              ${numField('design.L', 'Luz', d.L, { unit: 'm' })}${numField('design.f', 'Flecha (altura al centro)', d.f, { unit: 'm', hint: 'tg α = f / (L/2). Cubiertas: α entre 20° y 30°.' })}
             </div>
             <div class="field-row" style="flex-wrap:wrap;">
               ${numField('design.n', 'Paneles por faldón', d.n, { step: 1, hint: 'Entre 2 y 12. Los correas apoyan en los nudos del cordón superior.' })}
@@ -247,10 +247,10 @@ export const trussModule = {
     : selField('design.roofKind', 'Tipo de cubierta', d.roofKind === 'light' ? 'light' : 'other', [['other', 'Otro tipo de cubierta'], ['light', 'Liviana (hasta 50 kg/m² de peso)']], `p = ${fmt(pAuto, 0)} kg/m² en proyección horizontal (${ART.roof}).`)}
             </div>
             <div class="field-row" style="flex-wrap:wrap;">
-              ${numField('design.w', 'Succión del viento', d.w, { unit: 'kg/m²', hint: 'Dato (CIRSOC 102), perpendicular a la cubierta. 0 = sin estado de viento. La presión se desprecia con esta pendiente (apunte).' })}
-              ${selField('design.windMode', 'Viento', d.windMode, [['vertical', 'Solo la componente vertical (simplificación de la cátedra)'], ['full', 'Componente vertical y horizontal']])}
+              ${numField('design.w', 'Succión del viento', d.w, { unit: 'kg/m²', hint: 'Dato (CIRSOC 102), perpendicular a la cubierta. 0 = sin estado de viento. La presión se desprecia con esta pendiente.' })}
+              ${selField('design.windMode', 'Viento', d.windMode, [['vertical', 'Solo la componente vertical (simplificación habitual)'], ['full', 'Componente vertical y horizontal']])}
             </div>
-            ${selField('design.autoSelf', 'Peso propio', d.autoSelf === 'no' ? 'no' : 'yes', [['yes', 'Ajustar automáticamente al peso calculado de la cabriada'], ['no', 'Usar el estimado (como en la cátedra)']])}
+            ${selField('design.autoSelf', 'Peso propio', d.autoSelf === 'no' ? 'no' : 'yes', [['yes', 'Ajustar automáticamente al peso calculado de la cabriada'], ['no', 'Usar el estimado']])}
           </div>
         </div>`;
     }
@@ -261,7 +261,7 @@ export const trussModule = {
           ${previewSketch('parallel', d)}
           ${kindBlock}
           <div class="field-row" style="flex-wrap:wrap;">
-            ${numField('design.L', 'Luz', d.L, { unit: 'm' })}${numField('design.h', 'Altura entre ejes de cordones', d.h, { unit: 'm', hint: 'h ≥ L/20 (apunte "Vigas reticuladas").' })}
+            ${numField('design.L', 'Luz', d.L, { unit: 'm' })}${numField('design.h', 'Altura entre ejes de cordones', d.h, { unit: 'm', hint: 'h ≥ L/20.' })}
           </div>
           <div class="field-row" style="flex-wrap:wrap;">
             ${numField('design.n', k === 'warren' ? 'Tramos del cordón inferior' : 'Paneles', d.n, { step: 1, hint: 'Entre 2 y 40.' })}
@@ -300,11 +300,11 @@ export const trussModule = {
           <h4 style="margin:10px 0 6px; font-size:13px;">Sección de cada familia de barras</h4>
           ${famRows}
           <div class="field-row" style="flex-wrap:wrap;">
-            ${numField('design.sep', 'Separación entre los dos perfiles (ángulos) o espesor de la chapa nodal (UPN)', calc.design.sep, { unit: 'cm', hint: 'Ángulos: 0,5 cm (apunte). UPN: espesor de la chapa que los une.' })}
+            ${numField('design.sep', 'Separación entre los dos perfiles (ángulos) o espesor de la chapa nodal (UPN)', calc.design.sep, { unit: 'cm', hint: 'Ángulos: 0,5 cm. UPN: espesor de la chapa que los une.' })}
             ${numField('design.plate', 'Espesor de las presillas', calc.design.plate, { unit: 'cm', hint: '1/4" = 0,64 cm.' })}
           </div>
           <div class="field-row" style="flex-wrap:wrap;">
-            ${numField('design.lpD', 'Longitud de pandeo de diagonales y montantes', calc.design.lpD, { unit: '× longitud', hint: '1 = articuladas. 0,75 si son barras continuas, como permite el apunte de vigas reticuladas.' })}
+            ${numField('design.lpD', 'Longitud de pandeo de diagonales y montantes', calc.design.lpD, { unit: '× longitud', hint: '1 = articuladas. 0,75 si son barras continuas.' })}
             ${selField('design.sameChords', 'Cordones', calc.design.sameChords === 'yes' ? 'yes' : 'no', [['no', 'Cada cordón con su perfil mínimo'], ['yes', 'Cordón inferior igual al superior']])}
             ${deflSelect('design.deflLimit', calc.design.deflLimit || (calc.design.kind === 'gable' ? 'industrialRigid' : 'course'))}
           </div>
@@ -313,7 +313,7 @@ export const trussModule = {
           <h3 style="margin-top:0;">Predimensionado</h3>
           ${res ? `<table class="data-table"><thead><tr><th>Familia</th><th style="text-align:right;">Tracción máx.</th><th style="text-align:right;">Compresión máx.</th><th style="text-align:right;">Área estimada</th></tr></thead><tbody>
             ${Object.values(res.families).map((f) => `<tr><td>${f.label}</td><td style="text-align:right;">${kg(f.Tmax)} kg</td><td style="text-align:right;">${kg(f.Cmax)} kg</td><td style="text-align:right;">${fmt(f.Apre, 1)} cm²</td></tr>`).join('')}</tbody></table>
-            <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Área estimada: compresión con σ = σadm/2 y ω = 1, o tracción con σadm (apunte). El esfuerzo de cada familia es el mayor de sus barras en los dos estados de carga; en el paso 3 se elige el perfil más liviano que verifica todas las barras de la familia, con la longitud de pandeo de cada una.</p>`
+            <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Área estimada: compresión con σ = σadm/2 y ω = 1, o tracción con σadm. El esfuerzo de cada familia es el mayor de sus barras en los dos estados de carga; en el paso 3 se elige el perfil más liviano que verifica todas las barras de la familia, con la longitud de pandeo de cada una.</p>`
     : `<div class="empty-state">${out.error || 'Completá el paso 1.'}</div>`}
         </div>
       </div>`;
@@ -438,7 +438,7 @@ function memoria(calc, out) {
     sub: `${d.kind === 'gable' ? 'Cabriada de acero' : 'Cercha de acero'} · luz ${fmt(g.L, 2)} m`,
     html: `
       <h2>1. Datos</h2>
-      <table>${memoRow('Acero', res.grade.label, 'Método elástico: σ ≤ σadm = fluencia / 1,6')}${memoRow('Coeficiente ω', calc.materials.omegaTable === 'St37' ? 'Tabla 3 del apunte (St 37)' : `Tabla del ${res.grade.omega}`)}${dataRows}
+      <table>${memoRow('Acero', res.grade.label, 'Método elástico: σ ≤ σadm = fluencia / 1,6')}${memoRow('Coeficiente ω', calc.materials.omegaTable === 'St37' ? 'Tabla ω para acero St 37' : `Tabla del ${res.grade.omega}`)}${dataRows}
         ${memoRow('Estados de carga', res.states.map((s) => s.label).join(' · '), ART.states)}</table>
       <h2>2. Esfuerzos en las barras</h2>
       ${res.states.map((_, i) => figureOf(res, i, 'print')).join('')}

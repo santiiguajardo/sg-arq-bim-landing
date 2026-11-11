@@ -1,5 +1,5 @@
 // Uniones de estructuras de acero: soldaduras de filete, bulones, chapas de nudo, placas base con bulones de anclaje y uniones soldadas viga-columna.
-// FUENTE: Proyecto de Reglamento CIRSOC 301/2017 (INTI), Cap. J, Cap. L, método de estados límites (LRFD). Los apuntes de la cátedra (e3) no desarrollan uniones.
+// FUENTE: Proyecto de Reglamento CIRSOC 301/2017 (INTI), Cap. J, Cap. L, método de estados límites (LRFD). 
 //   - Soldaduras de filete (J.2.2, Tabla J.2-5): φ = 0,60, Fnw = 0,60 FEXX, área efectiva = 0,707 · lado · longitud. Lado mínimo Tabla J.2-4
 //     (3, 5, 6, 8 mm según el espesor de la parte más gruesa); lado máximo J.2.2(b); longitud mínima 4 veces el lado; β de la ec. (J.2-1).
 //   - Bulones (J.3, Tabla J.3-2): φ = 0,75; Fnt y Fnv de la tabla; separación mínima 3 d (J.3.3); distancia al borde de la Tabla J.3-4;
@@ -442,7 +442,7 @@ export function designBasePlate({ col, N, M = 0, H = 0, uplift = 0, fc, j, fy, l
   return out;
 }
 
-// ---------------------------------------------------------------- soldadura de las presillas de una columna compuesta (TP 5)
+// ---------------------------------------------------------------- soldadura de las presillas de una columna compuesta 
 // Tp: fuerza en cada presilla (kg), Mp: momento en la presilla (kg·cm), hP: altura de la presilla (cm), e: espesor (cm)
 export function designBattenWeld({ Tp, Mp, hP, j, label }) {
   const T = toN(Tp, j.gamma);
@@ -463,7 +463,7 @@ export function designBattenWeld({ Tp, Mp, hP, j, label }) {
   }
   out.rows.push({ k: `Soldadura de filete (${j.electrode}) de cada presilla a cada perfil`, v: `lado ${chosen.w} mm, dos cordones de ${fmtN(h, 0)} mm: fuerza resultante ${fmtN(chosen.f, 1)} N/mm ≤ φRn = ${fmtN(chosen.cap, 1)} N/mm` });
   out.checks.push({ ok: chosen.f <= chosen.cap, label: 'Soldadura de presillas', text: `${fmtN(chosen.f, 1)} ≤ ${fmtN(chosen.cap, 1)} N/mm` });
-  out.notes.push('Corte T y momento M = T e / 2 en cada presilla (TP 5); la soldadura se calcula como dos líneas verticales (resultante vectorial por mm de cordón).');
+  out.notes.push('Corte T y momento M = T e / 2 en cada presilla ; la soldadura se calcula como dos líneas verticales (resultante vectorial por mm de cordón).');
   out.ok = out.checks.every((c) => c.ok);
   return out;
 }
@@ -471,7 +471,7 @@ export function designBattenWeld({ Tp, Mp, hP, j, label }) {
 // ---------------------------------------------------------------- fuerza horizontal en las bases: rozamiento con el suelo o tensor entre bases
 // H: reacción horizontal de servicio de una base (kg); weight: peso de la base y del suelo sobre ella (kg); uplift: levantamiento por viento (kg); mu: coeficiente de rozamiento base-suelo
 // (DATO DEL ESTUDIO DE SUELOS: el programa no lo supone). Rozamiento resistente = μ (peso − levantamiento), sin empuje pasivo y sin la carga gravitatoria de la columna (del lado seguro).
-// El coeficiente de seguridad al deslizamiento 1,5 es un criterio habitual del proyectista (no figura en los reglamentos CIRSOC 101/201 ni en los apuntes).
+// El coeficiente de seguridad al deslizamiento 1,5 es un criterio habitual del proyectista (no figura en los reglamentos CIRSOC 101/201).
 // Tensor: barra roscada ISO 4.6 con φ Fnt Ab, φ = 0,75, Fnt = 260 MPa (Tabla J.3-2), con T mayorada = 1,5 × el empuje que no toma el rozamiento.
 const TIE_RODS = [12, 16, 20, 22, 24, 27, 30, 36, 42, 48];
 export function designBaseSliding({ H, weight = 0, uplift = 0, mu = 0, label }) {
@@ -534,8 +534,8 @@ export const DEFLECTION_LIMITS = {
   roofPeople: { label: 'Techos con carga frecuente de personas: L/250 y L/300', total: 250, live: 300 },
   floor: { label: 'Pisos en general: L/250 total y L/300 por sobrecarga', total: 250, live: 300 },
   floorSensitive: { label: 'Barras con revestimientos susceptibles de fisuración: L/300 y L/350', total: 300, live: 350 },
-  course: { label: 'Apunte de la cátedra: L/300', total: 300, live: 0 },
-  courseRoof: { label: 'Apunte de la cátedra: correas de techo L/200', total: 200, live: 0 },
+  course: { label: 'Límite L/300', total: 300, live: 0 },
+  courseRoof: { label: 'Correas de techo L/200', total: 200, live: 0 },
 };
 export const DRIFT_LIMIT_INDUSTRIAL = 150;                // desplazamiento de columnas por viento: H/150 (edificios industriales)
 export function deflectionCheck({ fTotal, fLive, L, lim }) {

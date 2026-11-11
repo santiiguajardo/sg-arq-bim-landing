@@ -16,12 +16,12 @@ export function selField(path, label, value, options, hint = '') {
   return `<div class="field"><label>${label}</label><select data-f="${path}">${options.map(([v, l]) => `<option value="${v}" ${String(v) === String(value) ? 'selected' : ''}>${escapeHtml(l)}</option>`).join('')}</select>${hint ? `<span class="text-muted" style="font-size:11.5px;">${hint}</span>` : ''}</div>`;
 }
 
+export const PREDIM_AVISO = 'Predimensionado aproximado: este cálculo es una estimación orientativa y no tiene validez como cálculo estructural validado ni firmado. No reemplaza el proyecto, la verificación ni la firma de un profesional matriculado.';
+
 export function disclaimer() {
   return `<div class="note">
-    Herramienta de predimensionado y verificación según <b>CIRSOC 201-2005</b> (hormigón) y <b>CIRSOC 101-2005</b> (cargas).
-    Cada fórmula cita su artículo y se verificó contra el texto oficial del INTI-CIRSOC. Las estructuras de acero se calculan con el método elástico
-    (tensiones admisibles) del material de la cátedra de Estructuras III. No reemplaza el cálculo, la verificación
-    y la firma de un profesional matriculado: los resultados deben ser revisados antes de usarlos en obra.
+    <b>Predimensionado aproximado.</b> Los resultados son una estimación orientativa, según el método elástico para el acero, CIRSOC 201-2005 (hormigón) y CIRSOC 101-2005 (cargas).
+    <b>No valen como archivo de cálculo estructural validado ni firmado</b>: no reemplazan el proyecto, la verificación y la firma de un profesional matriculado.
   </div>`;
 }
 
@@ -42,30 +42,58 @@ export const memoRow = (a, b, art = '') => `<tr><td>${a}${art ? `<br><span class
 // ---------------------------------------------------------------- memoria de cálculo en hojas A4
 // La memoria se arma en hojas de 210 × 297 mm (membrete con el logo negro, pie con número de página) y se imprime
 // desde un iframe con esas mismas hojas: lo que se ve en pantalla es lo que sale en el PDF.
-const MEM_FONT = 'system-ui, "Segoe UI", Arial, sans-serif';
+const MEM_FONT = "'Archivo', 'Helvetica Neue', Arial, sans-serif";
+const MEM_FONTS_HREF = 'https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;1,300&display=swap';
+// Hojas A4 con la marca (igual que los presupuestos): banda grafito con el isotipo blanco, linea azul, titulos con barrita azul.
 const MEM_CSS = `
-  .mem-sheet { width: 210mm; height: 296mm; background: #fff; color: #111; position: relative; box-sizing: border-box; overflow: hidden; font: 12px/1.45 ${MEM_FONT}; }
+  .mem-sheet { width: 210mm; height: 296mm; background: #fff; color: #14161c; position: relative; box-sizing: border-box; overflow: hidden; font: 11.5px/1.45 ${MEM_FONT}; }
   .mem-sheet * { box-sizing: border-box; }
-  .mem-head { position: absolute; left: 15mm; right: 15mm; top: 11mm; height: 15mm; display: flex; align-items: center; justify-content: space-between; gap: 8mm; border-bottom: 1px solid #111; padding-bottom: 2mm; }
-  .mem-head img { max-height: 12mm; max-width: 55mm; object-fit: contain; display: block; }
-  .mem-head .mem-ht { font-size: 10px; color: #555; text-align: right; line-height: 1.3; }
-  .mem-body { position: absolute; left: 15mm; right: 15mm; top: 30mm; bottom: 20mm; overflow: hidden; }
-  .mem-pgfoot { position: absolute; left: 15mm; right: 15mm; bottom: 8mm; display: flex; justify-content: space-between; gap: 8mm; font-size: 8.5px; line-height: 1.35; color: #666; border-top: 1px solid #ccc; padding-top: 2mm; }
+  .mem-band { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 8mm; padding: 0 15mm; background: #14161c; color: #fff; border-bottom: 1.1mm solid #2f6fed; }
+  .mem-sheet.first .mem-band { height: 31mm; }
+  .mem-sheet:not(.first) .mem-band { height: 15mm; }
+  .mem-brand { display: flex; align-items: center; gap: 3.5mm; min-width: 0; }
+  .mem-brand img { display: block; width: auto; object-fit: contain; }
+  .mem-sheet.first .mem-brand img { height: 15mm; max-width: 40mm; }
+  .mem-sheet:not(.first) .mem-brand img { height: 8mm; max-width: 24mm; }
+  .mem-brand img.mem-chip { background: #fff; border-radius: 1.2mm; padding: 1mm 1.6mm; }
+  .mem-name b { display: block; font-size: 13.5px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; text-transform: uppercase; }
+  .mem-name span { display: block; margin-top: 1px; font-size: 9px; color: #9aa0ac; }
+  .mem-sheet:not(.first) .mem-name b { font-size: 10.5px; }
+  .mem-sheet:not(.first) .mem-name span { display: none; }
+  .mem-doc { text-align: right; min-width: 0; }
+  .mem-doc b { display: block; font-size: 23px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+  .mem-doc i { display: block; margin-top: 1.5mm; font-size: 10.5px; font-weight: 300; font-style: italic; color: #7fa8ff; max-width: 95mm; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mem-sheet:not(.first) .mem-doc b { font-size: 11px; font-weight: 700; letter-spacing: 0; }
+  .mem-sheet:not(.first) .mem-doc i { display: none; }
+  .mem-body { position: absolute; left: 15mm; right: 15mm; bottom: 19mm; overflow: hidden; }
+  .mem-sheet.first .mem-body { top: 38mm; }
+  .mem-sheet:not(.first) .mem-body { top: 22mm; }
+  .mem-pgfoot { position: absolute; left: 15mm; right: 15mm; bottom: 8mm; display: flex; justify-content: space-between; gap: 8mm; font-size: 8.3px; line-height: 1.35; color: #6b7080; border-top: 1px solid #d9dce3; padding-top: 2mm; }
   .mem-pgfoot span:last-child { white-space: nowrap; }
-  .mem-body h1 { font-size: 20px; margin: 0 0 4px; }
-  .mem-body h2 { font-size: 13px; margin: 18px 0 6px; padding-bottom: 4px; border-bottom: 1.5px solid #111; text-transform: uppercase; letter-spacing: .04em; }
+  .mem-pgfoot b { color: #14161c; font-weight: 700; }
+  .mem-body h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 3px; }
+  .mem-body h2 { position: relative; font-size: 12.5px; font-weight: 800; letter-spacing: -0.01em; margin: 17px 0 6px; padding: 3.4mm 0 3px; border: 0; border-bottom: 1px solid #14161c; }
+  .mem-body h2::before { content: ''; position: absolute; left: 0; top: 0; width: 7mm; height: 1mm; background: #2f6fed; }
   .mem-body h2:first-child { margin-top: 0; }
   .mem-body table { width: 100%; border-collapse: collapse; }
-  .mem-body td { padding: 4px 0; border-bottom: 1px solid #ddd; vertical-align: top; overflow-wrap: anywhere; }
+  .mem-body th { text-align: left; padding: 3px 0 4px; border-bottom: 1px solid #14161c; font-size: 8.3px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #6b7080; }
+  .mem-body td { padding: 4px 0; border-bottom: 1px solid #e4e6eb; vertical-align: top; overflow-wrap: anywhere; }
   .mem-body td:first-child { width: 52%; padding-right: 12px; }
-  .mem-body .mem-sub { color: #555; margin: 0 0 6px; }
-  .mem-body .mem-art { color: #666; font-size: 10px; }
+  .mem-body table.mem-cols td:first-child { width: auto; }
+  .mem-body table.mem-cols td, .mem-body table.mem-cols th { padding-right: 6px; }
+  .mem-body table.mem-cols td.n, .mem-body table.mem-cols th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mem-body tr.mem-total td { border-top: 1px solid #14161c; border-bottom: 0; font-weight: 800; }
+  .mem-body tr.mem-total td.n:last-child { color: #2f6fed; }
+  .mem-body .mem-sub { color: #6b7080; margin: 0 0 6px; font-size: 10.5px; letter-spacing: .02em; }
+  .mem-body .mem-art { color: #6b7080; font-size: 9.5px; }
   .mem-body .mem-ok { color: #15803d; font-weight: 700; }
   .mem-body .mem-bad { color: #b91c1c; font-weight: 700; }
   .mem-body svg { max-width: 100%; height: auto; display: block; margin: 4px 0 8px; }
   .mem-body svg text { paint-order: stroke fill; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
   .mem-body svg text[fill="#fff"], .mem-body svg text[fill="white"] { stroke: none; }
-  .mem-body .mem-foot { margin-top: 16px; font-size: 10.5px; color: #555; }
+  .mem-body .mem-foot { margin-top: 16px; font-size: 10px; color: #6b7080; }
+  .mem-body .mem-aviso { margin: 8px 0 14px; padding: 3mm 4mm; background: #fff8ea; border: 1px solid #e0a03a; border-left: 2.2mm solid #e0a03a; border-radius: 1.2mm; font-size: 10.5px; line-height: 1.45; color: #4a3a12; }
+  .mem-body .mem-foot { color: #4b5060; }
 `;
 const MEM_SHEET_CSS = `
   .mem-sheets { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 4px 0 30px; }
@@ -78,10 +106,15 @@ const MEM_PRINT_CSS = `
   .mem-sheet { break-after: page; page-break-after: always; }
   .mem-sheet:last-child { break-after: auto; page-break-after: auto; }
 `;
-const MEM_DISCLAIMER = 'Cálculo con CIRSOC 201-2005 y CIRSOC 101-2005. Herramienta de apoyo: debe ser revisada y firmada por un profesional matriculado antes de usarse en obra.';
+
 
 function ensureMemStyles() {
   if (document.getElementById('memStyles')) return;
+  if (!document.getElementById('memFonts')) {
+    const lk = document.createElement('link');
+    lk.id = 'memFonts'; lk.rel = 'stylesheet'; lk.href = MEM_FONTS_HREF;
+    document.head.appendChild(lk);
+  }
   const st = document.createElement('style');
   st.id = 'memStyles';
   st.textContent = MEM_CSS + MEM_SHEET_CSS;
@@ -160,7 +193,7 @@ function paginate(html, makeSheet) {
   return pages;
 }
 
-const printDocument = (title, sheetsHtml) => `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>${MEM_CSS}${MEM_PRINT_CSS}</style></head><body>${sheetsHtml}</body></html>`;
+const printDocument = (title, sheetsHtml) => `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><link rel="stylesheet" href="${MEM_FONTS_HREF}"><style>${MEM_CSS}${MEM_PRINT_CSS}</style></head><body>${sheetsHtml}</body></html>`;
 
 function printMemoria(title, sheetsHtml) {
   const frame = document.createElement('iframe');
@@ -172,7 +205,7 @@ function printMemoria(title, sheetsHtml) {
   const oldTitle = document.title;
   const cleanup = () => { document.title = oldTitle; frame.remove(); };
   w.document.open();
-  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>${MEM_CSS}${MEM_PRINT_CSS}</style></head><body>${sheetsHtml}</body></html>`);
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><link rel="stylesheet" href="${MEM_FONTS_HREF}"><style>${MEM_CSS}${MEM_PRINT_CSS}</style></head><body>${sheetsHtml}</body></html>`);
   w.document.close();
   w.addEventListener('afterprint', cleanup);
   document.title = title;     // el navegador propone este nombre al guardar el PDF
@@ -183,7 +216,8 @@ function printMemoria(title, sheetsHtml) {
 }
 
 // Memoria de cálculo a pantalla completa, en hojas A4, imprimible.
-export async function openMemoriaDoc({ title, sub, html, disclaimer = MEM_DISCLAIMER, towerUnits = false }) {
+export async function openMemoriaDoc({ title, sub, html, disclaimer: scopeNote = null, towerUnits = false, extraHtml = '' }) {
+  const disclaimer = PREDIM_AVISO;
   ensureMemStyles();
   const overlay = document.createElement('div');
   overlay.className = 'memoria-overlay';
@@ -197,15 +231,22 @@ export async function openMemoriaDoc({ title, sub, html, disclaimer = MEM_DISCLA
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   const close = () => { document.removeEventListener('keydown', onKey); overlay.remove(); };
   document.addEventListener('keydown', onKey);
-  const logo = await loadLogoData('negro');
+  // Logo blanco sobre la banda grafito; si la cuenta solo tiene el negro, va dentro de una pastilla blanca.
+  let logo = await loadLogoData('blanco');
+  let chip = false;
+  if (!logo) { logo = await loadLogoData('negro'); chip = Boolean(logo); }
   if (!overlay.isConnected) return;
   const holder = overlay.querySelector('.mem-sheets');
   const date = new Date().toLocaleDateString('es-AR');
-  const headText = `<div class="mem-ht"><b>Memoria de cálculo</b><br>${escapeHtml(title)}</div>`;
+  const brandName = (document.querySelector('.brand-text strong, .brand-name')?.textContent || 'SG ARQ BIM').trim();
+  const brandSub = (document.querySelector('.brand-text span')?.textContent || 'Estructuras · memoria de cálculo').trim();
   const makeSheet = () => {
     const s = document.createElement('section');
-    s.className = 'mem-sheet';
-    s.innerHTML = `<div class="mem-head">${logo ? `<img src="${logo}" alt="Logo" />` : '<span></span>'}${headText}</div><div class="mem-body"></div><div class="mem-pgfoot"><span>${escapeHtml(disclaimer)}</span><span class="mem-pg"></span></div>`;
+    const first = holder.children.length === 0;
+    s.className = first ? 'mem-sheet first' : 'mem-sheet';
+    s.innerHTML = `<div class="mem-band"><div class="mem-brand">${logo ? `<img src="${logo}" alt="" class="${chip ? 'mem-chip' : ''}" />` : ''}<div class="mem-name"><b>${escapeHtml(brandName)}</b><span>${escapeHtml(brandSub)}</span></div></div>
+      <div class="mem-doc"><b>${first ? 'Memoria de cálculo' : escapeHtml(title)}</b><i>${escapeHtml(title)}</i></div></div>
+      <div class="mem-body"></div><div class="mem-pgfoot"><span>${escapeHtml(disclaimer)}</span><span class="mem-pg"></span></div>`;
     holder.appendChild(s);          // tiene que estar en el documento para medir
     return s;
   };
@@ -214,9 +255,11 @@ export async function openMemoriaDoc({ title, sub, html, disclaimer = MEM_DISCLA
   const tinted = String(html)
     .replace(/<td>✓ /g, '<td class="mem-ok">✓ ').replace(/<td>✗ /g, '<td class="mem-bad">✗ ')
     .replace(/(<td[^>]*)>verifica<\/td>/g, '$1 class="mem-ok">✓ verifica</td>').replace(/(<td[^>]*)>no verifica<\/td>/g, '$1 class="mem-bad">✗ no verifica</td>');
-  const content = `<h1>${escapeHtml(title)}</h1><p class="mem-sub">${escapeHtml(sub)} · ${date}</p>${tidyHtml(convertHtmlUnits(tinted, { tower: towerUnits }))}`;
+  const aviso = `<div class="mem-aviso"><b>Predimensionado aproximado.</b> Esta memoria es una estimación orientativa: <b>no tiene validez como cálculo estructural validado ni firmado</b> y no puede presentarse como tal. No reemplaza el proyecto, la verificación ni la firma de un profesional matriculado.</div>`;
+  const scope = scopeNote ? `<h2>Alcance y limitaciones</h2><p class="mem-foot">${escapeHtml(scopeNote)}</p>` : '';
+  const content = `<h1>${escapeHtml(title)}</h1><p class="mem-sub">${escapeHtml(sub)} · ${date}</p>${aviso}${tidyHtml(convertHtmlUnits(tinted + extraHtml, { tower: towerUnits }))}${scope}`;
   const pages = paginate(content, makeSheet);
-  pages.forEach((p, i) => { p.querySelector('.mem-pg').textContent = `Página ${i + 1} de ${pages.length}`; });
+  pages.forEach((p, i) => { p.querySelector('.mem-pg').innerHTML = `<b>${escapeHtml(brandName)}</b> · Página ${i + 1} de ${pages.length}`; });
   // en pantallas angostas se achican las hojas para que entre el ancho completo
   const fit = () => { const k = Math.min(1, (overlay.clientWidth - 24) / 794); holder.style.zoom = k < 1 ? String(k) : ''; };
   fit();

@@ -47,6 +47,21 @@ export function setCalcField(id, path, value) {
   save();
 }
 
+// Cambia varios campos de una vez ({ "design.A": 12, "design.H": 5 }) con un solo guardado (lo usa el arrastre de los esquemas).
+export function setCalcFields(id, patch, opts = {}) {
+  const c = state.calcs.find((x) => x.id === id);
+  if (!c) return;
+  Object.entries(patch).forEach(([path, value]) => {
+    const keys = path.split('.');
+    let o = c;
+    for (const k of keys.slice(0, -1)) o = o[k] = o[k] || {};
+    o[keys[keys.length - 1]] = value;
+  });
+  if (opts.clearChosen) c.chosen = null;
+  c.updatedAt = new Date().toISOString();
+  save();
+}
+
 export function duplicateCalc(id) {
   const c = state.calcs.find((x) => x.id === id);
   if (!c) return null;

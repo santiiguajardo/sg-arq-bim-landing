@@ -1,6 +1,6 @@
 // Naves de acero con (a) cabriada apoyada sobre columnas y (b) arco parabólico sobre columnas (o que arranca del terreno). El análisis es el de un pórtico
 // plano por rigidez (frame.js): en la cabriada las barras son articuladas (se resuelven junto con las columnas, que toman el viento); el arco se discretiza en
-// tramos rectos sobre la parábola. Método elástico de la cátedra (σ ≤ σadm, ω) y viento CIRSOC 102 (wind.js). Unidades: kg, m; secciones en cm.
+// tramos rectos sobre la parábola. Método elástico (σ ≤ σadm, ω) y viento CIRSOC 102 (wind.js). Unidades: kg, m; secciones en cm.
 import * as S from './steel.js';
 import { solveFrame } from './frame.js';
 import { naveWind, archWind } from './wind.js';
@@ -115,8 +115,8 @@ function runCab(p, self) {
     if (p.windMix !== false && wind.lateral.length > 1) {
       const mx = (key, sign) => Math.max(...wind.lateral.map((c) => sign * c[key].p)) * sign;
       const pw = mx('wallWindward', 1); const rw = mx('roofWindward', -1); const rl = mx('roofLeeward', -1); const pl = mx('wallLeeward', -1);
-      addWind(`V${states.length}`, 'Viento lateral (izq.), más desfavorable por superficie (apunte)', pw, rw, rl, pl, false);
-      addWind(`V${states.length}`, 'Viento lateral (der.), más desfavorable por superficie (apunte)', pw, rw, rl, pl, true);
+      addWind(`V${states.length}`, 'Viento lateral (izq.), más desfavorable por superficie', pw, rw, rl, pl, false);
+      addWind(`V${states.length}`, 'Viento lateral (der.), más desfavorable por superficie', pw, rw, rl, pl, true);
     }
     wind.frontal.forEach((c) => {
       const gi = c.gcpi > 0 ? '+' : c.gcpi < 0 ? '−' : '0';
@@ -293,8 +293,8 @@ function archStates(g, o) {
     if (o.windMix !== false && wind.lateral.length > 1) {
       const mx = (fn, sign) => Math.max(...wind.lateral.map((c) => sign * fn(c))) * sign;
       const c = { wallWindward: { p: mx((q) => q.wallWindward.p, 1) }, wallLeeward: { p: mx((q) => q.wallLeeward.p, -1) }, quarterWindward: { p: mx((q) => q.quarterWindward.p, -1) }, center: { p: mx((q) => q.center.p, -1) }, quarterLeeward: { p: mx((q) => q.quarterLeeward.p, -1) } };
-      lat(c, false, '', 'Viento lateral (izq.), más desfavorable por zona (apunte)');
-      lat(c, true, '', 'Viento lateral (der.), más desfavorable por zona (apunte)');
+      lat(c, false, '', 'Viento lateral (izq.), más desfavorable por zona');
+      lat(c, true, '', 'Viento lateral (der.), más desfavorable por zona');
     }
     wind.frontal.forEach((c) => {
       const gi = c.gcpi > 0 ? '+' : c.gcpi < 0 ? '−' : '0';

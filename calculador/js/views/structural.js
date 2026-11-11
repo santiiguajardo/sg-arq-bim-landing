@@ -5,6 +5,7 @@ import { CIRSOC201 as N, LIVE_LOADS, ARTICLES } from '../structural/norms.js';
 import * as rc from '../structural/rc.js';
 import { newCalc } from '../structural/defaults.js';
 import { fmt, numField, selField, disclaimer, openMemoriaDoc, checksCard } from './structural-ui.js';
+import { computoSection } from '../structural/computo.js';
 import { columnModule } from './structural-column.js';
 import { footingModule } from './structural-footing.js';
 import { SOIL_UNIT_WEIGHTS } from '../structural/footing.js';
@@ -16,7 +17,7 @@ import { trussModule } from './structural-truss.js';
 import { portalModule } from './structural-portal.js';
 import { latticeModule } from './structural-lattice.js';
 import { naveCabModule, naveArchModule } from './structural-nave2.js';
-import { wireAxisEditors, axisEditor, axisSketch } from './structural-spans.js';
+import { wireAxisEditors, axisEditor, axisSketch, wireSketchDrag } from './structural-spans.js';
 import { applyForceUnits, unitToggleHtml, wireUnitToggle } from './structural-units.js';
 import { designContinuous, analyzeContinuous, minHeight } from '../structural/cbeam.js';
 import { tidySvgs } from './svg-tidy.js';
@@ -36,7 +37,7 @@ const STEEL = new Set(['sfloor', 'sbeam', 'spurlin', 'scolumn', 'stie', 'struss'
 // Grandes luces: no es una familia de material (cables y telas de acero, cáscaras de hormigón o cerámica, vigas Vierendeel, postesado…), tiene su propia categoría.
 const GL = new Set(['stens', 'scomp', 'svier', 'spost', 'splegado', 'sestereo', 'sph', 'sdome']);
 const GL_NOTES = { stens: TENS_NOTE, scomp: COMP_NOTE, svier: BIG_NOTE, spost: BIG_NOTE, splegado: FOLD_NOTE, sestereo: SPACE_NOTE, sph: SHELL_NOTE, sdome: SHELL_NOTE };
-const STEEL_NOTE = 'Cálculo por el método elástico (tensiones admisibles) con el material de la cátedra de Estructuras III y CIRSOC 101 para las cargas; bases con CIRSOC 201-2005. Herramienta de apoyo: debe ser revisada y firmada por un profesional matriculado antes de usarse en obra.';
+const STEEL_NOTE = 'Predimensionado aproximado por el método elástico (tensiones admisibles), con CIRSOC 101 para las cargas y CIRSOC 201-2005 para las bases. Herramienta de apoyo: no reemplaza la verificación y la firma de un profesional matriculado.';
 
 const ELEMENTS = {
   building: { label: 'Edificio completo de hormigón armado' },
@@ -545,6 +546,7 @@ function renderCalc(root, state, calc, step) {
   });
   mod?.wire?.(root, calc);
   wireAxisEditors(root, calc);
+  wireSketchDrag(root, calc);
   root.querySelector('#renameBtn').addEventListener('click', () => {
     openModal(`<h2>Renombrar cálculo</h2><form id="rnForm"><div class="field"><input name="name" required maxlength="80" value="${escapeHtml(calc.name)}" /></div>
       <div class="modal-actions"><button type="button" class="btn" id="rnCancel">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div></form>`, (bd) => {
@@ -554,7 +556,7 @@ function renderCalc(root, state, calc, step) {
   });
   root.querySelector('#memoriaBtn').addEventListener('click', () => {
     if (!canMemo(calc, out)) return;
-    if (mod) { const doc = mod.memoria(calc, out); if (doc) openMemoriaDoc(GL.has(calc.element) ? { ...doc, disclaimer: GL_NOTES[calc.element] } : calc.element === 'tower' ? { ...doc, disclaimer: TOWER_NOTE } : STEEL.has(calc.element) ? { ...doc, disclaimer: STEEL_NOTE } : doc); else showToast('Todavía no hay una solución para la memoria.'); }
+    if (mod) { const doc0 = mod.memoria(calc, out); const doc = doc0 ? { ...doc0, extraHtml: computoSection(calc, out) } : doc0; if (doc) openMemoriaDoc(GL.has(calc.element) ? { ...doc, disclaimer: GL_NOTES[calc.element] } : calc.element === 'tower' ? { ...doc, disclaimer: TOWER_NOTE } : STEEL.has(calc.element) ? { ...doc, disclaimer: STEEL_NOTE } : doc); else showToast('Todavía no hay una solución para la memoria.'); }
     else openMemoria(calc, out);
   });
 }

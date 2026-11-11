@@ -1,5 +1,5 @@
 // Columna reticulada de acero (dos cordones con diagonales en zigzag, o cuatro cordones con diagonales en las cuatro caras).
-// Motor en js/structural/steel-lattice.js. El método de la cátedra (TP 5) cubre las presillas; la rigidez al corte de la celosía se deduce (Engesser).
+// Motor en js/structural/steel-lattice.js. El método habitual cubre las presillas; la rigidez al corte de la celosía se deduce (Engesser).
 import { previewSketch } from './structural-spans.js';
 import * as S from '../structural/steel.js';
 import * as L from '../structural/steel-lattice.js';
@@ -9,15 +9,15 @@ import { latticeColumnFigure } from './structural-draw.js';
 import { jointsPanel, jointsLattice, jointsMemo } from './structural-joints.js';
 
 const GRADE_OPTS = Object.entries(S.GRADES).map(([k, g]) => [k, g.label]);
-const OMEGA_OPTS = [['grade', 'Tabla ω del acero elegido (más conservadora)'], ['St37', 'Tabla 3 del apunte (acero St 37), como en los ejemplos de la cátedra']];
+const OMEGA_OPTS = [['grade', 'Tabla ω del acero elegido (más conservadora)'], ['St37', 'Tabla ω para acero St 37 (alternativa)']];
 const SUP_OPTS = Object.entries(S.SUPPORTS_BUCKLING).map(([k, v]) => [k, `${v.label} (Lp = ${v.k} H)`]);
 const kg = (v) => fmt(v, 0);
 const pill = (ok) => (ok ? '<span class="tag tag-freelance">Verifica</span>' : '<span class="tag tag-alta">No verifica</span>');
 const ART = {
-  composite: 'Columna compuesta (TP 5, apunte "Compresión con pandeo"): λ ideal, λ1 = s / i1 ≤ 50, Q = ω N / 80',
-  shear: 'Rigidez al corte de las diagonales (Engesser): λi² = λy² + π² A / (n Ad sen²α cos α), deducida; no figura en los apuntes',
+  composite: 'Columna compuesta: λ ideal, λ1 = s / i1 ≤ 50, Q = ω N / 80',
+  shear: 'Rigidez al corte de las diagonales (Engesser): λi² = λy² + π² A / (n Ad sen²α cos α), deducida; no figura en el reglamento',
 };
-const NOTE = 'El apunte de la cátedra desarrolla la columna compuesta con presillas. Para la celosía se mantiene la estructura de verificación (esbeltez ideal, esbeltez local ≤ 50, corte ideal Q = ωN/80) y se agrega el efecto de la deformación por corte de las diagonales con el criterio de Engesser (1/Pcr = 1/PE + 1/S, S = n E Ad sen²α cos α, α con el eje de la columna). Esa parte no está transcripta de un reglamento: verificala con el CIRSOC 301 antes de usarla en obra.';
+const NOTE = 'El método habitual desarrolla la columna compuesta con presillas. Para la celosía se mantiene la estructura de verificación (esbeltez ideal, esbeltez local ≤ 50, corte ideal Q = ωN/80) y se agrega el efecto de la deformación por corte de las diagonales con el criterio de Engesser (1/Pcr = 1/PE + 1/S, S = n E Ad sen²α cos α, α con el eje de la columna). Esa parte no está transcripta de un reglamento: verificala con el CIRSOC 301 antes de usarla en obra.';
 
 function paramsOf(calc) {
   const d = calc.design;
@@ -57,7 +57,7 @@ export const latticeModule = {
           <div class="field-row" style="flex-wrap:wrap;">
             ${numField('design.N', 'Carga axial N', d.N, { unit: 'kg', hint: 'De servicio; se suma el peso propio de la columna.' })}${numField('design.H', 'Altura H', d.H, { unit: 'm' })}
           </div>
-          ${selField('design.support', 'Sustentación', d.support, SUP_OPTS, 'Longitud de pandeo del apunte.')}
+          ${selField('design.support', 'Sustentación', d.support, SUP_OPTS, 'Coeficiente de longitud de pandeo según la sustentación.')}
         </div>
         <div class="card">
           <h3 style="margin-top:0;">Celosía</h3>
@@ -66,7 +66,7 @@ export const latticeModule = {
             ${four ? numField('design.e2', 'Distancia entre cordones en Y', d.e2, { unit: 'cm' }) : ''}
           </div>
           <div class="field-row" style="flex-wrap:wrap;">
-            ${numField('design.alpha', 'Ángulo de las diagonales con el eje de la columna', d.alpha, { unit: '°', hint: 'Usual: entre 40° y 70° (ideal 60°, apunte "Vigas reticuladas").' })}
+            ${numField('design.alpha', 'Ángulo de las diagonales con el eje de la columna', d.alpha, { unit: '°', hint: 'Usual: entre 40° y 70° (ideal 60°).' })}
             ${numField('design.lpD', 'Longitud de pandeo de las diagonales', d.lpD, { unit: '× longitud', hint: '1 = articuladas; 0,75 si son continuas.' })}
           </div>
           <p class="text-muted" style="font-size:12px; margin:0;">Diagonales en zigzag (una por cada medio paso); los nudos de un mismo cordón quedan a 2 e cotg α. ${four ? 'Con cuatro cordones el corte de cada dirección lo toman dos caras.' : ''}</p>
@@ -164,9 +164,9 @@ function memoria(calc, out) {
     html: `
       <h2>1. Datos</h2>
       <table>${memoRow('Acero', res.grade.label, 'Método elástico: σ ≤ σadm = fluencia / 1,6')}${memoRow('Carga N', `${kg(res.N0)} kg (con el peso de los cordones: ${kg(res.Nt)} kg)`)}
-        ${memoRow('Sustentación', `${escapeHtml(res.sup.label)}; Lp = ${fmt(res.sup.k, 1)} H = ${fmt(res.Lp, 0)} cm`, 'Apunte "Longitud de pandeo"')}
+        ${memoRow('Sustentación', `${escapeHtml(res.sup.label)}; Lp = ${fmt(res.sup.k, 1)} H = ${fmt(res.Lp, 0)} cm`, '')}
         ${memoRow('Celosía', `${res.m === 2 ? `e = ${fmt(res.e, 0)} cm` : `${fmt(res.e, 0)} × ${fmt(res.e2, 0)} cm`}; diagonales en zigzag a α = ${fmt(res.alpha, 0)}° con el eje; paso ${fmt(res.pitch, 0)} cm`)}
-        ${memoRow('Coeficiente ω', input.omegaTable === 'St37' ? 'Tabla 3 del apunte (St 37)' : `Tabla del ${res.grade.omega}`)}</table>
+        ${memoRow('Coeficiente ω', input.omegaTable === 'St37' ? 'Tabla ω para acero St 37' : `Tabla del ${res.grade.omega}`)}</table>
       <h2>2. Esquema</h2>
       ${figOf(res, input, 'print')}
       <h2>3. Verificaciones</h2>
@@ -177,6 +177,6 @@ function memoria(calc, out) {
       ${jointsMemo(jointsLattice(res, calc))}
       <h2>5. Cómputo</h2>
       <table>${memoRow('Peso', `cordones ${kg(res.wChords)} kg + diagonales ${kg(res.wDiag)} kg = ${kg(res.weight)} kg (${fmt(res.weight / input.H, 1)} kg/m)`, 'Sin chapas de unión, placas de base ni soldaduras')}
-        ${memoRow('Nota', 'La rigidez al corte de la celosía se dedujo con el criterio de Engesser y no figura en los apuntes: verificar con el CIRSOC 301.')}</table>`,
+        ${memoRow('Nota', 'La rigidez al corte de la celosía se dedujo con el criterio de Engesser y no figura en el reglamento: verificar con el CIRSOC 301.')}</table>`,
   };
 }

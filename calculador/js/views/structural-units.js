@@ -56,6 +56,7 @@ function convertString(text, target, skipMass) {
 
 const isMassBlock = (node) => {
   const el = node.nodeType === 1 ? node : node.parentElement;
+  if (el && el.closest && el.closest('table.mem-mass')) return true;            // tablas del cómputo de materiales: siempre en kg
   const blk = el && el.closest ? el.closest('tr, li, p, .vf-row, .card h3') : null;
   return Boolean(blk && MASS_RE.test(blk.textContent));
 };
@@ -66,6 +67,7 @@ const ONLY_NUM = /^[\s\d.,·/−\-–+]*\d[\s\d.,·/−\-–+]*$/;
 
 function convertTables(root, target) {
   root.querySelectorAll('table').forEach((tb) => {
+    if (tb.classList.contains('mem-mass')) return;
     const rows = [...tb.rows];
     if (!rows.length) return;
     // grilla de celdas con rowspan y colspan resueltos

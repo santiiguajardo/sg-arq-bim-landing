@@ -1,10 +1,10 @@
 // Estereoestructura plana (retícula espacial de caños) para cubrir grandes luces.
-// FUENTE: guía de predimensionado 5 "Estereoestructuras" del Taller de Estructuras E4 (curso 2024; carpeta e4).
-// Método de la cátedra: la estereoestructura se asimila a una placa isótropa (a) apoyada sobre vigas y columnas o (b) apoyada directamente sobre columnas (como un entrepiso sin vigas).
+// Predimensionado aproximado: 5 "Estereoestructuras".
+// Método: la estereoestructura se asimila a una placa isótropa (a) apoyada sobre vigas y columnas o (b) apoyada directamente sobre columnas (como un entrepiso sin vigas).
 // Cada franja del ancho de un módulo se resuelve como viga continua con los coeficientes de la Tabla 1 (Ca de apoyo, Ct de tramo, voladizo Ca = 2) y carga qm = 0,65 q Lm (qx = qy = 0,65 q si ly / lx ≥ 0,80);
 // con placa sobre columnas los momentos se multiplican por 1,4 (apoyo) y 1,2 (tramo). Barras superiores e inferiores: C = T = M / H, caños de la Tabla G (DIN 2448), pandeo con ω (Sk = 0,7 L).
 // Diagonales: Q' = Q Ld / (4 H). Flecha: α M Lt² / (E Jp) con α = 5/48 y Jp = 2 (J + A ((H − Φ) / 2)²), admisible Lt / 500. Columnas por el área de influencia y Estado 3 (peso propio + viento a presión).
-// Unidades: m para las luces, kg/m² para las cargas; tensiones en kg/cm² y secciones en cm (como la guía).
+// Unidades: m para las luces, kg/m² para las cargas; tensiones en kg/cm² y secciones en cm .
 import { TUBES_G } from './cables-data.js';
 import * as S from './steel.js';
 import * as W from './wind.js';
@@ -22,7 +22,7 @@ export const MAX_SPANS = 4;
 export function stripMoments({ spans, cantL = 0, cantR = 0, qm, fSup = 1, fTr = 1 }) {
   const n = spans.length;
   const c = STRIP_COEF[n];
-  if (!c) return { error: `La guía da coeficientes para 1 a ${MAX_SPANS} tramos continuos.` };
+  if (!c) return { error: `El método da coeficientes para 1 a ${MAX_SPANS} tramos continuos.` };
   const items = [];
   if (cantL > 0) items.push({ kind: 'cant', label: 'Voladizo izquierdo', L: cantL, coef: 2, M: fSup * qm * cantL ** 2 / 2, R: qm * cantL });
   spans.forEach((L, i) => {
@@ -42,7 +42,7 @@ export function tubeBuckling(tube, C, Sk, table = 'F-22') {
 }
 
 // El caño más liviano de la Tabla G que cubre la sección necesaria (T / σadm) y, si compite al pandeo, verifica ω C / Fe ≤ σadm con una esbeltez λ ≤ lambdaMax
-// (criterio de proyecto: la guía no la fija, pero sus caños de diagonales quedan en λ ≈ 140; CIRSOC 301 admite hasta 200 en barras comprimidas). extra(tubo) permite exigir otras condiciones.
+// (criterio de proyecto: CIRSOC 301 admite hasta 200 en barras comprimidas). extra(tubo) permite exigir otras condiciones.
 export function pickTube({ C, Sk, sigma = 1400, table = 'F-22', compress = true, minA = 0, lambdaMax = 150, extra = null }) {
   const Fnec = C / sigma;
   for (const t of [...TUBES_G].sort((x, y) => x.G - y.G || x.A - y.A)) {
@@ -58,7 +58,7 @@ export function pickTube({ C, Sk, sigma = 1400, table = 'F-22', compress = true,
 const tubeName = (t) => (t ? `ø ${t.de} × ${t.s} mm` : '—');
 export { tubeName };
 
-// Viento sobre la cubierta con la simplificación de la guía: Cp = ±0,8 en toda la superficie y GCpi = ±0,18; p = qh (G Cp + GCpi) en kg/m², redondeado al kg/m²
+// Viento sobre la cubierta con la simplificación habitual: Cp = ±0,8 en toda la superficie y GCpi = ±0,18; p = qh (G Cp + GCpi) en kg/m², redondeado al kg/m²
 export function windOnRoof({ V, exposure = 'B', z = 7.5, Kzt = 1, Kd = 0.85, I = 1, G = 0.85, Cp = 0.8, GCpi = 0.18 }) {
   const Kz = W.kzOf(z, exposure, 2);
   const q = W.dynamicPressure({ V, Kz, Kzt, Kd, I });
@@ -67,11 +67,11 @@ export function windOnRoof({ V, exposure = 'B', z = 7.5, Kzt = 1, Kd = 0.85, I =
 
 const ZONE_WIDTHS = (spans, cL, cR) => spans.length + 1 > 0 ? Array.from({ length: spans.length + 1 }, (_, j) => (j > 0 ? spans[j - 1] / 2 : cL) + (j < spans.length ? spans[j] / 2 : cR)) : [];
 
-// p: ver el módulo de la vista (todos los campos tienen valores por defecto del ejemplo de la guía)
+// p: ver el módulo de la vista (todos los campos tienen valores por defecto de un ejemplo)
 export function designSpaceFrame(p) {
   const xs = p.xSpans.map(Number); const ys = p.ySpans.map(Number);
   const xcL = Number(p.xCantL) || 0; const xcR = Number(p.xCantR) || 0; const ycL = Number(p.yCantL) || 0; const ycR = Number(p.yCantR) || 0;
-  if (xs.length > MAX_SPANS || ys.length > MAX_SPANS) return { error: `La guía da coeficientes para 1 a ${MAX_SPANS} tramos continuos en cada dirección.` };
+  if (xs.length > MAX_SPANS || ys.length > MAX_SPANS) return { error: `El método da coeficientes para 1 a ${MAX_SPANS} tramos continuos en cada dirección.` };
   const sigma = Number(p.sigma) || 1400; const E = Number(p.E) || 2100000; const table = p.omegaTable || 'F-22';
   const Lt = Math.max(...xs, ...ys); const Lv = Math.max(xcL, xcR, ycL, ycR);
   const Hmin = Math.max(Lt / 18, Lv / 9); const LmMin = Math.SQRT2 * Hmin;
@@ -176,12 +176,12 @@ export function designSpaceFrame(p) {
 
   // ---- verificaciones
   const f0 = (v, n = 0) => Number(v).toFixed(n);
-  res.checks.push({ ok: ratio >= 0.8 - 1e-9, label: 'Hipótesis de la guía: relación de luces', text: `ly / lx = ${f0(ratio, 2)} ≥ 0,80 (qx = qy = 0,65 q). Si no se cumple hay que repartir la carga con tablas de losas cruzadas (Loser), que la guía no incluye.` });
+  res.checks.push({ ok: ratio >= 0.8 - 1e-9, label: 'Hipótesis de diseño: relación de luces', text: `ly / lx = ${f0(ratio, 2)} ≥ 0,80 (qx = qy = 0,65 q). Si no se cumple hay que repartir la carga con tablas de losas cruzadas (Loser), que el método no incluye.` });
   const t1 = chord.tube;
   res.checks.push(t1 ? { ok: true, label: cols ? 'Barras de la placa sobre columnas' : 'Barras superiores e inferiores de la placa', text: `M máx = ${f0(Mplate)} kg·m → C = T = M / H = ${f0(Cplate)} kg; Fe nec = ${f0(chord.Fnec, 2)} cm² → ${tubeName(t1)} (Fe = ${f0(t1.A, 2)} cm²); pandeo: λ = ${f0(chord.lambda, 1)}, ω = ${chord.omega}, σ = ω C / Fe = ${f0(chord.sigma)} ≤ ${sigma} kg/cm²` } : { ok: false, label: 'Barras de la placa', text: `No hay caño en la Tabla G que cubra Fe = ${f0(chord.Fnec, 2)} cm² y verifique el pandeo con σadm = ${sigma} kg/cm²: aumentar la altura o achicar la luz del módulo.` });
   const t2 = res.diag.tube;
   res.checks.push(t2 ? { ok: true, label: 'Diagonales de la placa', text: `Q = ${f0(Qplate)} kg → Q' = Q Ld / (4 H) = ${f0(Qp)} kg; ${tubeName(t2)} (Fe = ${f0(t2.A, 2)} cm²); λ = ${f0(res.diag.lambda, 1)}, ω = ${res.diag.omega}, σ = ${f0(res.diag.sigma)} ≤ ${sigma} kg/cm²` } : { ok: false, label: 'Diagonales de la placa', text: `Ningún caño de la Tabla G verifica Q' = ${f0(Qp)} kg al pandeo.` });
-  if (res.flex) res.checks.push({ ok: res.flex.sigma <= sigma + 1e-9, label: 'Flexocompresión del tubo entre nudos', text: `ω C / Fe + M / W = ${f0(res.flex.comp)} + ${f0(res.flex.bend)} = ${f0(res.flex.sigma)} ≤ ${sigma} kg/cm² (M = qc Lm² / 8 = ${f0(res.flex.M)} kg·cm con qc = ${res.flex.qc} kg/cm; la tabla de la guía suma C / Fe sin ω)` });
+  if (res.flex) res.checks.push({ ok: res.flex.sigma <= sigma + 1e-9, label: 'Flexocompresión del tubo entre nudos', text: `ω C / Fe + M / W = ${f0(res.flex.comp)} + ${f0(res.flex.bend)} = ${f0(res.flex.sigma)} ≤ ${sigma} kg/cm² (M = qc Lm² / 8 = ${f0(res.flex.M)} kg·cm con qc = ${res.flex.qc} kg/cm)` });
   if (res.defl) res.checks.push({ ok: res.defl.f <= res.defl.fAdm + 1e-9, label: 'Flecha de la placa', text: `f = α M Lt² / (E Jp) = ${f0(res.defl.f, 2)} cm ≤ Lt / ${Number(p.flechaRatio) || 500} = ${f0(res.defl.fAdm, 1)} cm (Jp = ${f0(res.defl.Jp)} cm⁴, M = ${f0(res.defl.M)} kg·cm)` });
   if (res.beams) {
     const bb = res.beams;
@@ -191,12 +191,12 @@ export function designSpaceFrame(p) {
     res.checks.push(res.capitel.tube ? { ok: true, label: 'Capitel sobre la columna', text: `Q = q A = ${f0(qDes)} × ${f0(Acol)} = ${f0(res.capitel.Q)} kg → Q' = ${f0(res.capitel.Qp)} kg por diagonal; ${tubeName(res.capitel.tube)} (Fe = ${f0(res.capitel.tube.A, 2)} cm²); ω = ${res.capitel.omega}, σ = ${f0(res.capitel.sigma)} ≤ ${sigma} kg/cm²` } : { ok: false, label: 'Capitel sobre la columna', text: `Ningún caño de la Tabla G verifica Q' = ${f0(Qcp)} kg.` });
     res.checks.push(res.capDiag.tube ? { ok: true, label: 'Diagonales de la estereoestructura sobre el capitel', text: `Q / 4 = ${f0(res.capDiag.Q)} kg en cada nudo → Q' = ${f0(res.capDiag.Qp)} kg; ${tubeName(res.capDiag.tube)} (Fe = ${f0(res.capDiag.tube.A, 2)} cm²); ω = ${res.capDiag.omega}, σ = ${f0(res.capDiag.sigma)} ≤ ${sigma} kg/cm²` } : { ok: false, label: 'Diagonales sobre el capitel', text: `Ningún caño de la Tabla G verifica Q' = ${f0(res.capDiag.Qp)} kg.` });
   }
-  res.checks.push(res.col.tube && res.col.sigma <= sigma + 1e-9 ? { ok: true, label: 'Columna (Estado 3)', text: `N = q A = ${f0(qDes)} × ${f0(Acol)} = ${f0(N3)} kg; Fe nec = ${f0(N3 / sigma, 2)} cm² → ${tubeName(res.col.tube)} (Fe = ${f0(res.col.tube.A, 2)} cm²)${res.col.same ? ', igual a las barras de las vigas como adopta la guía' : ''}; h = ${f0(h)} cm (Sk = h): λ = ${f0(res.col.lambda, 1)}, ω = ${res.col.omega}, σ = ${f0(res.col.sigma)} ≤ ${sigma} kg/cm²` } : { ok: false, label: 'Columna (Estado 3)', text: `Ningún caño de la Tabla G verifica N = ${f0(N3)} kg al pandeo con h = ${f0(h)} cm.` });
+  res.checks.push(res.col.tube && res.col.sigma <= sigma + 1e-9 ? { ok: true, label: 'Columna (Estado 3)', text: `N = q A = ${f0(qDes)} × ${f0(Acol)} = ${f0(N3)} kg; Fe nec = ${f0(N3 / sigma, 2)} cm² → ${tubeName(res.col.tube)} (Fe = ${f0(res.col.tube.A, 2)} cm²)${res.col.same ? ', igual a las barras de las vigas' : ''}; h = ${f0(h)} cm (Sk = h): λ = ${f0(res.col.lambda, 1)}, ω = ${res.col.omega}, σ = ${f0(res.col.sigma)} ≤ ${sigma} kg/cm²` } : { ok: false, label: 'Columna (Estado 3)', text: `Ningún caño de la Tabla G verifica N = ${f0(N3)} kg al pandeo con h = ${f0(h)} cm.` });
   const bs = res.base;
   res.checks.push({ ok: bs.anchored || bs.weight >= bs.uplift - 1e-9, label: 'Estado 4: succión sobre la base', text: bs.uplift <= 0 ? 'La columna no tiene solicitación ascendente.' : bs.anchored ? `La columna tiene una solicitación ascendente de ${f0(bs.uplift)} kg: se proyecta un apoyo que absorbe tracción (base vinculada a otros elementos o con contrapeso).` : `La columna tiene una solicitación ascendente de ${f0(bs.uplift)} kg y el peso muerto de la base (${f0(bs.a)} × ${f0(bs.a)} cm, ${f0(bs.weight)} kg) no la equilibra: hay que diseñar un apoyo vinculado a otros elementos que incrementen su peso o una base que absorba esfuerzos de tracción (se tilda en el paso 3).` });
   if (Lm < LmMin - 1e-9) res.advice.push(`El módulo Lm = ${f0(Lm, 2)} m es menor que √2 H mín = ${f0(LmMin, 2)} m (H ≥ luz / 18 = ${f0(Lt / 18, 2)} m y H ≥ voladizo / 9 = ${f0(Lv / 9, 2)} m).`);
   if (H < Hmin - 1e-9) res.advice.push(`La altura H = ${f0(H, 2)} m es menor que la mínima ${f0(Hmin, 2)} m (luz del tramo / 18 y voladizo / 9).`);
-  if (Lm < 1.5 * H - 1e-9 || Lm > 2.5 * H + 1e-9) res.advice.push(`La relación Lm / H = ${f0(Lm / H, 2)} está fuera del rango 1,5 a 2,5 de la guía (con Lm = √2 H, como adopta el ejemplo, da 1,41).`);
+  if (Lm < 1.5 * H - 1e-9 || Lm > 2.5 * H + 1e-9) res.advice.push(`La relación Lm / H = ${f0(Lm / H, 2)} está fuera del rango recomendado de 1,5 a 2,5 (con Lm = √2 H da 1,41).`);
   res.ok = res.checks.every((c) => c.ok);
   return res;
 }

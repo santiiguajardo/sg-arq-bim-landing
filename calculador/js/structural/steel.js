@@ -1,28 +1,27 @@
-// Estructuras de acero por el método elástico (tensiones admisibles) con el coeficiente de pandeo ω, tal como se enseña en el material de la
-// cátedra (Estructuras III: apuntes "Teoría acero", ejemplos del Ing. Monteros y TP 4, 5 y 7).
+// Estructuras de acero por el método elástico (tensiones admisibles) con el coeficiente de pandeo ω, de uso habitual en predimensionado.
 // Unidades de este archivo: fuerzas en kg, longitudes de cálculo estático en m, secciones en cm, tensiones en kg/cm², momentos en kg·m
-// (se pasan a kg·cm para dimensionar). Es una herramienta de apoyo y no reemplaza la verificación de un profesional matriculado.
+// (se pasan a kg·cm para dimensionar). Es un predimensionado aproximado y no reemplaza la verificación de un profesional matriculado.
 import { OMEGA, PROFILES as BASE_PROFILES } from './steel-data.js';
 import { ANGLES } from './steel-angles.js';
 import { TUBES } from './steel-tubes.js';
 import { solveFrame } from './frame.js';
 
-export const E_STEEL = 2100000;            // kg/cm2 (apunte, "Teoría acero")
+export const E_STEEL = 2100000;            // kg/cm2 ("Teoría acero")
 export const G_STEEL = 810000;             // kg/cm2
 export const GAMMA_STEEL = 7850;           // kg/m3
 
-// Tensión admisible = fluencia / 1,6 (apunte). La tensión de corte admisible y las tablas ω salen de TABLAS_DE_COEFICIENTES_DE_PANDEO.pdf.
+// Tensión admisible = fluencia / 1,6. La tensión de corte admisible y las tablas ω salen de TABLAS_DE_COEFICIENTES_DE_PANDEO.pdf.
 export const GRADES = {
   'F-22': { label: 'Acero F-22 (fluencia 2200 kg/cm²)', fy: 2200, sadm: 1375, tadm: 884, omega: 'F-22' },
   'F-24': { label: 'Acero F-24 (fluencia 2400 kg/cm²)', fy: 2400, sadm: 1500, tadm: 965, omega: 'F-24' },
   'F-20': { label: 'Acero F-20 (fluencia 2000 kg/cm²)', fy: 2000, sadm: 1250, tadm: 804, omega: 'F-20' },
 };
-// Perfiles de chapa doblada (PGC): el apunte adopta una tensión de diseño reducida que evita verificar pandeo lateral y abolladura.
-export const SIGMA_FORMED = 900;           // kg/cm2 (apunte, correas de chapa plegada, F-22)
+// Perfiles de chapa doblada (PGC): se adopta una tensión de diseño reducida que evita verificar pandeo lateral y abolladura.
+export const SIGMA_FORMED = 900;           // kg/cm2 (correas de chapa plegada, F-22)
 
 export const OMEGA_TABLES = {
   grade: 'Tabla ω del acero elegido (F-20, F-22 o F-24)',
-  St37: 'Tabla 3 del apunte (acero St 37), como en los ejemplos del Ing. Monteros',
+  St37: 'Tabla ω para acero St 37 (alternativa)',
 };
 
 // ---------------------------------------------------------------- perfiles
@@ -40,7 +39,7 @@ export const profilesOf = (type) => PROFILES.filter((p) => p.t === type).sort((a
 export const profileByName = (name) => PROFILES.find((p) => p.n === name) || null;
 export const profileList = (types) => PROFILES.filter((p) => types.includes(p.t)).sort((a, b) => a.G - b.G);
 
-// ω por esbeltez (el apunte aclara que no hace falta interpolar: se usa el entero más cercano). λ < 20: se toma el valor de 20.
+// ω por esbeltez (se aclara que no hace falta interpolar: se usa el entero más cercano). λ < 20: se toma el valor de 20.
 export function omegaOf(lambda, tableKey = 'F-22') {
   const tab = OMEGA[tableKey] || OMEGA['F-22'];
   if (!(lambda >= 0)) return null;
@@ -49,7 +48,7 @@ export function omegaOf(lambda, tableKey = 'F-22') {
   return tab[l - 20];
 }
 
-// Coeficiente de longitud de pandeo (apunte, "Longitud de pandeo").
+// Coeficiente de longitud de pandeo ("Longitud de pandeo").
 export const SUPPORTS_BUCKLING = {
   'art-art': { label: 'Articulada en ambos extremos', k: 1 },
   'emp-art': { label: 'Empotrada en la base y articulada arriba', k: 0.7 },
@@ -204,7 +203,7 @@ export function envelopeBeam({ spans, cantL, cantR, qD, qL, qDCantL = 0, qLCantL
 }
 
 // ---------------------------------------------------------------- verificaciones
-// Tensión de corte máxima de la sección: Colignon (Q·S / J·t) en perfiles laminados; en perfiles de chapa plegada Q / (h·t) (apunte).
+// Tensión de corte máxima de la sección: Colignon (Q·S / J·t) en perfiles laminados; en perfiles de chapa plegada Q / (h·t).
 export function shearStress(profile, Q) {
   const p = profile;
   if (p.t === 'C') return Q / ((p.h / 10) * (p.e / 10));                // h·t del alma
@@ -249,7 +248,7 @@ export function checkBending({ profile, grade, Mmax, Qmax, fmax, fAllow, multipl
   };
 }
 
-// ---------------------------------------------------------------- correa en flexión oblicua (techos inclinados, apunte "Correas")
+// ---------------------------------------------------------------- correa en flexión oblicua (techos inclinados)
 // Solicitaciones de una correa simplemente apoyada de luz L (m) con carga q (kg/m, vertical y por unidad de superficie ya multiplicada por el
 // ancho de influencia): la carga se descompone según los ejes del perfil: qy = q cos α (flexión en x) y qx = q sen α (flexión en y).
 export function purlinActions({ q, L, alphaDeg }) {
@@ -272,7 +271,7 @@ export function checkPurlin({ profile, grade, Mx, My, Q, qx, qy, L, fAllowRatio 
 }
 
 // ---------------------------------------------------------------- columna simple a compresión (con flexión opcional)
-// N kg, Lp cm, M kg·m (flexo-compresión: σ = ω N/A + 0,9 M/W y σ = N/A + M/W, apunte "Flexión compuesta")
+// N kg, Lp cm, M kg·m (flexo-compresión: σ = ω N/A + 0,9 M/W y σ = N/A + M/W)
 export function checkColumn({ profile, grade, N, Lp, M = 0, omegaTable = 'grade', multiplier = 1 }) {
   const A = profile.A * multiplier;
   const imin = profile.imin ?? Math.min(profile.ix, profile.iy);
@@ -297,7 +296,7 @@ export function checkColumn({ profile, grade, N, Lp, M = 0, omegaTable = 'grade'
   return out;
 }
 
-// ---------------------------------------------------------------- columna compuesta por dos perfiles unidos con presillas (TP 5)
+// ---------------------------------------------------------------- columna compuesta por dos perfiles unidos con presillas 
 // type: 'UPN' | 'IPN' (el eje material x-x es el de cada perfil; el inmaterial y-y pasa entre ellos)
 // e: distancia entre los ejes (baricentros) de los dos perfiles (cm); s: separación de las presillas (cm); Lp: longitud de pandeo (cm).
 export function checkBattenedColumn({ profile, grade, N, Lp, e, s, omegaTable = 'grade', plateThickness = 0.64 }) {

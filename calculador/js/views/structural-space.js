@@ -1,5 +1,5 @@
 // Grandes luces: estereoestructura plana (retícula espacial de caños). Motor en js/structural/spaceframe.js.
-// FUENTE: guía 5 "Estereoestructuras" del Taller de Estructuras E4 (curso 2024).
+// Predimensionado aproximado: 5 "Estereoestructuras".
 import * as P from '../structural/spaceframe.js';
 import * as W from '../structural/wind.js';
 import { escapeHtml } from '../utils.js';
@@ -9,7 +9,7 @@ import { axisEditor, gridSketch } from './structural-spans.js';
 const kg = (v) => fmt(v, 0);
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
 const nums = (a) => (Array.isArray(a) ? a.map(Number) : []);
-export const SPACE_NOTE = 'Predimensionado según la guía 5 "Estereoestructuras" del Taller de Estructuras E4 (2024): la retícula se asimila a una placa isótropa apoyada sobre vigas y columnas o sobre columnas, con franjas continuas (coeficientes de la Tabla 1, hasta 4 tramos), barras superiores e inferiores con C = T = M / H, diagonales con Q Ld / (4 H), pandeo con las tablas ω de la cátedra y caños de la Tabla G (DIN 2448). El caño se elige como el más liviano que verifica (esbeltez máxima 150 en las barras comprimidas), por lo que puede salir menor que el que adopta la guía. No se verifican los nudos, el pandeo de conjunto ni el montaje. Herramienta de apoyo para el predimensionado.';
+export const SPACE_NOTE = 'Predimensionado aproximado: la retícula se asimila a una placa isótropa apoyada sobre vigas y columnas o sobre columnas, con franjas continuas (coeficientes de la Tabla 1, hasta 4 tramos), barras superiores e inferiores con C = T = M / H, diagonales con Q Ld / (4 H), pandeo con las tablas ω y caños de la Tabla G (DIN 2448). El caño se elige como el más liviano que verifica (esbeltez máxima 150 en las barras comprimidas), por lo que puede salir menor que el que adopta el método. No se verifican los nudos, el pandeo de conjunto ni el montaje. Herramienta de apoyo para el predimensionado.';
 
 const defaults = () => ({ kind: 'space', hyp: 'beams', xSpans: [25, 25], xCantL: 5, xCantR: 2.5, ySpans: [20, 20], yCantL: 2.5, yCantR: 2.5, Lm: 2.5, H: 0, pp: 20, sc: 30, windManual: 0, V: 45, exposure: 'B', zWind: 7.5, Kzt: 1, Kd: 0.85, I: 1, G: 0.85,
   sigma: 1400, E: 2100000, omegaTable: 'F-22', flechaRatio: 500, lambdaMax: 150, qc: 0.375, colH: 3.5, colSame: 'yes', soilSigma: 2.5, plateC: 20, baseThick: 20, anchored: 'no' });
@@ -73,18 +73,18 @@ function step1(calc) {
   return `<div class="grid grid-2" style="align-items:start;">
     <div class="card"><h3 style="margin-top:0;">Estereoestructura plana</h3>
       ${selField('design.hyp', 'Cómo se asimila la placa', d.hyp, [['beams', 'Placa isótropa apoyada sobre vigas y columnas (vigas diferenciadas)'], ['columns', 'Placa isótropa apoyada sobre columnas (como un entrepiso sin vigas)']], 'Con vigas, la placa y las vigas se dimensionan por separado; sobre columnas, los momentos se incrementan 1,4 en el apoyo y 1,2 en el tramo y se agrega el capitel.')}
-      ${axisEditor({ path: 'design.xSpans', spans: d.xSpans, title: 'Luces entre columnas en X', kind: 'num', sketch: false, hint: `${nx} tramo${nx === 1 ? '' : 's'} (la guía da coeficientes para 1 a 4 tramos continuos).`, cant: { left: { path: 'design.xCantL', value: d.xCantL, label: 'Voladizo eje 1' }, right: { path: 'design.xCantR', value: d.xCantR, label: `Voladizo eje ${nx + 1}` } } })}
+      ${axisEditor({ path: 'design.xSpans', spans: d.xSpans, title: 'Luces entre columnas en X', kind: 'num', sketch: false, hint: `${nx} tramo${nx === 1 ? '' : 's'} (usual: coeficientes para 1 a 4 tramos continuos).`, cant: { left: { path: 'design.xCantL', value: d.xCantL, label: 'Voladizo eje 1' }, right: { path: 'design.xCantR', value: d.xCantR, label: `Voladizo eje ${nx + 1}` } } })}
       ${axisEditor({ path: 'design.ySpans', spans: d.ySpans, title: 'Luces entre columnas en Y', kind: 'letter', sketch: false, hint: `${ny} tramo${ny === 1 ? '' : 's'}: ejes A a ${String.fromCharCode(65 + ny)}.`, cant: { left: { path: 'design.yCantL', value: d.yCantL, label: 'Voladizo eje A' }, right: { path: 'design.yCantR', value: d.yCantR, label: `Voladizo eje ${String.fromCharCode(65 + ny)}` } } })}
       <div class="axed-sketch" style="border:0; padding:0 0 10px;">${planFigure(d)}</div></div>
     <div class="card"><h3 style="margin-top:0;">Módulo estructural (ajuste modular)</h3>${moduleFigure(r, d)}${modular}
-      <div class="field-row" style="flex-wrap:wrap; margin-top:8px;">${numField('design.Lm', 'Longitud del módulo Lm', d.Lm, { unit: 'm', hint: 'La guía adopta 2,5 m (redondeando 1,97).' })}${numField('design.H', 'Altura H (0 = Lm / √2)', d.H, { unit: 'm' })}</div>
-      ${r ? `<p class="text-muted" style="font-size:12px; margin:0;">${r.advice.map(escapeHtml).join(' ') || 'El módulo cumple las relaciones de la guía.'}</p>` : ''}</div>
+      <div class="field-row" style="flex-wrap:wrap; margin-top:8px;">${numField('design.Lm', 'Longitud del módulo Lm', d.Lm, { unit: 'm', hint: 'Usual: 2,5 m (redondeando 1,97).' })}${numField('design.H', 'Altura H (0 = Lm / √2)', d.H, { unit: 'm' })}</div>
+      ${r ? `<p class="text-muted" style="font-size:12px; margin:0;">${r.advice.map(escapeHtml).join(' ') || 'El módulo cumple las relaciones recomendadas.'}</p>` : ''}</div>
     <div class="card"><h3 style="margin-top:0;">Cargas</h3>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.pp', 'Peso propio (caños y cubierta liviana)', d.pp, { unit: 'kg/m²', hint: 'Guía: 20.' })}${numField('design.sc', 'Sobrecarga accidental', d.sc, { unit: 'kg/m²', hint: 'Guía: 30.' })}</div>
-      <h4 style="margin:10px 0 4px; font-size:13px;">Viento (CIRSOC 102-2005, simplificado como la guía)</h4>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.pp', 'Peso propio (caños y cubierta liviana)', d.pp, { unit: 'kg/m²', hint: 'Usual: 20.' })}${numField('design.sc', 'Sobrecarga accidental', d.sc, { unit: 'kg/m²', hint: 'Usual: 30.' })}</div>
+      <h4 style="margin:10px 0 4px; font-size:13px;">Viento (CIRSOC 102-2005, simplificado)</h4>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.V', 'Velocidad básica V', d.V, { unit: 'm/s', hint: 'Buenos Aires: 45 m/s.' })}${selField('design.exposure', 'Categoría de exposición', d.exposure, Object.entries(W.EXPOSURES))}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.zWind', 'Altura media de la cubierta', d.zWind, { unit: 'm', hint: 'Para Kz (caso 2: sistema principal).' })}${numField('design.windManual', 'Viento de diseño manual (0 = calculado)', d.windManual, { unit: 'kg/m²' })}</div>
-      <p class="text-muted" style="font-size:12px; margin:0;">${r ? `Kz = ${r.wind.Kz ? fmt(r.wind.Kz, 2) : '—'}; qh = ${r.wind.q ? fmt(r.wind.q, 1) : '—'} kg/m²; p = qh (G Cp + GCpi) con Cp = ±0,8 y GCpi = ±0,18 = <b>${kg(r.wind.p)} kg/m²</b>${r.wind.manual ? ' (manual)' : ''}. La guía obtiene 60 kg/m².` : ''}</p></div></div>
+      <p class="text-muted" style="font-size:12px; margin:0;">${r ? `Kz = ${r.wind.Kz ? fmt(r.wind.Kz, 2) : '—'}; qh = ${r.wind.q ? fmt(r.wind.q, 1) : '—'} kg/m²; p = qh (G Cp + GCpi) con Cp = ±0,8 y GCpi = ±0,18 = <b>${kg(r.wind.p)} kg/m²</b>${r.wind.manual ? ' (manual)' : ''}.` : ''}</p></div></div>
     <div class="note" style="margin-top:16px;">${SPACE_NOTE}</div>`;
 }
 
@@ -96,7 +96,7 @@ function step2(calc) {
     <tr><td>Estado de diseño (el mayor entre E2 y E3) · qm = 0,65 q Lm</td><td style="text-align:right;"><b>${kg(r.qDes)} kg/m² · ${kg(r.qm)} kg/m</b></td></tr></tbody></table>`;
   const beams = r.beams ? `<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Vigas de apoyo (líneas de columnas)</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>Línea</th><th style="text-align:right;">Ancho (m)</th><th style="text-align:right;">qm (kg/m)</th><th style="text-align:right;">M apoyo</th><th style="text-align:right;">M tramo</th><th style="text-align:right;">R (kg)</th></tr></thead><tbody>
     ${['x', 'y'].map((dir) => r.beams.lines[dir].map((l) => `<tr><td>${dir === 'x' ? `Vigas en X, eje ${String.fromCharCode(65 + l.j)}` : `Vigas en Y, eje ${l.j + 1}`}</td><td style="text-align:right;">${fmt(l.w, 2)}</td><td style="text-align:right;">${kg(l.qb)}</td><td style="text-align:right;">${kg(l.Msup)}</td><td style="text-align:right;">${kg(l.Mtr)}</td><td style="text-align:right;">${kg(l.Rmax)}</td></tr>`).join('')).join('')}</tbody></table></div>
-    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Se diseñan todas las vigas con los esfuerzos de las más cargadas. Momento de apoyo común: el menor entre las dos direcciones (${kg(r.beams.MsupX)} y ${kg(r.beams.MsupY)} kg·m) por la superposición de las áreas de influencia, como indica la guía → <b>${kg(r.beams.Mdes)} kg·m</b>.</p></div>` : '';
+    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Se diseñan todas las vigas con los esfuerzos de las más cargadas. Momento de apoyo común: el menor entre las dos direcciones (${kg(r.beams.MsupX)} y ${kg(r.beams.MsupY)} kg·m) por la superposición de las áreas de influencia → <b>${kg(r.beams.Mdes)} kg·m</b>.</p></div>` : '';
   return `<div class="grid grid-2" style="align-items:start;">
     <div class="card"><h3 style="margin-top:0;">Estados de carga</h3>${states}</div>
     <div class="card"><h3 style="margin-top:0;">Momentos y reacciones de la placa${r.hyp === 'columns' ? ' (× 1,4 apoyo, × 1,2 tramo)' : ''}</h3>${stripTable('Sentido X', r.stripX)}${stripTable('Sentido Y', r.stripY)}</div></div>${beams}`;
@@ -108,10 +108,10 @@ function step3(calc, out) {
   const data = `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
     <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigma', 'Tensión admisible del acero', d.sigma, { unit: 'kg/cm²', hint: 'F-22 / F-24: 1400.' })}${selField('design.omegaTable', 'Tabla ω', d.omegaTable, [['F-22', 'F-22'], ['F-24', 'F-24']])}</div>
     <div class="field-row" style="flex-wrap:wrap;">${numField('design.E', 'Módulo de elasticidad E', d.E, { unit: 'kg/cm²' })}${numField('design.flechaRatio', 'Flecha admisible Lt /', d.flechaRatio, { step: 1 })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.lambdaMax', 'Esbeltez máxima de las barras comprimidas', d.lambdaMax, { step: 1, hint: 'Criterio de proyecto (CIRSOC 301 admite 200).' })}${numField('design.qc', 'Carga de la cubierta sobre el tubo qc', d.qc, { unit: 'kg/cm', hint: '0 = la cubierta no apoya directo sobre los tubos (sin flexocompresión). Guía: 0,375.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.lambdaMax', 'Esbeltez máxima de las barras comprimidas', d.lambdaMax, { step: 1, hint: 'Criterio de proyecto (CIRSOC 301 admite 200).' })}${numField('design.qc', 'Carga de la cubierta sobre el tubo qc', d.qc, { unit: 'kg/cm', hint: '0 = la cubierta no apoya directo sobre los tubos (sin flexocompresión). Usual: 0,375.' })}</div>
     <h4 style="margin:10px 0 4px; font-size:13px;">Columnas y fundación</h4>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.colH', 'Altura de las columnas', d.colH, { unit: 'm' })}${selField('design.colSame', 'Tubo de la columna', d.colSame, [['yes', 'Igual al de las vigas (como la guía) si verifica'], ['no', 'El más liviano que verifica']])}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.soilSigma', 'Tensión admisible del terreno', d.soilSigma, { unit: 'kg/cm²', hint: 'Guía: 2,5.' })}${numField('design.plateC', 'Lado de la columna con su placa', d.plateC, { unit: 'cm' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.colH', 'Altura de las columnas', d.colH, { unit: 'm' })}${selField('design.colSame', 'Tubo de la columna', d.colSame, [['yes', 'Igual al de las vigas  si verifica'], ['no', 'El más liviano que verifica']])}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.soilSigma', 'Tensión admisible del terreno', d.soilSigma, { unit: 'kg/cm²', hint: 'Usual: 2,5.' })}${numField('design.plateC', 'Lado de la columna con su placa', d.plateC, { unit: 'cm' })}</div>
     <div class="field-row" style="flex-wrap:wrap;">${numField('design.baseThick', 'Espesor del borde de la base', d.baseThick, { unit: 'cm' })}${selField('design.anchored', 'Succión (Estado 4)', d.anchored, [['no', 'Solo el peso de la base'], ['yes', 'Se diseña un apoyo que absorbe tracción']])}</div></div>`;
   const base = `<div class="card" style="margin-top:16px;"><table class="data-table"><tbody>
     <tr><td>Base: superficie S = N / σs · lado a</td><td style="text-align:right;">${kg(r.base.S)} cm² · ${kg(r.base.a)} cm</td></tr>
@@ -125,7 +125,7 @@ function memoria(calc, out) {
   const r = out.res; const d = calc.design;
   const strip = (st) => `<table>${st.items.map((it) => memoRow(escapeHtml(it.label), `L = ${fmt(it.L, 2)} m · ${it.kind === 'tr' ? 'Ct' : 'Ca'} ${it.coef} · M = ${kg(it.M)} kg·m${it.R ? ` · R = ${kg(it.R)} kg` : ''}`)).join('')}</table>`;
   const tr = (name, c, t) => memoRow(name, t ? `ø ${t.de} × ${t.s} mm · Fe = ${fmt(t.A, 2)} cm² · λ = ${fmt(c.lambda, 0)}, ω = ${c.omega}, σ = ${kg(c.sigma)} kg/cm²` : 'sin caño en la Tabla G');
-  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', `Estereoestructura plana, placa ${r.hyp === 'columns' ? 'apoyada sobre columnas' : 'apoyada sobre vigas y columnas'}`, 'Guía de predimensionado E4 · 5')}
+  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', `Estereoestructura plana, placa ${r.hyp === 'columns' ? 'apoyada sobre columnas' : 'apoyada sobre vigas y columnas'}`, 'Predimensionado')}
       ${memoRow('Luces en X', `${r.xs.map((l) => fmt(l, 2)).join(' + ')} m, voladizos ${fmt(r.xcL, 2)} y ${fmt(r.xcR, 2)} m`)}${memoRow('Luces en Y', `${r.ys.map((l) => fmt(l, 2)).join(' + ')} m, voladizos ${fmt(r.ycL, 2)} y ${fmt(r.ycR, 2)} m`)}
       ${memoRow('Módulo', `Lm = ${fmt(r.Lm, 2)} m · H = ${fmt(r.H, 2)} m · Ld = ${fmt(r.Ld, 2)} m (H mín. ${fmt(r.Hmin, 2)} m)`)}</table>
     ${planFigure(d)}${moduleFigure(r, d)}

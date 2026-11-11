@@ -91,7 +91,7 @@ export const footingModule = {
             ${selField('design.limit', 'Columna 1', d.limit === 'yes' ? 'yes' : 'no', [['no', 'Con espacio a ambos lados (voladizos libres)'], ['yes', 'Junto al límite de la propiedad']])}
             ${d.limit === 'yes' ? numField('design.ax1', 'Distancia de la cara de la columna 1 al límite', d.ax1, { unit: 'cm', hint: '0 = al ras.' }) : ''}
           </div>
-          ${numField('design.bFixed', 'Ancho de la base b (0 = automático)', d.bFixed, { unit: 'cm', hint: 'Se puede fijar para que los voladizos de la placa no pasen de 1 m (apunte).' })}
+          ${numField('design.bFixed', 'Ancho de la base b (0 = automático)', d.bFixed, { unit: 'cm', hint: 'Se puede fijar para que los voladizos de la placa no pasen de 1 m.' })}
           <p class="text-muted" style="font-size:12px; margin:4px 0 0;">Se usa cuando la distancia libre entre las dos zapatas aisladas es menor que ${MIN_CLEAR_BETWEEN_FOOTINGS / 10} cm. La resultante de las cargas coincide con el baricentro de la base.</p>
         </div>`;
     } else if (type === 'isolated') {
@@ -474,7 +474,7 @@ function resultsComb(calc, out) {
 function memoriaComb(calc, out) {
   const { res, input } = out;
   const f = combinedFootingFigures(combFp(res, input), 'print');
-  const sep = res.sep && res.sep.clear != null ? memoRow('Distancia libre entre zapatas aisladas', `${fmt(res.sep.clear / 10, 0)} cm (zapatas de ${fmt(res.sep.sizes[0] / 10, 0)} y ${fmt(res.sep.sizes[1] / 10, 0)} cm) → ${res.sep.needUnify ? `menor que ${MIN_CLEAR_BETWEEN_FOOTINGS / 10} cm: se unifican` : 'no hace falta unificar'}`, 'Criterio de la cátedra (Estructuras III)') : '';
+  const sep = res.sep && res.sep.clear != null ? memoRow('Distancia libre entre zapatas aisladas', `${fmt(res.sep.clear / 10, 0)} cm (zapatas de ${fmt(res.sep.sizes[0] / 10, 0)} y ${fmt(res.sep.sizes[1] / 10, 0)} cm) → ${res.sep.needUnify ? `menor que ${MIN_CLEAR_BETWEEN_FOOTINGS / 10} cm: se unifican` : 'no hace falta unificar'}`, 'Criterio de proyecto') : '';
   const bars = (o) => `${o.n} ø${o.db}${o.layers === 2 ? ' (2 capas)' : ''} (As = ${fmt(o.As, 0)} mm²)`;
   return {
     title: calc.name,

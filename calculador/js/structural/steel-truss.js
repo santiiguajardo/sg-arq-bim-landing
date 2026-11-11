@@ -1,6 +1,6 @@
 // Cerchas y cabriadas de acero (estructuras planas de barras articuladas, cargas en los nudos). Método de los nudos resuelto con la matriz de
 // rigidez de la armadura (EA constante: en una cercha isostática los esfuerzos no dependen de EA). Dimensionado con el método elástico y el
-// coeficiente ω de la cátedra (apuntes "Cerchas metálicas" 1ª y 2ª parte, "Cabriada nave industrial con viento", "Vigas reticuladas").
+// coeficiente ω.
 // Unidades: m para la geometría, kg para las fuerzas, cm y kg/cm² para las secciones. Tracción positiva.
 import * as S from './steel.js';
 import { deflectionCheck, DEFLECTION_LIMITS } from './steel-joints.js';
@@ -78,7 +78,7 @@ const addBar = (bars, a, b, fam) => bars.push({ a, b, fam });
 const pin = (node) => ({ node, ux: true, uy: true });
 const roller = (node) => ({ node, ux: false, uy: true });
 
-// Cabriada a dos aguas con cordón inferior horizontal: n paneles por faldón (apuntes "Cerchas metálicas" y "Cabriada nave industrial").
+// Cabriada a dos aguas con cordón inferior horizontal: n paneles por faldón ( y "Cabriada nave industrial").
 // Los nudos superiores intermedios están sobre cada panel; el cordón superior arranca en el apoyo. diag: 'up' (las diagonales suben hacia el
 // centro, como en el ejemplo de la nave) o 'down' (bajan hacia el centro).
 export function gableTruss({ L, f, n, diag = 'up' }) {
@@ -302,14 +302,14 @@ export function designTruss(geom, states, opts) {
     fams[fam] = {
       fam, label: FAMILIES[fam], type: sections[fam], def, bars: fb, profile: chosen ? chosen.profile : null, per: chosen ? chosen.per : [], ok: Boolean(chosen && chosen.ok), candidates,
       Tmax, Cmax, worstC,
-      // predimensionado del apunte: área con σ = σadm / 2 y ω = 1 en compresión; N / σadm en tracción
+      // predimensionado: área con σ = σadm / 2 y ω = 1 en compresión; N / σadm en tracción
       Apre: Math.max(Cmax / (grade.sadm / 2), Tmax / grade.sadm),
       length: fb.reduce((a, b) => a + b.len, 0),
       weight: chosen ? fb.reduce((a, b) => a + b.len * chosen.profile.G * def.mult, 0) : 0,
     };
   };
   Object.keys(FAMILIES).forEach((fam) => buildFam(fam));
-  // cordones iguales (práctica del apunte: el cordón inferior igual al superior): se adopta el perfil más pesado de los dos
+  // cordones iguales (práctica habitual: el cordón inferior igual al superior): se adopta el perfil más pesado de los dos
   if (opts.sameChords && fams.CS && fams.CI && sections.CS === sections.CI && fams.CS.profile && fams.CI.profile) {
     const pick = fams.CS.profile.G >= fams.CI.profile.G ? fams.CS.profile : fams.CI.profile;
     buildFam('CS', { CS: pick.n });

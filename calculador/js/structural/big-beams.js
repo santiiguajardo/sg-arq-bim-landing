@@ -1,6 +1,6 @@
 // Vigas de gran inercia: viga Vierendeel (hormigón armado o acero) y viga postesada de hormigón.
-// FUENTE: guías de predimensionado 6.1 "Vigas de gran inercia - Vierendeel" y 6.2 "Vigas de gran inercia - Postesadas" del Taller de Estructuras E4 (curso 2024; carpeta e4).
-// Método de la cátedra (viga simplemente apoyada de luz L, carga q en kg/m): M = q L² / 8, Q = q L / 2; los cordones trabajan con C = T = M / Z, Z = 0,9 H (brazo de palanca).
+// Predimensionado aproximado: 6.1 "Vigas de gran inercia - Vierendeel" y 6.2 "Vigas de gran inercia - Postesadas".
+// Método (viga simplemente apoyada de luz L, carga q en kg/m): M = q L² / 8, Q = q L / 2; los cordones trabajan con C = T = M / Z, Z = 0,9 H (brazo de palanca).
 // Vierendeel: montantes por corte (hormigón: m2 ≥ Q / (m1 τadm); acero: Q / Fe ≤ 1100 kg/cm²), cordón comprimido C / (m1 m2) ≤ σadm con λ = 0,7 a / m1 (a = distancia entre nudos) y ω de la tabla,
 // armadura (hormigón) Fe = T / σs o perfil (acero) Fe = T / σadm, flecha f = 5 q L⁴ / (384 E J) ≤ L / 500 con J = 2 [J propio del cordón + A z1²].
 // Postesada: componente horizontal Ph = q L² / (8 f) (f = flecha del cable), ancho por compresión b = Ph / (σadm h), inercia por pandeo Jnec = Pk Lp² / (π² E) con Pk = 2 Ph y Lp = L,
@@ -11,7 +11,7 @@ const barArea = (d) => Math.PI * (d / 10) ** 2 / 4;              // cm² por bar
 export const REBAR_DIAMETERS = [12, 16, 20, 25, 32, 40];
 export { barArea };
 
-// ω de pandeo: la guía toma ω = 1 por debajo de λ = 20 (arranque de las tablas) y las tablas del anexo para el acero (F-22 o F-24)
+// ω de pandeo: se toma ω = 1 por debajo de λ = 20 (arranque de las tablas) y las tablas para el acero (F-22 o F-24)
 export function omegaSteel(lambda, table = 'F-22') { return lambda < 20 ? 1 : S.omegaOf(lambda, table); }
 
 export function loadsTotal(l) {
@@ -56,7 +56,7 @@ export function designVierendeel(p) {
     Object.assign(res, { m1, m2, m2req, ratio: m2 / m1, area, lambda, omega, sigC, Fe, nBars, barD: Number(r.barD), AsAdopt: nBars * bar, hc, z1, J, f: fl, fAllow: Lc / flechaRatio, sigmaC: Number(r.sigmaC), tau: Number(r.tau), sigmaS: Number(r.sigmaS), E: Number(r.E) });
     res.checks = [
       { ok: m2 >= m2req - 1e-9, label: 'Montantes al corte', text: `m2 = ${m2.toFixed(0)} cm ≥ Q / (m1 τadm) = ${f.Q.toFixed(0)} / (${m1} × ${r.tau}) = ${m2req.toFixed(1)} cm` },
-      { ok: true, label: 'Relación m2 / m1', text: `${res.ratio.toFixed(2)}${res.ratio >= 2 - 1e-9 && res.ratio <= 2.5 + 1e-9 ? '' : ' (fuera del rango de 2 a 2,5 que sugiere la guía; el ejemplo de la guía, 90 / 35, también)'}`, advisory: true },
+      { ok: true, label: 'Relación m2 / m1', text: `${res.ratio.toFixed(2)}${res.ratio >= 2 - 1e-9 && res.ratio <= 2.5 + 1e-9 ? '' : ' (fuera del rango recomendado de 2 a 2,5)'}`, advisory: true },
       { ok: sigC <= Number(r.sigmaC) + 1e-9, label: 'Cordón superior comprimido', text: `ω C / (m1 m2) = ${omega} × ${f.C.toFixed(0)} / (${m1} × ${m2}) = ${sigC.toFixed(2)} ≤ ${r.sigmaC} kg/cm² (λ = 0,7 a / m1 = ${lambda.toFixed(1)})` },
       { ok: nBars * bar >= Fe - 1e-9, label: 'Armadura del cordón inferior', text: `Fe = T / σs = ${f.T.toFixed(0)} / ${r.sigmaS} = ${Fe.toFixed(2)} cm² → ${nBars} Ø${r.barD} (${(nBars * bar).toFixed(2)} cm²)` },
       { ok: fl <= Lc / flechaRatio + 1e-9, label: 'Flecha', text: `f = 5 q L⁴ / (384 E J) = ${fl.toFixed(2)} cm ≤ L / ${flechaRatio} = ${(Lc / flechaRatio).toFixed(1)} cm (J = ${J.toExponential(3)} cm⁴)` },
@@ -84,7 +84,7 @@ export function designVierendeel(p) {
     Object.assign(res, { FeNec, ...ch, sigma: sig, tau, E, fAllow: Lc / flechaRatio, profile: ch.u });
     res.checks = [
       { ok: ch.tCh <= sig + 1e-9, label: 'Cordón inferior a tracción', text: `T / Fe = ${f.T.toFixed(0)} / ${ch.Fe.toFixed(1)} = ${ch.tCh.toFixed(0)} ≤ ${sig} kg/cm² (Fe necesaria ${FeNec.toFixed(2)} cm²; 2 ${ch.u.n})` },
-      { ok: ch.sh <= tau + 1e-9, label: 'Montantes al corte', text: `Qmax / Fe = ${f.Q.toFixed(0)} / ${ch.Fe.toFixed(1)} = ${ch.sh.toFixed(0)} ≤ ${tau} kg/cm² (con la sección del cordón, como la guía)` },
+      { ok: ch.sh <= tau + 1e-9, label: 'Montantes al corte', text: `Qmax / Fe = ${f.Q.toFixed(0)} / ${ch.Fe.toFixed(1)} = ${ch.sh.toFixed(0)} ≤ ${tau} kg/cm² (con la sección del cordón)` },
       { ok: ch.cCh <= sig + 1e-9, label: 'Cordón superior al pandeo', text: `ω C / Fe = ${ch.omega === null ? '—' : ch.omega} × ${f.C.toFixed(0)} / ${ch.Fe.toFixed(1)} = ${ch.cCh.toFixed(0)} ≤ ${sig} kg/cm² (λ = 0,7 a / m1 = ${ch.lambda.toFixed(1)}, m1 = 2 b = ${ch.m1.toFixed(1)} cm)` },
       { ok: ch.f <= Lc / flechaRatio + 1e-9, label: 'Flecha', text: `f = 5 q L⁴ / (384 E J) = ${ch.f.toFixed(2)} cm ≤ L / ${flechaRatio} = ${(Lc / flechaRatio).toFixed(1)} cm (J = ${ch.J.toExponential(3)} cm⁴, dos cordones de dos perfiles)` },
     ];
@@ -121,7 +121,7 @@ export function designPostTensioned(p, helpers) {
   }
   res.checks = [
     { ok: b1 >= bNec - 1e-9, label: 'Ancho por compresión', text: `b nec = Ph / (σadm h) = ${Ph.toFixed(0)} / (${sigmaC} × ${h}) = ${bNec.toFixed(2)} cm ≤ ancho total ${b1} cm` },
-    { ok: res.sigmaPh <= sigmaC + 1e-9, label: 'Compresión sobre la sección hueca', text: `Ph / A = ${Ph.toFixed(0)} / ${A.toFixed(0)} cm² = ${res.sigmaPh.toFixed(1)} ≤ ${sigmaC} kg/cm² (verificación agregada: la guía solo calcula el ancho necesario)`, extra: true },
+    { ok: res.sigmaPh <= sigmaC + 1e-9, label: 'Compresión sobre la sección hueca', text: `Ph / A = ${Ph.toFixed(0)} / ${A.toFixed(0)} cm² = ${res.sigmaPh.toFixed(1)} ≤ ${sigmaC} kg/cm² (verificación agregada)`, extra: true },
     { ok: Jnec <= Jyy + 1e-9, label: 'Pandeo', text: `Jnec = Pk Lp² / (π² E) = ${Jnec.toFixed(0)} cm⁴ ≤ Jy-y = ${Jyy.toFixed(0)} cm⁴ (Pk = 2 Ph = ${Pk.toFixed(0)} kg, Lp = ${Lp.toFixed(0)} cm)` },
     { ok: fl <= Lp / flechaRatio + 1e-9, label: 'Flecha', text: `f = 5 q L⁴ / (384 E J) = ${fl.toFixed(2)} cm ≤ L / ${flechaRatio} = ${(Lp / flechaRatio).toFixed(1)} cm (Jx-x = ${Jxx.toFixed(0)} cm⁴; sin descontar la componente vertical de los cables)` },
   ];

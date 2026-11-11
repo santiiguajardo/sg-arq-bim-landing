@@ -1,5 +1,5 @@
 // Hormigón armado: edificio en torre con tabiques contraviento. Motor en js/structural/tower.js.
-// FUENTE: guía 7 "Edificio en torre" del Taller de Estructuras E4 (curso 2024) y CIRSOC 102-2005 (viento).
+// Predimensionado aproximado: 7 "Edificio en torre" y CIRSOC 102-2005 (viento).
 import * as T from '../structural/tower.js';
 import { setCalcField } from '../state.js';
 import { escapeHtml, showToast } from '../utils.js';
@@ -7,7 +7,7 @@ import { fmt, numField, selField, checksCard, memoRow } from './structural-ui.js
 
 const num = (v, def = 0) => (Number.isFinite(Number(v)) ? Number(v) : def);
 const tn = (v, n = 1) => fmt(v, n);
-export const TOWER_NOTE = 'Predimensionado según la guía 7 "Edificio en torre" del Taller de Estructuras E4 (2024) con el viento del CIRSOC 102-2005 (procedimiento analítico, sistema principal resistente al viento): el edificio trabaja como una ménsula empotrada; los tabiques de hormigón paralelos al viento toman el momento en proporción a su inercia y se predimensionan a flexocompresión en la planta baja con tensiones admisibles; se verifican volcamiento, tensión del terreno bajo la platea y flecha en cabeza. Solo se calcula la dirección más crítica (viento sobre la cara mayor): hay que repetirlo con el viento sobre la cara menor. No se verifican las losas, los pórticos perimetrales, el efecto dinámico (Gf si la frecuencia es menor que 1 Hz), la torsión de planta fuera del caso simple ni la interacción con el suelo. Herramienta de apoyo para el predimensionado.';
+export const TOWER_NOTE = 'Predimensionado aproximado: el edificio trabaja como una ménsula empotrada; los tabiques de hormigón paralelos al viento toman el momento en proporción a su inercia y se predimensionan a flexocompresión en la planta baja con tensiones admisibles; se verifican volcamiento, tensión del terreno bajo la platea y flecha en cabeza. Solo se calcula la dirección más crítica (viento sobre la cara mayor): hay que repetirlo con el viento sobre la cara menor. No se verifican las losas, los pórticos perimetrales, el efecto dinámico (Gf si la frecuencia es menor que 1 Hz), la torsión de planta fuera del caso simple ni la interacción con el suelo. Herramienta de apoyo para el predimensionado.';
 
 const rectWall = (name, x, y) => ({ kind: 'rect', name, e: 0.2, lw: 4.5, x, y, infl: 10.5, hd: 0.9 });
 const uWall = (name, x) => ({ kind: 'U', name, e: 0.2, lw: 3.6, lf: 5, x, y: 8, inflWeb: 17.2, inflFl: 30.4 });
@@ -131,7 +131,7 @@ function wallsEditor(d) {
     <td><button type="button" class="btn btn-sm btn-danger" data-del-wall="${i}" aria-label="Quitar el tabique ${escapeHtml(w.name)}">quitar</button></td></tr>`).join('');
   return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Tabique</th><th>Tipo</th><th>Espesor e (m)</th><th>Largo (alma) (m)</th><th>Alas (m)</th><th>x (m)</th><th>y (m)</th><th>Área de influencia (alma o tabique) (m²)</th><th>Área de influencia de cada ala (m²)</th><th>Dintel (m)</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;"><button type="button" class="btn btn-sm" data-add-wall="rect">+ Tabique recto</button><button type="button" class="btn btn-sm" data-add-wall="U">+ Tabique en U</button></div>
-    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Los tabiques son paralelos al viento. x: posición a lo largo de B desde el borde izquierdo (en los tabiques en U, la del baricentro); y: posición a lo largo de L desde el borde superior (solo para el dibujo). El área de influencia es la zona de losa que descarga sobre cada pieza (en la guía: 10,5 m² por tabique recto; 17,2 m² el alma y 30,4 m² cada ala del tabique en U). Dintel: altura del dintel sobre una abertura de la fachada (0 = sin abertura).</p>`;
+    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Los tabiques son paralelos al viento. x: posición a lo largo de B desde el borde izquierdo (en los tabiques en U, la del baricentro); y: posición a lo largo de L desde el borde superior (solo para el dibujo). El área de influencia es la zona de losa que descarga sobre cada pieza. Dintel: altura del dintel sobre una abertura de la fachada (0 = sin abertura).</p>`;
 }
 
 function step1(calc) {
@@ -140,18 +140,18 @@ function step1(calc) {
     <div class="card"><h3 style="margin-top:0;">Torre de hormigón armado con tabiques contraviento</h3>${elevationFigure(d, r)}
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.B', 'Cara mayor B (perpendicular al viento)', d.B, { unit: 'm' })}${numField('design.L', 'Cara menor L (paralela al viento)', d.L, { unit: 'm' })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.nTipo', 'Plantas tipo', d.nTipo, { step: 1 })}${numField('design.hTipo', 'Altura de planta tipo', d.hTipo, { unit: 'm' })}${numField('design.hPB', 'Altura de planta baja', d.hPB, { unit: 'm' })}</div>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.nSub', 'Subsuelos', d.nSub, { step: 1 })}${numField('design.hSub', 'Altura de cada subsuelo', d.hSub, { unit: 'm', hint: 'La guía rotula −4 y −8 m pero calcula el momento con 3 m por subsuelo.' })}</div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.nSub', 'Subsuelos', d.nSub, { step: 1 })}${numField('design.hSub', 'Altura de cada subsuelo', d.hSub, { unit: 'm', hint: 'Usual: 3 m por subsuelo.' })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.B1', 'Platea: ancho B1 (perpendicular al viento)', d.B1, { unit: 'm' })}${numField('design.L1', 'Platea: largo L1 (paralelo al viento)', d.L1, { unit: 'm' })}</div>
       <p class="text-muted" style="font-size:12px; margin:0;">${r ? `Esbeltez λ = h / lado menor = ${fmt(r.slender, 2)} (torre si > 3) · altura total h = ${fmt(r.h, 0)} m.` : ''}</p></div>
     <div class="card"><h3 style="margin-top:0;">Planta y tabiques</h3>${planFigure(d, r)}</div>
     <div class="card" style="grid-column:1 / -1;"><h3 style="margin-top:0;">Tabiques contraviento</h3>${wallsEditor(d)}</div>
     <div class="card"><h3 style="margin-top:0;">Viento (CIRSOC 102-2005)</h3>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.V', 'Velocidad básica V', d.V, { unit: 'm/s', hint: 'Neuquén: 48 m/s (Fig. 1 del reglamento).' })}${selField('design.exposure', 'Categoría de exposición', d.exposure, Object.entries(T.EXPOSURES), 'Sistema principal resistente (caso 2). La guía usa A.')}</div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.V', 'Velocidad básica V', d.V, { unit: 'm/s', hint: 'Neuquén: 48 m/s (Fig. 1 del reglamento).' })}${selField('design.exposure', 'Categoría de exposición', d.exposure, Object.entries(T.EXPOSURES), 'Sistema principal resistente (caso 2). Usual: A.')}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.Kd', 'Direccionalidad Kd', d.Kd, { hint: 'Edificios: 0,85.' })}${numField('design.I', 'Importancia I', d.I, { hint: 'Categoría II: 1,00.' })}${numField('design.Kzt', 'Topografía Kzt', d.Kzt, { hint: 'Planicie: 1.' })}</div>
       <div class="field-row" style="flex-wrap:wrap;">${numField('design.G', 'Factor de ráfaga G', d.G, { hint: 'Edificio rígido: 0,85.' })}${numField('design.gcpi', 'GCpi (edificio cerrado)', d.gcpi, { hint: '±0,18; en la acción conjunta se compensa.' })}</div></div>
     <div class="card"><h3 style="margin-top:0;">Cargas verticales</h3>
-      <div class="field-row" style="flex-wrap:wrap;">${numField('design.qpp0', 'Peso de cada losa, sin sobrecarga', d.qpp0, { unit: 't/m²', hint: 'Guía: 0,7 t/m².' })}${numField('design.qpp1', 'Peso de cada losa, con sobrecarga', d.qpp1, { unit: 't/m²', hint: 'Guía: 0,9 t/m².' })}</div>
-      <p class="text-muted" style="font-size:12px; margin:0;">Incluye losas, contrapisos, tabiquería, columnas, vigas y sobrecarga de uso (en la guía, por piso). Se aplica a las ${num(d.nTipo) + 2} losas (azotea, plantas y planta baja) y a los subsuelos.</p></div></div>
+      <div class="field-row" style="flex-wrap:wrap;">${numField('design.qpp0', 'Peso de cada losa, sin sobrecarga', d.qpp0, { unit: 't/m²', hint: 'Usual: 0,7 t/m².' })}${numField('design.qpp1', 'Peso de cada losa, con sobrecarga', d.qpp1, { unit: 't/m²', hint: 'Usual: 0,9 t/m².' })}</div>
+      <p class="text-muted" style="font-size:12px; margin:0;">Incluye losas, contrapisos, tabiquería, columnas, vigas y sobrecarga de uso. Se aplica a las ${num(d.nTipo) + 2} losas (azotea, plantas y planta baja) y a los subsuelos.</p></div></div>
     <div class="note" style="margin-top:16px;">${TOWER_NOTE}</div>`;
 }
 
@@ -171,7 +171,7 @@ function resultantFigure(r) {
   return `<svg viewBox="0 0 ${W} ${yb + 66}" style="width:100%; max-width:560px; height:auto; display:block;" role="img" aria-label="Resultante de G y W respecto del núcleo central de la base">${s}</svg>`;
 }
 
-// Cómo trabajan los tabiques en planta (traslación o rototraslación) y qué dice la cátedra de cada disposición
+// Cómo trabajan los tabiques en planta (traslación o rototraslación) y qué se recomienda en cada disposición
 function behaviorCard(r) {
   const b = r.behavior;
   return `<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Comportamiento de los tabiques en planta</h3>
@@ -183,7 +183,7 @@ function behaviorCard(r) {
     <p class="text-muted" style="font-size:12px; margin:6px 0 0;">${escapeHtml(b.text)} La suma de los momentos de los tabiques debe ser igual al momento del viento.</p></div>`;
 }
 
-// Sistemas estructurales según la cantidad de pisos (resumen de la cátedra)
+// Sistemas estructurales según la cantidad de pisos 
 function systemsCard(r) {
   return `<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Sistemas estructurales según la altura <span class="text-muted" style="font-weight:400; font-size:12.5px;">(${r.floors} pisos sobre el nivel 0,00)</span></h3>
     <div class="table-wrap"><table class="data-table"><thead><tr><th>Sistema</th><th style="text-align:right;">Hasta</th><th>Cómo trabaja</th><th>Para este edificio</th></tr></thead><tbody>
@@ -202,7 +202,7 @@ function step2(calc) {
       <tr><td>Cp barlovento · Cp sotavento (L / B = ${fmt(r.LB, 2)})</td><td style="text-align:right;">${fmt(r.CpW, 1)} · ${fmt(r.CpL, 1)}</td></tr>
       <tr><td>Período T = 0,08 h / √L · √(h / (L + h)) · frecuencia</td><td style="text-align:right;">${fmt(r.T, 2)} s · ${fmt(r.freq, 2)} Hz</td></tr>
       <tr><td>Esbeltez h / lado menor (torre si &gt; 3)</td><td style="text-align:right;">${fmt(r.slender, 2)}</td></tr></tbody></table>
-      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">p = qz G Cp − qh GCpi a barlovento y qh G Cp − qh GCpi a sotavento; la acción conjunta suma presión y succión (la presión interna se anula). 1 kgf = 10 N, como en los apuntes.</p></div>
+      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">p = qz G Cp − qh GCpi a barlovento y qh G Cp − qh GCpi a sotavento; la acción conjunta suma presión y succión (la presión interna se anula). 1 kgf = 10 N.</p></div>
     <div class="card"><h3 style="margin-top:0;">Esfuerzos en la base</h3><table class="data-table"><tbody>
       <tr><td>Corte en el nivel 0,00 · momento en el nivel 0,00</td><td style="text-align:right;"><b>${fmt(r.Q0, 1)} t · ${fmt(r.M0, 0)} tm</b></td></tr>
       <tr><td>Momento al pie de la platea (${r.nSub} subsuelo${r.nSub === 1 ? '' : 's'} de ${fmt(r.hSub, 1)} m)</td><td style="text-align:right;"><b>${fmt(r.Mbase, 0)} tm</b></td></tr>
@@ -216,10 +216,10 @@ function step3(calc, out) {
   if (out.error) return `<div class="card"><div class="empty-state">${out.error}</div></div>`;
   const r = out.res; const d = calc.design;
   const data = `<div class="card"><h3 style="margin-top:0;">Datos de dimensionado</h3>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.fc', 'Hormigón: σbk (H-30 = 300)', d.fc, { unit: 'kg/cm²' })}${numField('design.E', 'Módulo de elasticidad', d.E, { unit: 'kg/cm²', hint: 'Guía (H-30): 340000.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaBadm', 'Compresión admisible del hormigón (0 = automática)', d.sigmaBadm, { unit: 'kg/cm²', hint: `Automática: (σbk + 0,8 % × 4200) / ${fmt(num(d.gammaSeg, 2.5), 1)} = ${fmt(r.sBadm, 1)} (criterio de las guías de columnas; la de tabiques solo dice que verifica para H-30).` })}${numField('design.gammaSeg', 'Coeficiente de seguridad', d.gammaSeg, { hint: 'Guías de columnas: 2,5.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.tauAdm', 'Corte admisible', d.tauAdm, { unit: 'kg/cm²', hint: 'Guía (H-30): 24.' })}${numField('design.sigmaS', 'Acero (AB-42)', d.sigmaS, { unit: 'kg/cm²', hint: 'Guía: 2400.' })}</div>
-    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaT', 'Tensión admisible del terreno', d.sigmaT, { unit: 'kg/cm²', hint: 'Guía: 1,9 (sale del estudio de suelo).' })}${numField('design.flechaRatio', 'Flecha admisible h /', d.flechaRatio, { step: 1 })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.fc', 'Hormigón: σbk (H-30 = 300)', d.fc, { unit: 'kg/cm²' })}${numField('design.E', 'Módulo de elasticidad', d.E, { unit: 'kg/cm²', hint: 'Usual (H-30): 340000.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaBadm', 'Compresión admisible del hormigón (0 = automática)', d.sigmaBadm, { unit: 'kg/cm²', hint: `Automática: (σbk + 0,8 % × 4200) / ${fmt(num(d.gammaSeg, 2.5), 1)} = ${fmt(r.sBadm, 1)} (criterio habitual de predimensionado).` })}${numField('design.gammaSeg', 'Coeficiente de seguridad', d.gammaSeg, { hint: 'Guías de columnas: 2,5.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.tauAdm', 'Corte admisible', d.tauAdm, { unit: 'kg/cm²', hint: 'Usual (H-30): 24.' })}${numField('design.sigmaS', 'Acero (AB-42)', d.sigmaS, { unit: 'kg/cm²', hint: 'Usual: 2400.' })}</div>
+    <div class="field-row" style="flex-wrap:wrap;">${numField('design.sigmaT', 'Tensión admisible del terreno', d.sigmaT, { unit: 'kg/cm²', hint: 'Usual: 1,9 (sale del estudio de suelo).' })}${numField('design.flechaRatio', 'Flecha admisible h /', d.flechaRatio, { step: 1 })}</div>
     <div class="field-row" style="flex-wrap:wrap;">${selField('design.barD', 'Barras verticales', d.barD, [8, 10, 12, 16, 20].map((x) => [x, `Ø${x} mm`]), 'Mínimo Ø8 c/20 (CIRSOC 201).')}${selField('design.barDh', 'Barras horizontales', d.barDh, [6, 8, 10].map((x) => [x, `Ø${x} mm`]), 'Fe horizontal = 1/5 Fe vertical, mínimo Ø6 c/25.')}</div></div>`;
   const notes = r.notes.map((n) => `<div class="note" style="margin-top:12px;">${escapeHtml(n)}</div>`).join('') + systemsCard(r);
   const soil = `<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Verificación gráfica al volcamiento</h3>${resultantFigure(r)}<table class="data-table"><tbody>
@@ -228,7 +228,7 @@ function step3(calc, out) {
     <tr><td>Flecha en cabeza f · admisible</td><td style="text-align:right;">${fmt(r.defl.f * 100, 1)} · ${fmt(r.defl.fAdm * 100, 1)} cm</td></tr></tbody></table></div>`;
   return `<div class="grid grid-2" style="align-items:start;"><div>${data}${notes}</div><div>${checksCard({ ok: r.ok, checks: r.checks })}${soil}${behaviorCard(r)}</div>
     <div class="card" style="grid-column:1 / -1;"><h3 style="margin-top:0;">Flexocompresión de los tabiques en el nivel 0,00</h3>${wallTable(r)}
-      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">σ = −N / F ± M / W (negativa = compresión). M es la parte del momento flector total que toma cada pieza, proporcional a su inercia (en el tabique en U, el alma y las alas por separado). Las alas forman un par de brazo z = largo del alma + espesor. Los esfuerzos del viento son reversibles: la armadura se reparte en forma simétrica. La armadura mínima es el 0,8 % de la sección (la guía, con x = 78 cm, obtiene T = 10,7 t; por semejanza de triángulos con las tensiones de la planilla da x = ${fmt(r.walls[0]?.fx?.x ?? 0, 2)} m).</p></div></div>`;
+      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">σ = −N / F ± M / W (negativa = compresión). M es la parte del momento flector total que toma cada pieza, proporcional a su inercia (en el tabique en U, el alma y las alas por separado). Las alas forman un par de brazo z = largo del alma + espesor. Los esfuerzos del viento son reversibles: la armadura se reparte en forma simétrica. La armadura mínima es el 0,8 % de la sección (por semejanza de triángulos con las tensiones de la planilla da x = ${fmt(r.walls[0]?.fx?.x ?? 0, 2)} m).</p></div></div>`;
 }
 
 function memoria(calc, out) {
@@ -241,7 +241,7 @@ function memoria(calc, out) {
     const f = w.kind === 'U' ? memoRow(`${escapeHtml(w.name)} ala comprimida`, `par = ${tn(w.flange.M, 0)} tm / ${tn(w.flange.z, 2)} m = ${tn(w.flange.par, 0)} t · N = ${tn(w.flange.N, 0)} t · σ = ${tn(w.flange.sigma, 1)} kg/cm² · armadura ${tn(w.flange.As, 1)} cm²: Ø${r.barD} c/${tn(w.flange.vert.s, 1)} (${w.flange.vert.n} por capa)`) : '';
     return a + f;
   }).join('');
-  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Edificio en torre de hormigón armado con tabiques contraviento', 'Guía de predimensionado E4 · 7')}
+  const html = `<h2>1. Diseño</h2><table>${memoRow('Tipo', 'Edificio en torre de hormigón armado con tabiques contraviento', 'Predimensionado')}
       ${memoRow('Edificio', `B = ${fmt(d.B, 1)} m · L = ${fmt(d.L, 1)} m · h = ${fmt(r.h, 0)} m (planta baja ${fmt(d.hPB, 1)} m + ${fmt(d.nTipo, 0)} plantas de ${fmt(d.hTipo, 1)} m) · ${r.nSub} subsuelos`)}
       ${memoRow('Platea', `${fmt(d.B1, 1)} × ${fmt(d.L1, 1)} m`)}${memoRow('Hormigón · acero', `σbk = ${fmt(d.fc, 0)} kg/cm² · E = ${fmt(d.E, 0)} kg/cm² · σe = ${fmt(d.sigmaS, 0)} kg/cm²`)}</table>
     ${elevationFigure(d, r)}${planFigure(d, r)}

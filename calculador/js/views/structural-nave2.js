@@ -12,7 +12,7 @@ import { famCard, annotate, barName } from './structural-truss.js';
 import { deflSelect, deflCardHtml, deflMemo, jointsPanel, jointsCab, jointsArch, jointsMemo } from './structural-joints.js';
 
 const GRADE_OPTS = Object.entries(S.GRADES).map(([k, g]) => [k, g.label]);
-const OMEGA_OPTS = [['grade', 'Tabla ω del acero elegido (más conservadora)'], ['St37', 'Tabla 3 del apunte (acero St 37), como en los ejemplos de la cátedra']];
+const OMEGA_OPTS = [['grade', 'Tabla ω del acero elegido (más conservadora)'], ['St37', 'Tabla ω para acero St 37 (alternativa)']];
 const FAM_OPTS = [['IPE', 'Doble T IPE'], ['IPN', 'Doble T normal (IPN)'], ['HEB', 'Doble T ala ancha (HEB)'], ['TR', 'Tubo rectangular'], ['TC', 'Tubo cuadrado']];
 const SECTION_OPTS = Object.entries(T.SECTION_TYPES).map(([k, v]) => [k, v.label]);
 const CHORD_OPTS = [['UPN', 'Perfil U (UPN)'], ['IPN', 'Doble T normal (IPN)']];
@@ -20,10 +20,10 @@ const kg = (v) => fmt(v, 0);
 const pill = (ok) => (ok ? '<span class="tag tag-freelance">Verifica</span>' : '<span class="tag tag-alta">No verifica</span>');
 const rerender = () => window.dispatchEvent(new HashChangeEvent('hashchange'));
 const ART = {
-  method: 'Método elástico: σ ≤ σadm = fluencia / 1,6 (apunte "Teoría acero")',
+  method: 'Método elástico: σ ≤ σadm = fluencia / 1,6',
   wind: 'CIRSOC 102 (2005): p = q (G Cp − GCpi), q = 0,613 Kz Kzt Kd V² I',
   roof: 'CIRSOC 101-1982, art. 4.1.7.1 (sobrecarga de cubierta)',
-  flexo: 'Flexo-compresión: σ = N/A + M/W y σ = ωN/A + 0,9 M/W; flexo-tracción: σ = M/W + N/A (apunte)',
+  flexo: 'Flexo-compresión: σ = N/A + M/W y σ = ωN/A + 0,9 M/W; flexo-tracción: σ = M/W + N/A',
   arch: 'Cubiertas abovedadas: CIRSOC 102 Tabla 8 (cuarto a barlovento, mitad central, cuarto a sotavento)',
 };
 let ntab = 'resumen';
@@ -108,16 +108,16 @@ function windCard(calc) {
     <h3 style="margin-top:0;">Viento <span class="text-muted" style="font-weight:400; font-size:12.5px;">(${ART.wind})</span></h3>
     <div class="field-row" style="flex-wrap:wrap;">
       ${selField('design.windOn', 'Acción del viento', d.windOn === 'no' ? 'no' : 'yes', [['yes', 'Calcular con CIRSOC 102'], ['no', 'No considerar viento']])}
-      ${numField('design.V', 'Velocidad básica V', d.V, { unit: 'm/s', hint: 'Mar del Plata: 51 m/s (apunte).' })}${selField('design.exposure', 'Exposición', d.exposure, Object.entries(W.EXPOSURES))}
+      ${numField('design.V', 'Velocidad básica V', d.V, { unit: 'm/s', hint: 'Ej.: Mar del Plata 51 m/s.' })}${selField('design.exposure', 'Exposición', d.exposure, Object.entries(W.EXPOSURES))}
     </div>
     <div class="field-row" style="flex-wrap:wrap;">
       ${selField('design.enclosure', 'Cerramiento', d.enclosure, Object.entries(W.ENCLOSURES).map(([k, v]) => [k, v[0]]))}
-      ${selField('design.caso', 'Caso de Kz', Number(d.caso) === 2 ? 2 : 1, [[1, 'Caso 1 (el del apunte)'], [2, 'Caso 2']])}${numField('design.Kd', 'Kd', d.Kd)}
+      ${selField('design.caso', 'Caso de Kz', Number(d.caso) === 2 ? 2 : 1, [[1, 'Caso 1 (usual)'], [2, 'Caso 2']])}${numField('design.Kd', 'Kd', d.Kd)}
     </div>
     <div class="field-row" style="flex-wrap:wrap;">
       ${numField('design.Kzt', 'Kzt', d.Kzt)}${numField('design.Ie', 'Factor de importancia I', d.Ie)}${numField('design.xFrame', 'Distancia del pórtico al frente', d.xFrame, { unit: 'm', hint: 'Viento sobre el frente; 0 = el más cargado.' })}
     </div>
-    ${selField('design.windMix', 'Estados de viento lateral', d.windMix === 'no' ? 'no' : 'yes', [['yes', 'Los de CIRSOC 102 y además el del apunte (valor más desfavorable de cada zona)'], ['no', 'Solo los de CIRSOC 102']])}
+    ${selField('design.windMix', 'Estados de viento lateral', d.windMix === 'no' ? 'no' : 'yes', [['yes', 'Los de CIRSOC 102 y además el estado conservador de cada zona (valor más desfavorable de cada zona)'], ['no', 'Solo los de CIRSOC 102']])}
   </div>`;
 }
 
@@ -144,7 +144,7 @@ function purlinCard(res, input) {
     <tr><td>Luz · separación</td><td style="text-align:right;">${fmt(input.S, 2)} m · ${fmt(input.sPurlin, 2)} m</td></tr>
     <tr><td>Cargas por metro: permanente · sobrecarga · succión máxima</td><td style="text-align:right;">${fmt(pu.gH + pu.profile.G, 1)} · ${fmt(pu.pH, 1)} · ${fmt(pu.sv, 1)} kg/m</td></tr>
     ${pu.states.map((s2) => `<tr><td>${escapeHtml(s2.label)}</td><td style="text-align:right;">σ ${kg(s2.chk.sigma)} / ${kg(s2.chk.sigmaAllow)} · f ${fmt(s2.chk.f, 2)} / ${fmt(s2.chk.fAllow, 2)} cm</td></tr>`).join('')}</tbody></table>
-    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Flexión oblicua con la succión máxima de los estados de viento (${fmt(res.suction, 0)} kg/m²); método del apunte "Correas a flexión oblicua".</p></div>`;
+    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Flexión oblicua con la succión máxima de los estados de viento (${fmt(res.suction, 0)} kg/m²); método del.</p></div>`;
 }
 
 const fmtP = (v) => `${v >= 0 ? '+' : '−'}${fmt(Math.abs(v), 1)}`;
@@ -160,7 +160,7 @@ function cabWindTable(wd) {
     ${wd.lateral.map((c) => `<tr><td>GCpi ${c.gcpi > 0 ? '+' : c.gcpi < 0 ? '−' : '0'}${c.roofOption === 'pos' ? ', presión en el faldón' : ''}</td><td style="text-align:right;">${fmtP(c.wallWindward.p)} <span class="text-muted">(${fmt(c.wallWindward.cp, 2)})</span></td><td style="text-align:right;">${fmtP(c.roofWindward.p)} <span class="text-muted">(${fmt(c.roofWindward.cp, 2)})</span></td><td style="text-align:right;">${fmtP(c.roofLeeward.p)} <span class="text-muted">(${fmt(c.roofLeeward.cp, 2)})</span></td><td style="text-align:right;">${fmtP(c.wallLeeward.p)} <span class="text-muted">(${fmt(c.wallLeeward.cp, 2)})</span></td></tr>`).join('')}</tbody></table></div>
     <div class="table-wrap" style="margin-top:10px;"><table class="data-table"><thead><tr><th>Viento sobre el frente</th><th style="text-align:right;">Cubierta</th><th style="text-align:right;">Paredes laterales</th></tr></thead><tbody>
     ${wd.frontal.map((c) => `<tr><td>GCpi ${c.gcpi > 0 ? '+' : c.gcpi < 0 ? '−' : '0'}</td><td style="text-align:right;">${fmtP(c.roof.p)} <span class="text-muted">(${fmt(c.roof.cp, 2)})</span></td><td style="text-align:right;">${fmtP(c.side.p)} <span class="text-muted">(${fmt(c.side.cp, 2)})</span></td></tr>`).join('')}</tbody></table></div>
-    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Entre paréntesis, Cp (Figura 3). Una sola presión dinámica qh para todas las superficies (simplificación del apunte).</p></div>`;
+    <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Entre paréntesis, Cp (Figura 3). Una sola presión dinámica qh para todas las superficies (simplificación habitual).</p></div>`;
 }
 
 function archWindTable(wd) {
@@ -345,7 +345,7 @@ function cabMemoria(calc, out) {
       <table>${memoRow(`${escapeHtml(res.col.n)}`, `A = ${fmt(res.col.A, 1)} cm², Wx = ${fmt(res.col.Wx, 0)} cm³; Lp = ${fmt(input.kx, 1)} H en el plano, ${fmt(input.sGirt, 2)} m fuera del plano`, ART.flexo)}
         ${memoRow('Solicitación más exigente', `M = ${kg(Math.abs(c.M))} kg·m; N = ${c.N >= 0 ? '+' : '−'}${kg(Math.abs(c.N))} kg; V = ${kg(Math.abs(c.V))} kg → σ = ${kg(c.sigma)} ≤ ${kg(c.sigmaAllow)}; τ = ${kg(c.tau)} kg/cm²`)}${memoRow('Resultado', c.ok ? 'verifica' : 'no verifica')}</table>
       <h2>6. Correas y bases</h2>
-      <table>${pu.profile ? memoRow('Correa', `${escapeHtml(pu.profile.n)}: luz ${fmt(input.S, 2)} m, cada ${fmt(input.sPurlin, 2)} m — ${pu.ok ? 'verifica' : 'no verifica'}`, 'Apunte "Correas a flexión oblicua"') : ''}
+      <table>${pu.profile ? memoRow('Correa', `${escapeHtml(pu.profile.n)}: luz ${fmt(input.S, 2)} m, cada ${fmt(input.sPurlin, 2)} m — ${pu.ok ? 'verifica' : 'no verifica'}`, '') : ''}
         ${res.bases.map((b) => memoRow(`Base ${b.idx === 0 ? 'izquierda' : 'derecha'}`, `N = ${kg(b.Nmax)} kg; M = ${kg(b.Mmax)} kg·m; H = ${kg(b.H)} kg; ${b.footing.ok ? `${fmt(b.footing.B / 10, 0)} × ${fmt(b.footing.L / 10, 0)} × ${fmt(b.footing.h / 10, 0)} cm` : escapeHtml(b.footing.reason || '—')}`, 'CIRSOC 201; presión máxima del suelo con momento')).join('')}
         ${memoRow('No verificado', 'vuelco de las bases, armadura suplementaria y del pedestal de los anclajes, bloque de corte de las chapas de nudo, arriostramientos')}</table>
       <h2>7. Flechas</h2>${deflMemo(res.defl, 'cab', res.bumps ? res.bumps.truss + res.bumps.col : 0)}
@@ -392,7 +392,7 @@ export const naveArchModule = {
         ${selField('design.rafter', 'Arco', d.rafter, [['solid', 'De alma llena'], ['truss', 'Reticulado (dos cordones y diagonales)']])}
         ${d.rafter === 'truss' ? `<div class="field-row" style="flex-wrap:wrap;">${numField('design.hTruss', 'Altura entre cordones h', d.hTruss, { unit: 'm' })}${numField('design.alphaDiag', 'Ángulo de las diagonales', d.alphaDiag, { unit: '°' })}</div>` : ''}
         <h4 style="margin:10px 0 6px; font-size:13px;">Longitudes de pandeo</h4>
-        <div class="field-row" style="flex-wrap:wrap;">${numField('design.kArc', 'Arco en el plano: Lp = k × longitud del arco', d.kArc, { hint: 'Criterio del proyectista (no figura en los apuntes): 0,5 es habitual en arcos de tres articulaciones; 1 es conservador.' })}${numField('design.sPurlin', 'Separación de correas (arriostra el arco)', d.sPurlin, { unit: 'm' })}</div>
+        <div class="field-row" style="flex-wrap:wrap;">${numField('design.kArc', 'Arco en el plano: Lp = k × longitud del arco', d.kArc, { hint: 'Criterio del proyectista (no figura en el reglamento): 0,5 es habitual en arcos de tres articulaciones; 1 es conservador.' })}${numField('design.sPurlin', 'Separación de correas (arriostra el arco)', d.sPurlin, { unit: 'm' })}</div>
         ${deflSelect('design.deflLimit', d.deflLimit || 'industrialRigid')}
         ${Number(d.H) > 0 ? `<div class="field-row" style="flex-wrap:wrap;">${selField('design.kx', 'Columna en el plano', Number(d.kx), [[2, 'Lp = 2 H'], [1, 'Lp = H'], [0.7, 'Lp = 0,7 H']])}${numField('design.sGirt', 'Arriostramiento de columna fuera del plano', d.sGirt, { unit: 'm' })}</div>` : ''}`)}
       <div class="card"><h3 style="margin-top:0;">Predimensionado</h3>${res ? `<table class="data-table"><tbody>
@@ -495,7 +495,7 @@ function archMemoria(calc, out) {
       <table>${blocks.map((blk) => `${memoRow(escapeHtml(blk.title), blk.ok ? 'verifica' : 'no verifica', ART.flexo)}${blk.items.map((k) => memoRow(`${k.ok ? '✓' : '✗'} ${k.label}`, escapeHtml(k.text))).join('')}`).join('')}
         ${memoRow('Pandeo del arco en el plano', `Lp = ${fmt(input.kArc, 2)} × ${fmt(res.arcLen, 2)} m = ${fmt(res.LpxArch / 100, 2)} m (criterio del proyectista); fuera del plano, a la separación de correas (${fmt(input.sPurlin, 2)} m)`)}</table>
       <h2>5. Correas y bases</h2>
-      <table>${pu.profile ? memoRow('Correa', `${escapeHtml(pu.profile.n)}: luz ${fmt(input.S, 2)} m — ${pu.ok ? 'verifica' : 'no verifica'}`, 'Apunte "Correas a flexión oblicua"') : ''}
+      <table>${pu.profile ? memoRow('Correa', `${escapeHtml(pu.profile.n)}: luz ${fmt(input.S, 2)} m — ${pu.ok ? 'verifica' : 'no verifica'}`, '') : ''}
         ${res.bases.map((b) => memoRow(`Base ${b.idx === 0 ? 'izquierda' : 'derecha'}`, `N = ${kg(b.Nmax)} kg; M = ${kg(b.Mmax)} kg·m; H = ${kg(b.H)} kg; ${b.footing.ok ? `${fmt(b.footing.B / 10, 0)} × ${fmt(b.footing.L / 10, 0)} × ${fmt(b.footing.h / 10, 0)} cm` : escapeHtml(b.footing.reason || '—')}`, 'CIRSOC 201')).join('')}
         ${memoRow('No verificado', 'armadura suplementaria y del pedestal de los anclajes, bloque de corte de las chapas de nudo, arriostramientos')}</table>
       <h2>6. Flechas</h2>${deflMemo(res.defl, 'arch', res.bumps ? res.bumps.arch + res.bumps.col : 0)}

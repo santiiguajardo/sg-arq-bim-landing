@@ -1,13 +1,14 @@
 // Estructuras de grandes luces traccionadas: cercha Jawerth, cubierta pesada, paraboloide hiperbólico e hiperboloide de revolución.
-// Motor en js/structural/cables.js. FUENTE: guías 1.1 a 1.5 de Tracción del Taller de Estructuras E4 (curso 2024).
+// Motor en js/structural/cables.js. Predimensionado aproximado: 1.1 a 1.5 de Tracción.
+import { previewSketch } from './structural-spans.js';
 import * as C from '../structural/cables.js';
 import { escapeHtml } from '../utils.js';
 import { fmt, numField, selField, checksCard, failCard, memoRow } from './structural-ui.js';
 
 const kg = (v) => fmt(v, 0);
 const pill = (ok) => (ok ? '<span class="tag tag-freelance">Verifica</span>' : '<span class="tag tag-alta">No verifica</span>');
-const KINDS = { jawerth: 'Cercha Jawerth (guía 1.1)', heavy: 'Cubierta pesada (guía 1.2)', ph: 'Paraboloide hiperbólico (guía 1.4)', hr: 'Hiperboloide de revolución (guía 1.3)' };
-export const TENS_NOTE = 'Predimensionado según las guías de Tracción del Taller de Estructuras E4 (2024): la catenaria se resuelve como parábola (flecha del orden del 10 % de la luz), la tensión previa evita la compresión de los cables y la carga de rotura se busca en las tablas de cables. El coeficiente de forma del viento de estas formas no está tabulado: es un valor hipotético que debe verificarse en el cálculo definitivo, y las guías piden tablas de cables del fabricante. Herramienta de apoyo para el predimensionado.';
+const KINDS = { jawerth: 'Cercha Jawerth ', heavy: 'Cubierta pesada ', ph: 'Paraboloide hiperbólico ', hr: 'Hiperboloide de revolución ' };
+export const TENS_NOTE = 'Predimensionado aproximado: la catenaria se resuelve como parábola (flecha del orden del 10 % de la luz), la tensión previa evita la compresión de los cables y la carga de rotura se busca en las tablas de cables. El coeficiente de forma del viento de estas formas no está tabulado: es un valor hipotético que debe verificarse en el cálculo definitivo, y conviene usar tablas de cables del fabricante. Herramienta de apoyo para el predimensionado.';
 const CATALOGS = C.CABLE_CATALOGS;
 const LAYOUTS = { espacial: 'Cilíndrica espacial: cables superior e inferior desfasados medio módulo', plana: 'Cilíndrica plana (coplanar): los dos cables en el mismo plano vertical', radial: 'Radial: planta circular, con la carga triangular de cada faja' };
 const COVERS = { tela: 'Tela estructural (cerramiento y pendolón a la vez)', pend: 'Pendolones inclinados de cable (cubierta aparte)', a: 'Sobre el cable superior: pendolones verticales', b: 'Colgada del cable inferior: pendolones verticales' };
@@ -48,7 +49,7 @@ function compute(calc) {
     return { kind, input: q, res: C.designHyperboloid(q) };
   }
   if (![p.L, p.f, p.a, p.Pp].every((v) => v > 0) || !(p.W >= 0)) return { error: 'Completá la luz, la flecha, el área de influencia y el peso propio con valores mayores que cero.' };
-  if (p.f / p.L < 0.05 || p.f / p.L > 0.35) return { error: 'La flecha tiene que estar entre el 5 % y el 35 % de la luz (las guías usan el 10 %).' };
+  if (p.f / p.L < 0.05 || p.f / p.L > 0.35) return { error: 'La flecha tiene que estar entre el 5 % y el 35 % de la luz (usual: 10 %).' };
   if (kind === 'heavy') {
     const res = C.designHeavyRoof({ ...p, ratioMin: num(d.ratioMin, 2.5) });
     const sup = C.planarSupport({ R: res.Rmax, thetaDeg: res.slopeDeg, betaDeg: num(d.betaT, 60) });
@@ -187,7 +188,7 @@ function windCard(d) {
   const w = windSuggestion(d);
   return `<div class="card"><h3 style="margin-top:0;">Viento sobre la cubierta (ayuda de cálculo)</h3>
     <div class="field-row" style="flex-wrap:wrap;">
-      ${numField('design.windV', 'Velocidad básica V', d.windV, { unit: 'm/s', hint: 'CIRSOC 102-2005 (Buenos Aires: 45 m/s en las guías).' })}${numField('design.windKz', 'Kz', d.windKz, { hint: 'Exposición y altura.' })}
+      ${numField('design.windV', 'Velocidad básica V', d.windV, { unit: 'm/s', hint: 'CIRSOC 102-2005 (Buenos Aires: 45 m/s).' })}${numField('design.windKz', 'Kz', d.windKz, { hint: 'Exposición y altura.' })}
     </div>
     <div class="field-row" style="flex-wrap:wrap;">
       ${numField('design.windKd', 'Kd', d.windKd)}${numField('design.windKzt', 'Kzt', d.windKzt)}${numField('design.windI', 'I', d.windI)}
@@ -195,7 +196,7 @@ function windCard(d) {
     <div class="field-row" style="flex-wrap:wrap;">
       ${numField('design.windG', 'G', d.windG)}${numField('design.windCp', 'Cp', d.windCp, { min: -5, hint: 'Hipotético: estas formas no están tabuladas.' })}${numField('design.windGCpi', 'GCpi', d.windGCpi, { min: -5 })}
     </div>
-    <p class="text-muted" style="font-size:12.5px; margin:0;">qh = 0,613 V² Kd Kzt I Kz = <b>${fmt(w.qh, 0)} N/m²</b>; p = qh (G Cp − GCpi) = <b>${fmt(w.pN, 0)} N/m² ≈ ${fmt(w.pKg, 1)} kg/m²</b> (1 kg = 10 N). La succión que se carga arriba es el valor absoluto de esta presión (las guías adoptan 60 kg/m²).</p></div>`;
+    <p class="text-muted" style="font-size:12.5px; margin:0;">qh = 0,613 V² Kd Kzt I Kz = <b>${fmt(w.qh, 0)} N/m²</b>; p = qh (G Cp − GCpi) = <b>${fmt(w.pN, 0)} N/m² ≈ ${fmt(w.pKg, 1)} kg/m²</b> (1 kg = 10 N). La succión que se carga arriba es el valor absoluto de esta presión.</p></div>`;
 }
 
 function geometryCard(calc) {
@@ -208,10 +209,10 @@ function geometryCard(calc) {
   const head = jaw
     ? `${selField('design.layout', 'Tipo de cercha Jawerth', layout, Object.entries(LAYOUTS), 'Según cómo se ubican los cables entre sí cambian los pendolones, la cubierta y los apoyos.')}${jawFigure(d)}${jawPlan(d)}`
     : netFigure(num(d.L, 30), num(d.f, 3), `${heavy ? 'Cable portante' : 'Dos familias de cables'}, flecha ${fmt(num(d.f) / num(d.L, 1) * 100, 0)} % de la luz`, { two: !heavy });
-  return `<div class="card"><h3 style="margin-top:0;">${KINDS[d.kind]}</h3>
+  return `<div class="card"><h3 style="margin-top:0;">${KINDS[d.kind]}</h3>${d.kind === 'jawerth' || d.kind === 'heavy' ? previewSketch('jawerth', d) : ''}
     ${head}
     <div class="field-row" style="flex-wrap:wrap;">
-      ${numField('design.L', radial ? 'Diámetro de la cubierta L' : 'Luz de los cables L', d.L, { unit: 'm' })}${numField('design.f', 'Flecha f', d.f, { unit: 'm', hint: `f / L = ${fmt(num(d.f) / num(d.L, 1), 3)} (las guías usan 0,10).` })}
+      ${numField('design.L', radial ? 'Diámetro de la cubierta L' : 'Luz de los cables L', d.L, { unit: 'm' })}${numField('design.f', 'Flecha f', d.f, { unit: 'm', hint: `f / L = ${fmt(num(d.f) / num(d.L, 1), 3)} (usual: 0,10).` })}
     </div>
     <div class="field-row" style="flex-wrap:wrap;">
       ${numField('design.a', radial ? 'Ancho de la faja de cubierta en el borde a' : 'Distancia entre cables (área de influencia) a', d.a, { unit: 'm', hint: radial ? 'Perímetro / cantidad de cables en el borde: la carga de cada cable es triangular, máxima en el borde y nula en el centro.' : jaw ? (layout === 'espacial' ? 'Un cable superior y uno inferior alternados: la separación entre uno y el siguiente es a.' : 'Ancho de cubierta que descarga sobre cada cercha.') : ph ? 'Cables cada metro en cada sentido.' : 'Cada cable toma una faja de ancho a.' })}
@@ -235,7 +236,7 @@ function hyperGeometryCard(calc) {
       ${numField('design.Pp', 'Peso propio de la membrana', d.Pp, { unit: 'kg/m²' })}${numField('design.W', 'Succión del viento W', d.W, { unit: 'kg/m²' })}
     </div>
     <div class="field"><label>Áreas de influencia de los nudos <span class="text-muted">(m², opcional: uno por nudo)</span></label><input data-f="design.areasText" value="${escapeHtml(d.areasText || '')}" placeholder="vacío = se calculan a partir de la geometría" />
-      <span class="text-muted" style="font-size:11.5px;">La guía las mide del dibujo; con la geometría el programa las calcula (a = perímetro / meridianos por la longitud de influencia sobre el meridiano).</span></div>
+      <span class="text-muted" style="font-size:11.5px;">Se calculan con la geometría (a = perímetro / meridianos por la longitud de influencia sobre el meridiano).</span></div>
   </div>`;
 }
 
@@ -244,12 +245,12 @@ function coefCard(calc, withBeta1 = true) {
   const heavy = d.kind === 'heavy';
   return `<div class="card"><h3 style="margin-top:0;">Coeficientes y cables</h3>
     <div class="field-row" style="flex-wrap:wrap;">
-      ${withBeta1 ? numField('design.beta1', 'β1: tensión previa sobre la mínima', d.beta1, { hint: 'De 1,5 a 2 (guías).' }) : ''}
-      ${numField('design.beta2', 'β2: carga de rotura sobre la máxima', d.beta2, { hint: 'Las guías usan 2.' })}
+      ${withBeta1 ? numField('design.beta1', 'β1: tensión previa sobre la mínima', d.beta1, { hint: 'De 1,5 a 2.' }) : ''}
+      ${numField('design.beta2', 'β2: carga de rotura sobre la máxima', d.beta2, { hint: 'Usual: 2.' })}
     </div>
-    ${withBeta1 ? numField('design.TpAdopt', 'Tensión previa adoptada Tp', d.TpAdopt, { unit: 'kg', hint: 'Vacío o 0 = la calculada (mínima × β1). Las guías redondean (p. ej. 1650 kg).' }) : ''}
-    ${selField('design.catalog', 'Tabla de cables', d.catalog || 'guide', CATALOGS, 'Los valores de las guías vienen de una tabla que no se adjuntó; las Tablas 1 y 2 del anexo son las del catálogo HIERROMAT.')}
-    ${heavy ? numField('design.nCables', 'Cantidad de cables por faja', d.nCables, { step: 1, hint: 'La guía usa 2 cables de 19 mm en lugar de uno de 26 mm para apoyar las losetas.' }) : ''}
+    ${withBeta1 ? numField('design.TpAdopt', 'Tensión previa adoptada Tp', d.TpAdopt, { unit: 'kg', hint: 'Vacío o 0 = la calculada (mínima × β1). Se puede redondear (p. ej. 1650 kg).' }) : ''}
+    ${selField('design.catalog', 'Tabla de cables', d.catalog || 'guide', CATALOGS, 'Tablas 1 y 2: catálogo HIERROMAT.')}
+    ${heavy ? numField('design.nCables', 'Cantidad de cables por faja', d.nCables, { step: 1, hint: 'Usual: 2 cables de 19 mm en lugar de uno de 26 mm para apoyar las losetas.' }) : ''}
   </div>`;
 }
 
@@ -262,10 +263,10 @@ function extraCard(calc) {
     return `<div class="card"><h3 style="margin-top:0;">Pendolones y cubierta</h3>
     ${selField('design.cover', 'Sistema de unión entre las dos familias', cover, coversOf(layout).map((c) => [c, COVERS[c]]), hints[cover])}
     ${cover === 'tela' ? '' : numField('design.b', cover === 'pend' ? 'Separación entre pendolones inclinados b' : 'Separación entre pendolones b', d.b, { unit: 'm', hint: 'Esfuerzo de cada pendolón = qe · b.' })}
-    ${spatial ? numField('design.sc', 'Separación vertical entre los cables en la clave', d.sc === undefined ? 0.5 : d.sc, { unit: 'm', hint: 'En el centro la tela (o el pendolón inclinado) queda casi horizontal y su esfuerzo crece sin límite si los cables están al mismo nivel: la guía separa 0,50 m.' }) : numField('design.es', 'Separación vertical entre los dos cables en el apoyo', d.es === undefined ? 4 : d.es, { unit: 'm', hint: 'Si es menor que 2 f los cables se cruzan y los pendolones del tramo central trabajan comprimidos: se dimensionan como caños con pandeo.' })}
+    ${spatial ? numField('design.sc', 'Separación vertical entre los cables en la clave', d.sc === undefined ? 0.5 : d.sc, { unit: 'm', hint: 'En el centro la tela (o el pendolón inclinado) queda casi horizontal y su esfuerzo crece sin límite si los cables están al mismo nivel: usual: 0,50 m.' }) : numField('design.es', 'Separación vertical entre los dos cables en el apoyo', d.es === undefined ? 4 : d.es, { unit: 'm', hint: 'Si es menor que 2 f los cables se cruzan y los pendolones del tramo central trabajan comprimidos: se dimensionan como caños con pandeo.' })}
     <h3 style="margin:14px 0 6px;">Apoyos y columnas</h3>
     <div class="field-row" style="flex-wrap:wrap;">
-      ${numField('design.betaA', 'Ángulo del tensor del cable superior con la horizontal', d.betaA, { unit: '°', hint: 'La guía lo dibuja a 60°.' })}${numField('design.betaB', 'Ángulo del tensor del cable inferior', d.betaB, { unit: '°' })}
+      ${numField('design.betaA', 'Ángulo del tensor del cable superior con la horizontal', d.betaA, { unit: '°', hint: 'Usual: 60°.' })}${numField('design.betaB', 'Ángulo del tensor del cable inferior', d.betaB, { unit: '°' })}
     </div>
     <div class="field-row" style="flex-wrap:wrap;">
       ${numField('design.hA', spatial ? 'Altura de la columna del cable superior' : 'Altura de la columna (los dos cables se anclan en ella)', d.hA, { unit: 'm' })}${spatial ? numField('design.hB', 'Altura de la columna del cable inferior', d.hB, { unit: 'm', hint: 'La diferencia con la columna superior es la separación vertical de los cables en el apoyo.' }) : ''}
@@ -275,22 +276,22 @@ function extraCard(calc) {
     </div>
     ${spatial ? `<div class="field-row" style="flex-wrap:wrap;">${numField('design.tubeBD', 'Tubo propio columna inferior: diámetro', d.tubeBD, { unit: 'cm' })}${numField('design.tubeBe', 'espesor de pared', d.tubeBe, { unit: 'cm' })}</div>` : ''}
     <div class="field-row" style="flex-wrap:wrap;">
-      ${numField('design.k', 'Coeficiente de longitud de pandeo k', d.k, { hint: '1 = articulada en los dos extremos (guía).' })}${numField('design.sigmaSteel', 'Tensión admisible del acero', d.sigmaSteel, { unit: 'kg/cm²', hint: 'Guía: 1400 (F-22 / F-24).' })}
+      ${numField('design.k', 'Coeficiente de longitud de pandeo k', d.k, { hint: '1 = articulada en los dos extremos.' })}${numField('design.sigmaSteel', 'Tensión admisible del acero', d.sigmaSteel, { unit: 'kg/cm²', hint: 'Usual: 1400 (F-22 / F-24).' })}
     </div>
-    <p class="text-muted" style="font-size:12px; margin:0;">${spatial ? 'En la cercha espacial el cable superior se ancla en una columna y el inferior en otra: las cargas no se suman. El apoyo del cable inferior de la guía es espacial (tensores T2, T2′, T2″ en dos planos, descomposición gráfica); aquí ambos cables se descomponen en un plano con el ángulo indicado.' : 'En la cercha coplanar ambos cables se anclan sobre la misma columna, que se predimensiona con N = C1 + C2. Para la cubierta hace falta un sistema con la inercia necesaria para cubrir la luz entre cerchas; las correas pueden apoyar sobre el cable a o colgar del b.'}</p></div>`;
+    <p class="text-muted" style="font-size:12px; margin:0;">${spatial ? 'En la cercha espacial el cable superior se ancla en una columna y el inferior en otra: las cargas no se suman. Ambos cables se descomponen en un plano con el ángulo indicado.' : 'En la cercha coplanar ambos cables se anclan sobre la misma columna, que se predimensiona con N = C1 + C2. Para la cubierta hace falta un sistema con la inercia necesaria para cubrir la luz entre cerchas; las correas pueden apoyar sobre el cable a o colgar del b.'}</p></div>`;
   }
   if (d.kind === 'heavy') return `<div class="card"><h3 style="margin-top:0;">Apoyos y columnas</h3>
     <div class="field-row" style="flex-wrap:wrap;">
-      ${numField('design.ratioMin', 'Relación mínima peso propio / succión', d.ratioMin, { hint: 'Guía: 2,5 a 3.' })}${numField('design.betaT', 'Ángulo del tensor de apoyo con la horizontal', d.betaT, { unit: '°' })}
+      ${numField('design.ratioMin', 'Relación mínima peso propio / succión', d.ratioMin, { hint: 'Usual: 2,5 a 3.' })}${numField('design.betaT', 'Ángulo del tensor de apoyo con la horizontal', d.betaT, { unit: '°' })}
     </div>
     <div class="field-row" style="flex-wrap:wrap;">
-      ${numField('design.sigmaC', 'Tensión de predimensionado del hormigón de la columna', d.sigmaC, { unit: 'kg/cm²', hint: 'Guía: H13, AB42, coeficiente 2,5 → N / 60.' })}${numField('design.rho', 'Cuantía de armadura', d.rho, { unit: '%' })}
+      ${numField('design.sigmaC', 'Tensión de predimensionado del hormigón de la columna', d.sigmaC, { unit: 'kg/cm²', hint: 'Usual: H13, AB42, coeficiente 2,5 → N / 60.' })}${numField('design.rho', 'Cuantía de armadura', d.rho, { unit: '%' })}
     </div></div>`;
   if (d.kind === 'ph') return `<div class="card"><h3 style="margin-top:0;">Borde y membrana</h3>
     <div class="field-row" style="flex-wrap:wrap;">
       ${numField('design.sCol', 'Separación de las columnas del borde', d.sCol, { unit: 'm' })}${numField('design.hEdge', 'Altura entre ejes de la viga de borde', d.hEdge, { unit: 'm' })}
     </div>
-    ${numField('design.sigmaEdge', 'Tensión admisible de los tubos del borde', d.sigmaEdge, { unit: 'kg/cm²', hint: 'Guía: 1200.' })}
+    ${numField('design.sigmaEdge', 'Tensión admisible de los tubos del borde', d.sigmaEdge, { unit: 'kg/cm²', hint: 'Usual: 1200.' })}
     ${selField('design.membrane', 'Variante con membrana estructural', d.membrane === 'no' ? 'no' : 'yes', [['yes', 'Sí: franjas de 5 cm de tela y cable de borde colector'], ['no', 'No']])}
     ${d.membrane === 'no' ? '' : `<div class="field-row" style="flex-wrap:wrap;">${numField('design.Lb', 'Luz del cable de borde', d.Lb, { unit: 'm' })}${numField('design.fb', 'Flecha del cable de borde', d.fb, { unit: 'm' })}</div>`}
   </div>`;
@@ -428,14 +429,14 @@ function pendantCard(out) {
       <tr><td>En la clave: separación ${fmt(pd.riseC, 2)} m (φ = ${fmt(pd.phiC, 1)}°)</td><td style="text-align:right;"><b>${fmt(pd.qer2, 2)} kg/50 mm</b></td></tr></tbody></table>
       <h4 style="margin:10px 0 4px; font-size:13px;">Telas de la tabla que alcanzan ${fmt(pd.qerMax, 1)} kg/50 mm</h4>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Tela</th><th style="text-align:right;">Resistencia (kg/50 mm)</th><th></th></tr></thead><tbody>${pd.telas.map((t) => `<tr><td>${escapeHtml(t.n || t.name || '')}${t.g ? ` · ${fmt(t.g, 2)} kg/m²` : ''}</td><td style="text-align:right;">${fmt(t.min, 0)}</td><td style="text-align:right;">${t.ok ? '✓' : '✗'}</td></tr>`).join('')}</tbody></table></div>
-      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">La guía obtiene gráficamente 16,25 en el apoyo y 73,80 en la clave (con 0,50 m de separación); la descomposición se hace con la geometría: separación horizontal entre cables a / 2, vertical entre las columnas en el apoyo y la indicada en la clave. En el centro, con los cables al mismo nivel, el esfuerzo de la tela sería infinito: por eso se los separa.</p></div>`;
+      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">La descomposición se hace con la geometría: separación horizontal entre cables a / 2, vertical entre las columnas en el apoyo y la indicada en la clave. En el centro, con los cables al mismo nivel, el esfuerzo de la tela sería infinito: por eso se los separa.</p></div>`;
   }
   if (pd.cover === 'pend') {
     return `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Pendolones inclinados ${pill(pd.ok)}</h3><table class="data-table"><tbody>${head}
       <tr><td>Separación entre pendolones b · carga de cada uno qe b</td><td style="text-align:right;">${fmt(pd.b, 2)} m · <b>${fmt(pd.F, 0)} kg</b></td></tr>
       <tr><td>En su dirección, en el apoyo (φ = ${fmt(pd.phiS, 1)}°) · en la clave (φ = ${fmt(pd.phiC, 1)}°)</td><td style="text-align:right;">${fmt(pd.TS, 0)} · <b>${fmt(pd.TC, 0)} kg</b></td></tr>
       <tr><td>Carga de rotura × β2</td><td style="text-align:right;">${kg(pd.Trot)} kg → ${cableTxt(pd.cableSel)}</td></tr></tbody></table>
-      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">La guía no da la descomposición para pendolones inclinados de cable: se usa la misma que para la tela (dos pendolones por cable, a / 2 de separación horizontal).</p></div>`;
+      <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Para pendolones inclinados de cable se usa la misma que para la tela (dos pendolones por cable, a / 2 de separación horizontal).</p></div>`;
   }
   const rows = pd.rows.map((r) => `<tr><td style="text-align:right;">${fmt(r.x, 2)}</td><td style="text-align:right;">${fmt(r.len, 2)}</td><td>${r.kind === 'T' ? 'tracción (cable)' : '<span style="color:var(--bad); font-weight:600;">compresión (caño)</span>'}</td><td style="text-align:right;">${r.kind === 'T' ? fmt(pd.F, 0) : `${fmt(pd.F, 0)} × ω`}</td></tr>`).join('');
   return `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Pendolones verticales ${pill(pd.ok)}</h3><table class="data-table"><tbody>${head}
@@ -485,7 +486,7 @@ function resultsHtml(calc, out) {
       left += `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Apoyos</h3><table class="data-table"><tbody>
         <tr><td>Cable superior: R = ${kg(net.Ra)} kg (pendiente ${fmt(net.slopeDeg, 1)}°) → tensor a ${fmt(out.supA.betaDeg, 0)}°</td><td style="text-align:right;">T = <b>${kg(out.supA.T)}</b> · C = <b>${kg(out.supA.C)}</b> kg</td></tr>
         <tr><td>Cable inferior: R = ${kg(net.Rb)} kg → tensor a ${fmt(out.supB.betaDeg, 0)}°</td><td style="text-align:right;">T = <b>${kg(out.supB.T)}</b> · C = <b>${kg(out.supB.C)}</b> kg</td></tr></tbody></table>
-        <p class="text-muted" style="font-size:12px; margin:8px 0 0;">${out.single ? 'Los dos cables se anclan en la misma columna: N = C1 + C2.' : 'El apoyo del cable inferior de la guía es espacial (tensores en el plano de las columnas y en el plano del cable, descomposición gráfica): acá se descompone en un solo plano, por lo que los valores del cable inferior son una cota del lado seguro y no coinciden con los de la guía.'}</p></div>`;
+        <p class="text-muted" style="font-size:12px; margin:8px 0 0;">${out.single ? 'Los dos cables se anclan en la misma columna: N = C1 + C2.' : 'Se descompone en un solo plano, por lo que los valores del cable inferior son una cota del lado seguro y no coinciden con los de el método.'}</p></div>`;
     }
     if (kind === 'ph') {
       left += `<div class="card" style="margin-bottom:16px;"><h3 style="margin-top:0;">Borde recto</h3><table class="data-table"><tbody>
@@ -493,7 +494,7 @@ function resultsHtml(calc, out) {
         <tr><td>Viga de borde (columnas cada ${fmt(res.edge.n * num(calc.design.a, 1), 1)} m, cargas Rc cada ${fmt(num(calc.design.a, 1), 2)} m): momento máximo</td><td style="text-align:right;">${kg(res.edge.M)} kg·m</td></tr>
         <tr><td>Cordones: C = T = M / h (h = ${fmt(res.edge.h, 2)} m) · Fnec = C / ${kg(res.edge.sigmaAdm)}</td><td style="text-align:right;">${kg(res.edge.C)} kg · ${fmt(res.edge.Fnec, 2)} cm²</td></tr>
         <tr><td>Carga de cada columna del borde (n Rc)</td><td style="text-align:right;">${kg(res.edge.colN)} kg</td></tr></tbody></table>
-        <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Los cuatro diseños de apoyo de la guía (columna sola, dos tensores, tensor y puntal…) se descomponen gráficamente en el espacio con la geometría del dibujo: no se calculan aquí.</p></div>`;
+        <p class="text-muted" style="font-size:12px; margin:8px 0 0;">Los diseños de apoyo espaciales (columna sola, dos tensores, tensor y puntal…) no se calculan aquí.</p></div>`;
     }
   }
   const right = `${checksCard({ ok, checks })}<div class="card" style="margin-top:16px;"><h3 style="margin-top:0;">Esquema</h3>${kind === 'jawerth' ? jawFigure(calc.design, out.pend) + jawPlan(calc.design) : netFigure(res.L ?? net.L, res.f ?? net.f, kind === 'heavy' ? 'Cable portante' : 'Cables de curvatura contraria', { two: kind !== 'heavy' })}</div>`;
@@ -517,7 +518,7 @@ function memoria(calc, out) {
   const ok = checks.every((x) => x.ok);
   const d = calc.design;
   let body = '';
-  const ART = 'Guía de predimensionado E4 · Tracción';
+  const ART = 'Predimensionado · Tracción';
   const w = windSuggestion(d);
   const head = `<h2>1. Diseño</h2><table>${memoRow('Tipo', KINDS[kind], ART)}${kind === 'hr' ? `${memoRow('Hipérbola Y = c² / X', `c = ${fmt(d.c, 1)}; X desde ${fmt(d.x0, 2)} cada ${fmt(d.dx, 2)} m, ${d.nNodes} nudos`)}${memoRow('Hiperboloide', `eje de giro en X = ${fmt(d.xAxis, 2)}; ${d.nMer} meridianos`)}`
     : `${kind === 'jawerth' ? memoRow('Tipo de cercha · cubierta', `${LAYOUTS[out.layout]} · ${COVERS[out.cover]}`) : ''}${memoRow(out.layout === 'radial' ? 'Diámetro · flecha' : 'Luz · flecha', `L = ${fmt(d.L, 2)} m · f = ${fmt(d.f, 2)} m (f/L = ${fmt(d.f / d.L, 3)})`)}${memoRow(out.layout === 'radial' ? 'Ancho de la faja en el borde' : 'Distancia entre cables', `${fmt(d.a, 2)} m`)}`}
