@@ -410,7 +410,49 @@ function towerComputo(calc, res) {
   return { title: `Torre de ${f0(res.floors)} niveles con ${walls.length} tabiques.`, rows: [], concrete: [{ desc: `Tabiques de hormigón (${f2(area)} m² de planta, ${f1(H)} m de altura incluyendo subsuelos)`, n: 1, vol: area * H, kgSteel: 0 }], notes: ['Se cuenta solo el hormigón de los tabiques. Losas, columnas, platea y armaduras no están incluidos.'] };
 }
 
-const BUILDERS = { tower: towerComputo, scomp: compComputo, building: buildingComputo, snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
+
+// Viga de hormigón armado de un tramo (simple o en voladizo): hormigón, barras longitudinales y estribos
+function rcBeamComputo(calc, res, out) {
+  const inp = (out && out.input) || {};
+  const ch = res && res.chosen;
+  const L = num(inp.L), b = num(inp.b) / 1000, h = num(inp.h) / 1000;
+  if (!ch || !(L > 0 && b > 0 && h > 0)) return null;
+  const hf = res.flange && res.flange.hf ? num(res.flange.hf) / 1000 : 0;
+  const web = Math.max(h - hf, 0.1);
+  const cover = (num(ch.cover, 30) || 30) / 1000;
+  const dSt = num(inp.dStirrup, 8);
+  let kg = num(ch.n) * kgBar(num(ch.db)) * L;
+  let est = '';
+  if (res.shear && res.shear.stirrups && num(res.shear.s) > 0) {
+    const nEst = Math.ceil(L * 1000 / num(res.shear.s)) + 1;
+    const lEst = 2 * ((b - 2 * cover) + (h - 2 * cover)) + 0.2;
+    kg += nEst * lEst * kgBar(dSt);
+    est = `, estribos ø${f0(dSt)} c/${f0(res.shear.s)} mm`;
+  }
+  return {
+    title: `Una viga de ${f0(b * 1000)} × ${f0(h * 1000)} mm y ${f2(L)} m de luz.`,
+    rows: [],
+    concrete: [{ desc: `Viga (${f0(b * 1000)} × ${f0(web * 1000)} mm${hf ? ', sin el espesor de la losa' : ''}), ${f0(ch.n)} ø${f0(ch.db)}${est}`, n: 1, vol: b * web * L, kgSteel: kg }],
+    notes: ['La armadura es la de flexión y corte del cálculo (recubrimiento supuesto de 30 mm si no se indica); armadura de montaje, apoyos, anclajes y empalmes no están incluidos.'],
+  };
+}
+
+// Losa maciza en una dirección: se cuenta una franja de 1 m de ancho
+function rcSlabComputo(calc, res, out) {
+  const inp = (out && out.input) || {};
+  const ch = res && res.chosen;
+  const L = num(inp.L), h = num(inp.h) / 1000;
+  if (!ch || !(L > 0 && h > 0) || !(num(ch.s) > 0)) return null;
+  const kg = (1000 / num(ch.s)) * kgBar(num(ch.db)) * L;
+  return {
+    title: `Franja de 1 m de ancho de una losa de ${f2(L)} m de luz y ${f0(h * 1000)} mm de espesor.`,
+    rows: [],
+    concrete: [{ desc: `Losa (1,00 × ${f2(L)} m × ${f0(h * 1000)} mm), armadura principal ø${f0(ch.db)} c/${f0(ch.s)} mm`, n: 1, vol: L * h, kgSteel: kg }],
+    notes: ['Para la losa completa, multiplicar por el ancho. No incluye la armadura de repartición, las barras superiores en apoyos ni los empalmes.'],
+  };
+}
+
+const BUILDERS = { beam: rcBeamComputo, slab: rcSlabComputo, tower: towerComputo, scomp: compComputo, building: buildingComputo, snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
 
 // Devuelve el HTML del cómputo para la memoria, o '' si el elemento todavía no tiene armador o el cálculo no tiene solución.
 export function computoSection(calc, out) {
@@ -419,7 +461,7 @@ export function computoSection(calc, out) {
   const res = out && (out.res || out);
   if (!res || out.error) return '';
   try {
-    const c = b(calc, res);
+    const c = b(calc, res, out);
     return c ? computoHtml(c) : '';
   } catch (e) { return ''; }
 }
