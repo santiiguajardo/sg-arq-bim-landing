@@ -139,9 +139,19 @@
   .p-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; }
   .p-card { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg-2); transition: transform .18s, border-color .18s; }
   .p-card:hover { transform: translateY(-3px); border-color: #3a3f4d; }
-  .p-featured { grid-column: 1 / -1; display: grid; grid-template-columns: 1.1fr 1fr; }
+  .p-featured { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: stretch; }
   .p-media { aspect-ratio: 16/10; background: #1e212a; position: relative; overflow: hidden; }
-  .p-featured .p-media { aspect-ratio: auto; min-height: 260px; }
+  /* destacada: la foto se ve completa (sin recortar) sobre su propio fondo desenfocado */
+  .p-featured .p-media { aspect-ratio: 16/10; min-height: 0; background: #0d1018; }
+  .p-featured .p-media::before { content: ''; position: absolute; inset: -30px; background: var(--pbg, none) center / cover no-repeat; filter: blur(26px) brightness(.55) saturate(1.2); pointer-events: none; }
+  .p-featured .p-media img { object-fit: contain; position: relative; }
+  .p-featured .p-body { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 28px clamp(22px, 3vw, 40px); }
+  .p-featured .p-body h3 { font-size: clamp(26px, 2.8vw, 38px); margin: 14px 0 6px; line-height: 1.05; }
+  .p-featured .p-sub { font-size: 15px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  .p-featured .p-loc { font-size: 13px; margin-top: 12px; line-height: 1.4; }
+  .p-featured .p-desc { font-size: 15px; margin-top: 14px; max-width: 52ch; }
+  .p-featured .p-stats { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); width: 100%; }
+  .p-featured .p-stat { font-size: 15px; padding: 6px 14px; }
   .p-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .ph-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #1e212a, #262a35); }
   .p-gallery { display: flex; width: 100%; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
