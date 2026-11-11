@@ -239,8 +239,26 @@ function latticeComputo(calc, res) {
 // Cables de gran luz (solo longitud: el peso por metro lo da el catálogo del fabricante)
 const parabolaLen = (L, f) => L * (1 + (8 / 3) * (f / L) * (f / L));
 function cableRow(desc, c, n, len) { return { fn: 'Cables', desc, perfil: `ø ${f0(c.d)} mm`, n, len, total: n * len, kgm: 0, kg: 0 }; }
-function tensComputo(calc, res) {
+// Paraboloide hiperbólico de cables: dos familias de cables de curvatura contraria, uno cada a metros, de luz L y flecha f (largos por parábola)
+function hyparComputo(calc, res, out) {
+  const net = res.net;
+  const L = num(net && net.L), f = num(net && net.f), a = num(net && net.a);
+  if (!net || !net.cableSel || !net.cableSel.cable || !(L > 0 && a > 0)) return null;
+  const c = net.cableSel.cable;
+  const perFamily = Math.max(2, Math.round(L / a) + 1);
+  const nPer = num(net.cableSel.n, 1);
+  const len = parabolaLen(L, f);
+  const rows = [cableRow(`Cables portantes ø ${f0(c.d)} mm (carga de rotura ${f0(c.F)} kg): ${perFamily} por familia × 2 familias, cada ${f2(a)} m, longitud por parábola`, c, 2 * perFamily * nPer, len)];
+  const ec = out && out.edgeCable;
+  if (ec && ec.cableSel && ec.cableSel.cable) {
+    const e = ec.cableSel.cable;
+    rows.push(cableRow(`Cable de borde colector ø ${f0(e.d)} mm (carga de rotura ${f0(e.F)} kg), parábola de ${f2(num(calc.design.Lb, 20))} m`, e, num(ec.cableSel.n, 1), parabolaLen(num(calc.design.Lb, 20), num(calc.design.fb, 2))));
+  }
+  return { title: `Paraboloide hiperbólico de ${f2(L)} m de luz y ${f2(f)} m de flecha.`, rows, notes: ['El peso de los cables se toma del catálogo del fabricante (no se calcula acá). El cable de borde se cuenta una sola vez: multiplicar por la cantidad de bordes colectores. Viga de borde, columnas, tensores, anclajes y telas no incluidos.'] };
+}
+function tensComputo(calc, res, out) {
   const d = calc.design;
+  if (d.kind === 'ph') return hyparComputo(calc, res, out);
   if (d.kind === 'hr') return hyperComputo(calc, res);
   if (!res.cableSel || !res.cableSel.cable || !['jawerth', 'heavy'].includes(d.kind)) return null;
   const L = num(d.L), f = num(d.f);
