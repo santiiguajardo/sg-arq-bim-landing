@@ -411,8 +411,69 @@ function towerComputo(calc, res) {
 }
 
 
+
+// Viga o losa continua (varios tramos y voladizos): hormigón, armadura de tramos, de apoyos y estribos
+function contRcComputo(calc, res, out) {
+  const inp = (out && out.input) || {};
+  const members = res.members || [];
+  const slab = calc.element === 'slab';
+  const h = num(inp.h) / 1000, b = slab ? 1 : num(inp.b) / 1000;
+  if (!members.length || !(h > 0 && b > 0)) return null;
+  const Ltot = members.reduce((sum, m) => sum + num(m.L), 0);
+  const perM = (c) => (c ? (slab ? (1000 / Math.max(num(c.s), 1)) * kgBar(num(c.db)) : num(c.n) * kgBar(num(c.db))) : 0);
+  let kg = 0;
+  members.forEach((m) => { if (m.type === 'span') kg += perM(m.pos) * num(m.L); });
+  // barras superiores de los apoyos: se extienden 0,3 de la luz de cada lado (estimación; los voladizos se cubren enteros)
+  const supports = res.supports || [];
+  supports.forEach((sp) => {
+    if (!sp.bars) return;
+    const left = members.find((m) => (m.type === 'span' && m.supR === sp.q) || (m.type === 'cantR' && m.sup === sp.q));
+    const right = members.find((m) => (m.type === 'span' && m.supL === sp.q) || (m.type === 'cantL' && m.sup === sp.q));
+    const ext = (m) => (!m ? 0 : m.type === 'span' ? 0.3 * num(m.L) : num(m.L));
+    kg += perM(sp.bars) * (ext(left) + ext(right));
+  });
+  if (!slab) {
+    const cover = 0.03, dSt = num(inp.dStirrup, 8);
+    members.forEach((m) => {
+      if (m.shear && m.shear.stirrups && num(m.shear.s) > 0) {
+        kg += (Math.ceil(num(m.L) * 1000 / num(m.shear.s)) + 1) * (2 * ((b - 2 * cover) + (h - 2 * cover)) + 0.2) * kgBar(dSt);
+      }
+    });
+  }
+  const n = members.filter((m) => m.type === 'span').length;
+  return {
+    title: `${slab ? 'Franja de 1 m de losa' : 'Viga'} continua de ${f2(Ltot)} m en total (${n} tramo${n === 1 ? '' : 's'}).`,
+    rows: [],
+    concrete: [{ desc: `${slab ? 'Losa' : 'Viga'} (${slab ? '1,00' : f2(b)} × ${f2(h)} m × ${f2(Ltot)} m), armadura de tramos, de apoyos${slab ? '' : ' y estribos'}`, n: 1, vol: b * h * Ltot, kgSteel: kg }],
+    notes: ['Barras superiores de apoyos estimadas con 0,3 de la luz hacia cada lado (voladizos completos); recubrimiento de estribos supuesto de 30 mm. Armadura de montaje, de repartición, anclajes y empalmes no están incluidos.'],
+  };
+}
+
+// Losa maciza en dos direcciones: hormigón y armadura inferior por franjas (central = mitad del ancho; laterales = la otra mitad)
+function slab2Computo(calc, res) {
+  const lx = num(calc.design.lx), ly = num(calc.design.ly), h = num(calc.section && calc.section.h) / 100;
+  if (!res || !res.strips || !(lx > 0 && ly > 0 && h > 0)) return null;
+  let kg = 0;
+  res.strips.forEach((st) => {
+    if (!st.chosen || !/^pos-/.test(st.role)) return;
+    const alongX = /^pos-x/.test(st.role);
+    const span = alongX ? lx : ly;
+    const across = alongX ? ly : lx;
+    kg += ((across / 2) * 1000 / num(st.chosen.s, 1)) * span * kgBar(num(st.chosen.db));
+  });
+  const hasMore = res.strips.some((st) => !/^pos-/.test(st.role)) || (res.corners || []).length > 0;
+  return {
+    title: `Losa de ${f2(lx)} × ${f2(ly)} m y ${f0(h * 100)} cm de espesor.`,
+    rows: [],
+    concrete: [{ desc: `Losa (${f2(lx)} × ${f2(ly)} × ${f2(h)} m), armadura inferior en las dos direcciones por franjas`, n: 1, vol: lx * ly * h, kgSteel: kg }],
+    area: { planta: lx * ly },
+    notes: [hasMore ? 'No incluye la armadura superior de bordes continuos ni la de las esquinas ni los empalmes.' : 'No incluye empalmes ni armadura de montaje.'],
+  };
+}
+
 // Viga de hormigón armado de un tramo (simple o en voladizo): hormigón, barras longitudinales y estribos
 function rcBeamComputo(calc, res, out) {
+  if (res && res.members) return contRcComputo(calc, res, out);
   const inp = (out && out.input) || {};
   const ch = res && res.chosen;
   const L = num(inp.L), b = num(inp.b) / 1000, h = num(inp.h) / 1000;
@@ -439,6 +500,7 @@ function rcBeamComputo(calc, res, out) {
 
 // Losa maciza en una dirección: se cuenta una franja de 1 m de ancho
 function rcSlabComputo(calc, res, out) {
+  if (res && res.members) return contRcComputo(calc, res, out);
   const inp = (out && out.input) || {};
   const ch = res && res.chosen;
   const L = num(inp.L), h = num(inp.h) / 1000;
@@ -452,7 +514,7 @@ function rcSlabComputo(calc, res, out) {
   };
 }
 
-const BUILDERS = { beam: rcBeamComputo, slab: rcSlabComputo, tower: towerComputo, scomp: compComputo, building: buildingComputo, snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
+const BUILDERS = { slab2: slab2Computo, beam: rcBeamComputo, slab: rcSlabComputo, tower: towerComputo, scomp: compComputo, building: buildingComputo, snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
 
 // Devuelve el HTML del cómputo para la memoria, o '' si el elemento todavía no tiene armador o el cálculo no tiene solución.
 export function computoSection(calc, out) {
