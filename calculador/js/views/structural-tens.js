@@ -209,7 +209,7 @@ function geometryCard(calc) {
   const head = jaw
     ? `${selField('design.layout', 'Tipo de cercha Jawerth', layout, Object.entries(LAYOUTS), 'Según cómo se ubican los cables entre sí cambian los pendolones, la cubierta y los apoyos.')}${jawFigure(d)}${jawPlan(d)}`
     : netFigure(num(d.L, 30), num(d.f, 3), `${heavy ? 'Cable portante' : 'Dos familias de cables'}, flecha ${fmt(num(d.f) / num(d.L, 1) * 100, 0)} % de la luz`, { two: !heavy });
-  return `<div class="card"><h3 style="margin-top:0;">${KINDS[d.kind]}</h3>${d.kind === 'jawerth' || d.kind === 'heavy' ? previewSketch('jawerth', d) : ''}
+  return `<div class="card"><h3 style="margin-top:0;">${KINDS[d.kind]}</h3>${d.kind === 'jawerth' || d.kind === 'heavy' || d.kind === 'ph' ? previewSketch('jawerth', d) : ''}
     ${head}
     <div class="field-row" style="flex-wrap:wrap;">
       ${numField('design.L', radial ? 'Diámetro de la cubierta L' : 'Luz de los cables L', d.L, { unit: 'm' })}${numField('design.f', 'Flecha f', d.f, { unit: 'm', hint: `f / L = ${fmt(num(d.f) / num(d.L, 1), 3)} (usual: 0,10).` })}
@@ -224,7 +224,7 @@ function geometryCard(calc) {
 
 function hyperGeometryCard(calc) {
   const d = calc.design;
-  return `<div class="card"><h3 style="margin-top:0;">${KINDS.hr}</h3>
+  return `<div class="card"><h3 style="margin-top:0;">${KINDS.hr}</h3>${previewSketch('hyper', d)}
     <p class="text-muted" style="font-size:12.5px; margin:0 0 8px;">Hipérbola equilátera Y = c² / X (c entre 5 y 10, X ≥ 4); los nudos se ubican cada Δx y el hiperboloide se obtiene girándola a r = X − (posición del eje).</p>
     <div class="field-row" style="flex-wrap:wrap;">
       ${numField('design.c', 'Distancia focal c', d.c)}${numField('design.x0', 'X del primer nudo', d.x0)}${numField('design.dx', 'Paso Δx entre nudos', d.dx, { unit: 'm' })}

@@ -241,6 +241,7 @@ const parabolaLen = (L, f) => L * (1 + (8 / 3) * (f / L) * (f / L));
 function cableRow(desc, c, n, len) { return { fn: 'Cables', desc, perfil: `ø ${f0(c.d)} mm`, n, len, total: n * len, kgm: 0, kg: 0 }; }
 function tensComputo(calc, res) {
   const d = calc.design;
+  if (d.kind === 'hr') return hyperComputo(calc, res);
   if (!res.cableSel || !res.cableSel.cable || !['jawerth', 'heavy'].includes(d.kind)) return null;
   const L = num(d.L), f = num(d.f);
   const c = res.cableSel.cable;
@@ -386,7 +387,30 @@ function buildingComputo(calc, res) {
   return { title: `Edificio de ${f0((q.levels || []).length)} niveles.`, rows: [], concrete, notes: ['Estimación por longitudes de barra, sin empalmes, ganchos ni desperdicio.'] };
 }
 
-const BUILDERS = { scomp: compComputo, building: buildingComputo, snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
+
+// Hiperboloide de revolución de cables: meridianos y anillos (largos por geometría; el peso lo da el catálogo)
+function hyperComputo(calc, res) {
+  const d = calc.design;
+  const merLen = (res.segs || []).reduce((s, g) => s + num(g.len), 0);
+  const nMer = Math.max(1, Math.round(num(d.nMer, 1)));
+  if (!(merLen > 0) || !res.cableM || !res.cableM.cable) return null;
+  const c = res.cableM.cable; const nPer = num(res.cableM.n, 1);
+  const rings = (res.parallels || []).reduce((s, p) => s + 2 * Math.PI * num(p.r), 0);
+  const rows = [{ fn: 'Meridianos', desc: `Cables meridianos ø ${f0(c.d)} mm (carga de rotura ${f0(c.F)} kg), ${nMer} meridianos`, perfil: `ø ${f0(c.d)} mm`, n: nMer * nPer, len: merLen, total: nMer * nPer * merLen, kgm: 0, kg: 0 }];
+  if (rings > 0) rows.push({ fn: 'Anillos', desc: `Cables de los ${(res.parallels || []).length} paralelos (diámetro según su carga)`, perfil: 'según cálculo', n: (res.parallels || []).length, len: rings / (res.parallels || []).length, total: rings, kgm: 0, kg: 0 });
+  return { title: 'Hiperboloide de revolución de cables.', rows, notes: ['Longitudes por geometría; el peso de los cables y las telas se toma del catálogo del fabricante. Anillos de borde, columnas y anclajes no incluidos.'] };
+}
+
+// Edificio en torre: hormigón de los tabiques (sobre y bajo nivel de terreno)
+function towerComputo(calc, res) {
+  const walls = res.walls || [];
+  const area = walls.reduce((s, w) => s + num(w.area), 0);
+  const H = num(res.h) + num(res.nSub) * num(res.hSub);
+  if (!(area > 0 && H > 0)) return null;
+  return { title: `Torre de ${f0(res.floors)} niveles con ${walls.length} tabiques.`, rows: [], concrete: [{ desc: `Tabiques de hormigón (${f2(area)} m² de planta, ${f1(H)} m de altura incluyendo subsuelos)`, n: 1, vol: area * H, kgSteel: 0 }], notes: ['Se cuenta solo el hormigón de los tabiques. Losas, columnas, platea y armaduras no están incluidos.'] };
+}
+
+const BUILDERS = { tower: towerComputo, scomp: compComputo, building: buildingComputo, snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
 
 // Devuelve el HTML del cómputo para la memoria, o '' si el elemento todavía no tiene armador o el cálculo no tiene solución.
 export function computoSection(calc, out) {

@@ -198,6 +198,8 @@ const clampN = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const nodeLines = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
 const DRAG = {
+  'hyper.focal': (d, m) => ({ 'design.c': clampN(rnd(snap(Math.sqrt(Math.max(m.ym, 0.1) * num(d.x0, 4)), 0.1), 1), 1, 20) }),
+  'hyper.last': (d, m) => ({ 'design.dx': Math.max(0.2, rnd(snap(((m.xm + (Number(d.xAxis) || 0)) - num(d.x0, 4)) / Math.max(1, Math.round(num(d.nNodes, 6)) - 1), 0.05))) }),
   'folded.flange': (d, m) => ({ 'design.b': clampN(rnd(snap(m.xm, 0.05)), 0.1, Math.max(0.15, num(d.B, 3) / 2 - 0.1)), 'design.H': Math.max(0.3, rnd(snap(m.ym, 0.05))) }),
   'folded.module': (d, m) => ({ 'design.B': Math.max(rnd(num(d.b, 0.6) * 2 + 0.2), rnd(snap(m.xm, 0.05))) }),
   'ph.corner': (d, m) => ({ 'design.b': Math.max(1, rnd(snap(m.xm, 0.25))), 'design.a': Math.max(1, rnd(snap(m.ym, 0.25))) }),
@@ -448,6 +450,22 @@ export function previewSketch(kind, d, extra = null) {
     body += dimH(X(0), X(Lm), oy + 24, `Módulo Lm = ${fmt(Lm, 2)} m`) + dimV(X(0) - 12, Y(0), Y(H), `H = ${fmt(H, 2)} m`);
     body += `<text x="${W - 8}" y="16" text-anchor="end" font-size="11" fill="var(--ink-soft)">Corte de la placa: capa superior, capa inferior y diagonales</text>`;
     body += HINT.replace('y="16"', 'y="34"') + HANDLE('node', kind, X(Lm), Y(H), { k, ox, oy });
+  } else if (kind === 'hyper') {
+    const c = num(d.c, 6); const x0 = num(d.x0, 4); const dx = num(d.dx, 1.2);
+    const nn = Math.max(2, Math.min(20, Math.round(num(d.nNodes, 6)))); const xa = Number(d.xAxis) || 0;
+    const nodes = [];
+    for (let i = 0; i < nn; i++) { const X0 = x0 + i * dx; nodes.push({ r: Math.max(X0 - xa, 0.05), y: c * c / X0 }); }
+    const rmax = Math.max(...nodes.map((n) => n.r)); const ymax = Math.max(...nodes.map((n) => n.y));
+    const lk = lockOf(kind);
+    const k = lk ? lk.k : Math.min(200 / Math.max(rmax, 1), 130 / Math.max(ymax, 1));
+    const ox = 280; const oy = 175;
+    const X = (m) => ox + m * k; const Y = (m) => oy - m * k;
+    body += `<line x1="${ox}" y1="${Y(0) + 4}" x2="${ox}" y2="${Y(ymax) - 10}" stroke="${INK}" stroke-width="1" stroke-dasharray="5 4"/>`;
+    body += `<polyline points="${nodes.map((n) => `${X(n.r)},${Y(n.y)}`).join(' ')}" fill="none" stroke="${INK}" stroke-width="2.6"/><polyline points="${nodes.map((n) => `${X(-n.r)},${Y(n.y)}`).join(' ')}" fill="none" stroke="${INK}" stroke-width="2.6"/>`;
+    nodes.forEach((n) => { body += bar(X(-n.r), Y(n.y), X(n.r), Y(n.y), 1); });
+    body += `<text x="${ox + 8}" y="${Y(ymax) - 4}" font-size="11.5" font-weight="600" fill="${ACCI}">c = ${fmt(c, 1)} · Δx = ${fmt(dx, 2)} m · ${nn} paralelos</text>`;
+    body += `<text x="${W - 8}" y="16" text-anchor="end" font-size="11" fill="var(--ink-soft)">Meridiano Y = c² / X girado alrededor del eje</text>`;
+    body += HINT.replace('y="16"', 'y="34"') + HANDLE('focal', kind, X(nodes[0].r), Y(nodes[0].y), { k, ox, oy }) + HANDLE('last', kind, X(nodes[nn - 1].r), Y(nodes[nn - 1].y), { k, ox, oy });
   } else if (kind === 'tie') {
     const T = Number(d.T) || 0;
     const L = num(d.L, 2);
