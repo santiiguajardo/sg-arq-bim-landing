@@ -142,7 +142,9 @@
   .p-featured { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: stretch; }
   .p-media { aspect-ratio: 16/10; background: #1e212a; position: relative; overflow: hidden; }
   /* destacada: la foto se ve completa (sin recortar) sobre su propio fondo desenfocado */
-  .p-featured .p-media { aspect-ratio: 16/10; min-height: 0; background: #0d1018; }
+  .p-featured .p-media { aspect-ratio: auto; min-height: clamp(320px, 36vw, 480px); background: #0d1018; }
+  /* la foto/galería no manda sobre el tamaño de la tarjeta: va dentro del marco (si no, con textos largos la foto se ensanchaba y tapaba el texto) */
+  .p-featured .p-media > img, .p-featured .p-media > .p-gallery { position: absolute; inset: 0; width: 100%; height: 100%; }
   .p-featured .p-media::before { content: ''; position: absolute; inset: -30px; background: var(--pbg, none) center / cover no-repeat; filter: blur(26px) brightness(.55) saturate(1.2); pointer-events: none; }
   .p-featured .p-media img { object-fit: contain; position: relative; }
   .p-featured .p-body { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 28px clamp(22px, 3vw, 40px); }
@@ -270,6 +272,7 @@
     .mainnav a:last-child { border-bottom: 0; }
     .hero { padding: 40px 0 28px; }
     .p-featured { grid-template-columns: 1fr; }
+    .p-featured .p-media { aspect-ratio: 16/10; min-height: 0; }
     .sheet { padding: 0 18px; }
     header.top { padding: 12px 18px; }
     .section { padding: 40px 0; }
