@@ -622,6 +622,8 @@
   .pm-tiles { position: absolute; width: 768px; height: 768px; filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.9) saturate(.75); }
   .pm-tiles img { position: absolute; display: block; max-width: none; width: 256px; height: 256px; }
   .pm-map-view::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(47,111,237,.16), rgba(47,111,237,.05)); pointer-events: none; }
+  .p-srchip { top: 12px; right: 12px; background: rgba(47,111,237,.85); }
+  .p-vchip + .p-srchip { top: 42px; }
   .pm-pin, .pm-circle, .pm-badge { display: none; }
   .pm-exact .pm-pin { display: block; }
   .pm-circle { position: absolute; left: 50%; top: 50%; z-index: 2; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: rgba(47,111,237,.24); border: 2px dashed rgba(160,195,255,.9); }

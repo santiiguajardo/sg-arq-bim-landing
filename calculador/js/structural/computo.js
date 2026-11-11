@@ -364,7 +364,29 @@ function footingComputo(calc, res) {
   return { title: `Una base de ${f2(num(res.L) / 1000)} × ${f2(num(res.B) / 1000)} × ${f2(num(res.h) / 1000)} m.`, rows: [], concrete: [{ desc: 'Base (hormigón y armadura de flexión)', n: 1, vol: num(res.concrete), kgSteel: num(res.steelKg) }], notes: ['Armadura de columna (esperas) y vigas de equilibrio no están incluidas.'] };
 }
 
-const BUILDERS = { snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
+// Cubierta cilíndrica de compresión dominante: cantidades de UNA onda (la bóveda se arma repitiendo la onda)
+function compComputo(calc, res) {
+  const len = (res.tramos || []).reduce((s, t) => s + num(t.len), 0);
+  if (!(len > 0) || !res.on) return null;
+  return {
+    title: `Una onda de ${f2(res.on.B)} m de ancho a lo largo de ${f2(len)} m de arco.`,
+    rows: [],
+    concrete: [{ desc: `Onda (sección ${f2(res.on.F)} m², ${f0(res.on.pesoM)} kg por metro de arco)`, n: 1, vol: num(res.on.F) * len, kgSteel: 0 }],
+    notes: ['Son las cantidades de una sola onda: multiplicar por la cantidad de ondas (largo de la bóveda ÷ ancho de onda). Armadura, tensor y contrafuertes no están incluidos.'],
+  };
+}
+
+// Edificio completo de hormigón armado: el motor ya calcula hormigón y hierro por tipo de elemento
+function buildingComputo(calc, res) {
+  const q = res && res.quantities;
+  if (!q || !q.concrete) return null;
+  const kinds = [['slabs', 'Losas'], ['beams', 'Vigas'], ['columns', 'Columnas'], ['footings', 'Bases']];
+  const concrete = kinds.map(([k, label]) => ({ desc: label, n: 1, vol: num(q.concrete[k]), kgSteel: num(q.steel && q.steel[k]) })).filter((x) => x.vol > 0 || x.kgSteel > 0);
+  if (!concrete.length) return null;
+  return { title: `Edificio de ${f0((q.levels || []).length)} niveles.`, rows: [], concrete, notes: ['Estimación por longitudes de barra, sin empalmes, ganchos ni desperdicio.'] };
+}
+
+const BUILDERS = { scomp: compComputo, building: buildingComputo, snave: naveComputo, snavecab: cabComputo, snavearch: archComputo, struss: trussComputo, sbeam: beamComputo, spurlin: purlinComputo, scolumn: columnComputo, stie: tieComputo, sfloor: floorComputo, slat: latticeComputo, stens: tensComputo, spost: postComputo, sdome: domeComputo, svier: vierComputo, splegado: foldedComputo, sestereo: spaceComputo, sph: phComputo, column: rcColumnComputo, footing: footingComputo };
 
 // Devuelve el HTML del cómputo para la memoria, o '' si el elemento todavía no tiene armador o el cálculo no tiene solución.
 export function computoSection(calc, out) {
