@@ -151,6 +151,7 @@ export function resizeImageFile(file, maxW = 1000, quality = 0.82) {
       canvas.width = Math.round(img.width * scale);
       canvas.height = Math.round(img.height * scale);
       const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';   // al achicar mucho, evita bordes dentados
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
