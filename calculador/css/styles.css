@@ -427,3 +427,17 @@ table.data-table tr.t4d-hidden { display: none; }
 /* Esquemas del calculador estructural: las etiquetas llevan un borde del color del fondo para leerse aunque pasen por encima de un trazo */
 #content[data-view="structural"] svg text { paint-order: stroke fill; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
 #content[data-view="structural"] svg text[fill="#fff"], #content[data-view="structural"] svg text[fill="white"] { stroke: none; }
+
+/* Tarjetas desplegables (Landing pública): solo se ve el título y se abren al clickearlas */
+details.acc-card { padding: 0; }
+details.acc-card > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; cursor: pointer; list-style: none; font-weight: 700; font-size: 15px; color: var(--ink); border-radius: inherit; user-select: none; }
+details.acc-card > summary::-webkit-details-marker { display: none; }
+details.acc-card > summary::after { content: '+'; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-size: 18px; font-weight: 500; line-height: 1; color: var(--ink-soft); transition: background .15s, color .15s; }
+details.acc-card > summary:hover::after { background: var(--line-soft); color: var(--ink); }
+details.acc-card[open] > summary { border-bottom: 1px solid var(--line); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+details.acc-card[open] > summary::after { content: '−'; background: var(--accent); border-color: var(--accent); color: #fff; }
+details.acc-card > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+details.acc-card > .acc-card-body { padding: 16px 18px 18px; }
+details.acc-card .card-title-row { justify-content: flex-end; }
+details.acc-card .card-title-row:empty { display: none; }
+details.acc-card .acc-card-body div[style*="min-width"] { min-width: min(260px, 100%) !important; }
