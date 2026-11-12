@@ -272,7 +272,8 @@
     .mainnav a:last-child { border-bottom: 0; }
     .hero { padding: 40px 0 28px; }
     .p-featured { grid-template-columns: 1fr; }
-    .p-featured .p-media { aspect-ratio: 16/10; min-height: 0; }
+    /* width/justify-self explícitos: en Safari (iPhone) un ítem de grilla con aspect-ratio y solo hijos absolutos medía 0x0 y la foto no se veía */
+    .p-featured .p-media { aspect-ratio: 16/10; min-height: 0; width: 100%; justify-self: stretch; }
     .sheet { padding: 0 18px; }
     header.top { padding: 12px 18px; }
     .section { padding: 40px 0; }
